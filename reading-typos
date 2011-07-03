@@ -1,0 +1,82 @@
+#!/usr/bin/env perl
+use 5.14.0;
+use warnings;
+use utf8::all;
+use Encode 'decode_utf8';
+use DBI;
+
+my %known_homographs = (
+    '娘'     => [qw/こ        むすめ/],
+    '下'     => [qw/した      もと/],
+    '何'     => [qw/なに      なん/],
+    '側'     => [qw/かわ      そば/],
+    '君'     => [qw/きみ      くん/],
+    '家'     => [qw/いえ      うち/],
+    '方'     => [qw/かた      ほう/],
+    '空'     => [qw/から      そら/],
+    '訳'     => [qw/やく      わけ/],
+    '声'     => [qw/こえ      ヴォイス/],
+    '超'     => [qw/ちょう    スーパー/],
+    '空く'   => [qw/あく      すく/],
+    '良い'   => [qw/いい      よい/],
+    '行く'   => [qw/いく      ゆく/],
+    '入る'   => [qw/いる      はいる/],
+    '開く'   => [qw/あく      ひらく/],
+    'お腹'   => [qw/おなか    おはら/],
+    '何か'   => [qw/なにか    なんか/],
+    '辛い'   => [qw/からい    つらい/],
+    '日本'   => [qw/にっぽん  にほん/],
+    '一日'   => [qw/いちにち  ついたち/],
+    '止める' => [qw/とめる    やめる/],
+);
+my %readings_of;
+
+my $dbh = DBI->connect("dbi:SQLite:dbname=$ENV{HOME}/Documents/Anki/Japanese.anki");
+my $sth = $dbh->prepare("
+    select fields.value
+    from fields
+        join fieldModels on (fields.fieldModelId = fieldModels.id)
+        join models on (fieldModels.modelId = models.id)
+    where
+        models.name is 'Sentences'
+        and fieldModels.name like '%読み%'
+        and fields.value <> '';
+");
+
+$sth->execute;
+
+while (my ($reading_field) = $sth->fetchrow_array) {
+    my @readings = split /<br.*?>/, decode_utf8 $reading_field;
+    for (@readings) {
+        my ($word, $reading) = /^([^【]+)【([^】]+)】$/
+            or next; # warn "invalid reading line: $_" and next;
+        $readings_of{$word}{$reading} = 1;
+    }
+}
+
+for my $word (sort keys %readings_of) {
+    if ($known_homographs{$word}) {
+        $readings_of{$word}{$_} = 0 for @{ $known_homographs{$word} };
+    }
+
+    next if (grep { $_ } values %{ $readings_of{$word} }) <= 1;
+
+    say "$word: " . join (', ', sort keys %{ $readings_of{$word} });
+}
+
+__END__
+中: なか, なか？
+今日: きょう, きよう
+会社: かいしゃ, 会社
+信じる: しんじる, 信じる
+回復: かいふき, かいふく
+変わる: かわる, くわる
+存在: そんざい, ぞんさい
+引数: ひきすう, ひくすう
+恐怖: きょうふ, きょふ
+月: つき, つき？
+歌う: うたう, 歌う
+水死: すいし, すいしたい
+簡単: かんたん, たんたん
+読み込む: よみこむ, 読み込む
+遊ぶ: あそび, あそぶ
