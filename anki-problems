@@ -1,0 +1,16 @@
+#!/usr/bin/env perl
+use strict;
+use warnings;
+
+my @scripts = qw/
+    smartfm-divergence
+    reading-newlines
+    reading-typos
+/;
+
+for my $script (@scripts) {
+    print "$script:\n";
+    system($script);
+    print "\n";
+}
+
