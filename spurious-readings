@@ -25,9 +25,10 @@ while (my ($sentence, $reading_field) = map { decode_utf8 $_ } $sth->fetchrow_ar
 
     my @readings = map { /^([^【]+)/ } split /<br.*?>/, $reading_field;
     my @spurious;
-    for (grep defined, map { /(\p{Han}+)/g } @readings) {
-        next if $sentence =~ $_;
-        push @spurious, $_;
+    for my $kanji (grep defined, map { /(\p{Han}+)/g } @readings) {
+        my $regex = join 'っ*', split '', $kanji;
+        next if $sentence =~ $regex;
+        push @spurious, $kanji;
     }
     next if !@spurious;
 
