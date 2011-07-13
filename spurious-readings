@@ -18,6 +18,7 @@ my $sth = $dbh->prepare("
 
 $sth->execute;
 
+my $i = 0;
 while (my ($sentence, $reading_field) = map { decode_utf8 $_ } $sth->fetchrow_array) {
     next if $reading_field !~ /【/; # weirdly formatted reading field
 
@@ -30,7 +31,7 @@ while (my ($sentence, $reading_field) = map { decode_utf8 $_ } $sth->fetchrow_ar
     }
     next if !@spurious;
 
-    say $sentence;
+    say ++$i . ". " . $sentence;
     say "    $_" for @spurious;
 }
 
