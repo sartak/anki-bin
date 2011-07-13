@@ -1,0 +1,16 @@
+#!/bin/sh
+# find sentences with a "source" of Dictionary.app which has no
+# listed translation
+
+echo "select sentence.value
+    from fields as sentence
+        join fields as source on (sentence.factId = source.factId)
+        join fields as translation on (sentence.factId = translation.factId)
+    where
+        source.value = 'Dictionary.app'
+        and translation.value = ''
+        and sentence.fieldModelId = 4775683831775348908
+        and source.fieldModelId = -8932143135470038837
+        and translation.fieldModelId = -4172742128414485768;
+" | sqlite3 ~/Documents/Anki/Japanese.anki
+
