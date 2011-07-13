@@ -6,6 +6,7 @@ my @scripts = qw/
     smartfm-divergence
     reading-newlines
     reading-typos
+    dictionary-translations
 /;
 
 for my $script (@scripts) {
