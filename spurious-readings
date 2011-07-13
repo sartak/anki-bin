@@ -10,12 +10,10 @@ my $sth = $dbh->prepare("
     select sentence.value, reading.value
     from fields as sentence
         join fields as reading on (sentence.factId = reading.factId)
---        join cards as sentence_card on (sentence.factId = sentence_card.factId)
     where
         reading.fieldModelId=-988607031910086482
         and sentence.fieldModelId=4775683831775348908
-        and reading.value<>''
---        and sentence_card.type>0;
+        and reading.value<>'';
 ");
 
 $sth->execute;
