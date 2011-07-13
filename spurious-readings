@@ -1,0 +1,37 @@
+#!/usr/bin/env perl
+use 5.14.0;
+use warnings;
+use utf8::all;
+use Encode 'decode_utf8';
+use DBI;
+
+my $dbh = DBI->connect("dbi:SQLite:dbname=$ENV{HOME}/Documents/Anki/Japanese.anki");
+my $sth = $dbh->prepare("
+    select sentence.value, reading.value
+    from fields as sentence
+        join fields as reading on (sentence.factId = reading.factId)
+--        join cards as sentence_card on (sentence.factId = sentence_card.factId)
+    where
+        reading.fieldModelId=-988607031910086482
+        and sentence.fieldModelId=4775683831775348908
+        and reading.value<>''
+--        and sentence_card.type>0;
+");
+
+$sth->execute;
+
+while (my ($sentence, $reading_field) = map { decode_utf8 $_ } $sth->fetchrow_array) {
+    next if $reading_field !~ /【/; # weirdly formatted reading field
+
+    my @readings = map { /^([^【]+)/ } split /<br.*?>/, $reading_field;
+    my @spurious;
+    for (grep defined, map { /(\p{Han}+)/g } @readings) {
+        next if $sentence =~ $_;
+        push @spurious, $_;
+    }
+    next if !@spurious;
+
+    say $sentence;
+    say "    $_" for @spurious;
+}
+
