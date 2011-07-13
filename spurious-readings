@@ -35,3 +35,18 @@ while (my ($sentence, $reading_field) = map { decode_utf8 $_ } $sth->fetchrow_ar
     say "    $_" for @spurious;
 }
 
+__END__
+real sample output:
+
+誰と会ってみたいですか。
+    合
+もし時間が合ったらスカイプでも話そう！
+    会
+正規表現, 本っっ当に面白いですねぇ
+    本当
+記憶はつながってる
+    暗記
+次はいつ会いましょうか。
+    合
+今，大地震が起きたと仮定したらまずどうしますか
+    大地獄
