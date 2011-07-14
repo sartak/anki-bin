@@ -14,7 +14,7 @@ echo "select kanji.value, sentence.value
         and kanji.fieldModelId=7694462791390410032
         and reading.value=''
         and sentence_card.type>0
-        order by kanji_fact.created;" | sqlite3 ~/Documents/Anki/Japanese.anki | perl5i -nle '
+        order by kanji_fact.created;" | sqlite3 $ANKI_DECK | perl5i -nle '
 our (%seen, $i);
 my ($kanji, $sentence) = /^(.)\|(.+)$/;
 print "\n\n".++$i.". \e[35m$kanji\e[m:" if $seen{$kanji}++ == 0;
@@ -29,7 +29,7 @@ echo "select count()
     where
         reading.fieldModelId=1870991842743010604
         group by (reading.value = '');
-        " | sqlite3 ~/Documents/Anki/Japanese.anki | perl -e 'my ($with_reading, $without_reading) = map { chomp; $_ } <>; my $kanji = $with_reading + $without_reading; printf "Coverage: %d/%d (%.2f%%)\n", $with_reading, $kanji, 100*$with_reading/$kanji';
+        " | sqlite3 $ANKI_DECK | perl -e 'my ($with_reading, $without_reading) = map { chomp; $_ } <>; my $kanji = $with_reading + $without_reading; printf "Coverage: %d/%d (%.2f%%)\n", $with_reading, $kanji, 100*$with_reading/$kanji';
 
 # example output
 # 35. 球:

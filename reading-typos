@@ -37,7 +37,7 @@ my %known_homographs = (
 );
 my %readings_of;
 
-my $dbh = DBI->connect("dbi:SQLite:dbname=$ENV{HOME}/Documents/Anki/Japanese.anki");
+my $dbh = DBI->connect("dbi:SQLite:dbname=$ENV{ANKI_DECK}");
 my $sth = $dbh->prepare("
     select fields.value
     from fields

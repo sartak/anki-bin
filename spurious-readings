@@ -5,7 +5,7 @@ use utf8::all;
 use Encode 'decode_utf8';
 use DBI;
 
-my $dbh = DBI->connect("dbi:SQLite:dbname=$ENV{HOME}/Documents/Anki/Japanese.anki");
+my $dbh = DBI->connect("dbi:SQLite:dbname=$ENV{ANKI_DECK}");
 my $sth = $dbh->prepare("
     select sentence.value, reading.value
     from fields as sentence

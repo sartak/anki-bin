@@ -12,5 +12,5 @@ echo "select sentence.value
         and sentence.fieldModelId = 4775683831775348908
         and source.fieldModelId = -8932143135470038837
         and translation.fieldModelId = -4172742128414485768;
-" | sqlite3 ~/Documents/Anki/Japanese.anki
+" | sqlite3 $ANKI_DECK
 

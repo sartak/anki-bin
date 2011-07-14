@@ -10,7 +10,7 @@ my $dir = File::Temp->newdir;
 
 # find smart.fm cards from my deck
 run(qq{
-    echo "select sentence.value from fields as sentence join fields as source on (sentence.factId = source.factId) where sentence.fieldModelId=4775683831775348908 and source.fieldModelId=-8932143135470038837 and source.value like '%Smart.fm%' order by sentence.value;" | sqlite3 $ankidir/Japanese.anki > $dir/my-cards.txt
+    echo "select sentence.value from fields as sentence join fields as source on (sentence.factId = source.factId) where sentence.fieldModelId=4775683831775348908 and source.fieldModelId=-8932143135470038837 and source.value like '%Smart.fm%' order by sentence.value;" | sqlite3 $ENV{ANKI_DECK} > $dir/my-cards.txt
 });
 
 # find unsuspended smart.fm
