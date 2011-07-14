@@ -24,7 +24,7 @@ while (my ($sentence, $reading_field) = map { decode_utf8 $_ } $sth->fetchrow_ar
     next unless $reading_field eq '' || $reading_field =~ /【/;
 
     my @needed;
-    for my $kanji ($sentence =~ /(\p{Han}|0-9|０|１|２|３|４|５|６|７|８|９)/g) {
+    for my $kanji ($sentence =~ /(\p{Han}|[0-9０１２３４５６７８９])/g) {
         next if $reading_field =~ $kanji;
         push @needed, $kanji;
     }
