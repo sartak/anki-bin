@@ -13,5 +13,5 @@ echo "select kanji.value, group_concat(sentence.value, '|')
         group by kanji.value
         having count(sentence.value) < 4
         order by count(sentence.value)
-;" | sqlite3 ~/Documents/Anki/Japanese.anki
+;" | sqlite3 ~/Documents/Anki/Japanese.anki | perl -Mutf8::all -ple 's/^(.)/$1:/; s/\|/\n  /g'
 
