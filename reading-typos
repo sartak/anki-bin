@@ -64,9 +64,12 @@ for my $word (sort keys %readings_of) {
         $readings_of{$word}{$_} = 0 for @{ $known_homographs{$word} };
     }
 
-    # only show words with more than one reading, or with kanji in the reading itself
+    # only show words with more than one reading
+    # or with kanji in the reading itself (probably over-eagerly converted)
+    # or with only kana in the word (probably forgot to convert)
     next if (grep { $_ } values %{ $readings_of{$word} }) <= 1
-         && (join '', keys %{ $readings_of{$word} }) !~ /\p{Han}/;
+         && (join '', keys %{ $readings_of{$word} }) !~ /\p{Han}/
+         && $word !~ /^(\p{Hiragana}|\p{Katakana})+$/;
 
     say "$word: " . join (', ', sort keys %{ $readings_of{$word} });
 }
