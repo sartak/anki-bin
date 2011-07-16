@@ -2,6 +2,10 @@
 echo '
     select fields.value from fields
     where
-        fields.value like "%】%【%"
-        and fields.value not like "%<br%";
-' | sqlite3 $ANKI_DECK
+
+    -- fields with readings separated by \n not br - caused by AnkiMobile
+    (fields.value like "%】%【%" and fields.value not like "%<br%")
+
+    -- fields with leading or trailing whitespace
+    or fields.value like " %" or fields.value like "% "
+;' | sqlite3 $ANKI_DECK | perl -ple 's/^ +| +$/\e[1;41m$&\e[m/g'
