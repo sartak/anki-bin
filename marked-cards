@@ -1,0 +1,13 @@
+#!/bin/sh
+
+# find marked cards, which I use to indicate I'm not done with them
+
+echo '
+    select fact.id, sentence.value
+    from fields as sentence
+    join facts as fact on (sentence.factId = fact.id)
+    where
+        fact.tags like "%Marked%"
+        and sentence.ordinal = 0
+;' | sqlite3 $ANKI_DECK | perl -ple 's/^\s+|\s+$/\e[1;41m$&\e[m/g'
+
