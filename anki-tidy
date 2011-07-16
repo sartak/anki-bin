@@ -1,6 +1,10 @@
 #!/bin/sh
+
+# we return factId because you can search for fid:5593423642400193445
+# in Anki (which is useful when the value is too ambiguous)
+
 echo '
-    select fields.value from fields
+    select fields.factId, fields.value from fields
     where
 
     -- fields with readings separated by \n not br - caused by AnkiMobile
