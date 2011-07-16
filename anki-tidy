@@ -1,0 +1,7 @@
+#!/bin/sh
+echo '
+    select fields.value from fields
+    where
+        fields.value like "%】%【%"
+        and fields.value not like "%<br%";
+' | sqlite3 $ANKI_DECK

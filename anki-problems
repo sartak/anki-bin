@@ -9,8 +9,8 @@ system("cp $ENV{ANKI_DECK} $new_deck");
 $ENV{ANKI_DECK} = $new_deck;
 
 my @scripts = qw/
+    anki-tidy
     smartfm-divergence
-    reading-newlines
     reading-typos
     spurious-readings
     needed-readings
