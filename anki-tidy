@@ -8,4 +8,4 @@ echo '
 
     -- fields with leading or trailing whitespace
     or fields.value like " %" or fields.value like "% "
-;' | sqlite3 $ANKI_DECK | perl -ple 's/^ +| +$/\e[1;41m$&\e[m/g'
+;' | sqlite3 $ANKI_DECK | perl -ple 's/^\s+|\s+$/\e[1;41m$&\e[m/g'
