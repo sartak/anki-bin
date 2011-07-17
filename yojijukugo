@@ -70,7 +70,10 @@ sub learnable_yoji {
     my $sth = $yoji_dbh->prepare("
         select yoji.value
         from fields as yoji
+        join fields as frequency on (yoji.factId = frequency.factId)
         where yoji.fieldModelId=-507262820891124904
+        and frequency.fieldModelId=-407147889135299611
+        order by frequency.value
     ;");
 
     $sth->execute;
