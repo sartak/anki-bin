@@ -15,10 +15,13 @@ my $yoji_dbh = DBI->connect("dbi:SQLite:dbname=$yoji_deck");
 my %seen_kanji = map { $_ => 1 } my_kanji();
 my %seen_yoji  = map { $_ => 1 } my_yoji();
 
-my @learnable = grep { !$seen_yoji{$_} } learnable_yoji(\%seen_kanji);
+my @learnable = grep { !$seen_yoji{$_->[0]} } learnable_yoji(\%seen_kanji);
 
-for (my $i = 0; $i < @learnable; $i += 10) {
-    say join ' ', grep { defined } @learnable[$i..$i+9];
+my $prev_freq = '';
+for (@learnable) {
+    my ($yoji, $reading, $meaning, $freq) = @$_;
+    say "\n" . ($prev_freq = $freq) . ":" if $freq ne $prev_freq;
+    say "    $yoji【$reading】$meaning";
 }
 
 sub my_kanji {
@@ -70,19 +73,23 @@ sub learnable_yoji {
     my $kanji = shift;
 
     my $sth = $yoji_dbh->prepare("
-        select yoji.value
+        select yoji.value, reading.value, meaning.value, frequency.value
         from fields as yoji
         join fields as frequency on (yoji.factId = frequency.factId)
+        join fields as reading on (yoji.factId = reading.factid)
+        join fields as meaning on (yoji.factId = meaning.factid)
         where yoji.fieldModelId=-507262820891124904
         and frequency.fieldModelId=-407147889135299611
+        and reading.fieldModelId=167494270935804676
+        and meaning.fieldModelId=-6330489706848322249
         order by frequency.value
     ;");
 
     $sth->execute;
 
     my @yoji;
-    while (my ($yoji) = map { decode_utf8 $_ } $sth->fetchrow_array) {
-        push @yoji, $yoji
+    while (my ($yoji, $reading, $meaning, $frequency) = map { decode_utf8 $_ } $sth->fetchrow_array) {
+        push @yoji, [$yoji, $reading, $meaning, $frequency]
             if all { $kanji->{$_} } split '', $yoji;
     }
     return @yoji;
