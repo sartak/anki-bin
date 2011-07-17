@@ -1,0 +1,78 @@
+#!/usr/bin/env perl
+use 5.14.0;
+use warnings;
+use utf8::all;
+use Encode 'decode_utf8';
+use DBI;
+use List::MoreUtils 'all';
+
+my $ankidir = "$ENV{HOME}/Documents/Anki";
+my $yoji_deck = "$ankidir/yojijukugo.anki";
+
+my $japanese_dbh = DBI->connect("dbi:SQLite:dbname=$ENV{ANKI_DECK}");
+my $yoji_dbh = DBI->connect("dbi:SQLite:dbname=$yoji_deck");
+
+my %seen_kanji = map { $_ => 1 } my_kanji();
+my %seen_yoji  = map { $_ => 1 } my_yoji();
+
+my @learnable = grep { !$seen_yoji{$_} } learnable_yoji(\%seen_kanji);
+
+for (my $i = 0; $i < @learnable; $i += 10) {
+    say join ' ', grep { defined } @learnable[$i..$i+9];
+}
+
+sub my_kanji {
+    my $sth = $japanese_dbh->prepare("
+        select kanji.value
+        from fields as kanji
+        join facts as kanji_fact on (kanji_fact.id = kanji.factId)
+        where (
+               kanji.fieldModelId=7694462791390410032 -- heisig
+            or kanji.fieldModelId=808916364535512610  -- non-heisig
+        )
+        order by kanji_fact.created
+    ;");
+
+    $sth->execute;
+
+    my @kanji;
+    while (my ($kanji) = map { decode_utf8 $_ } $sth->fetchrow_array) {
+        push @kanji, $kanji;
+    }
+    return @kanji;
+}
+
+sub my_yoji {
+    my $sth = $japanese_dbh->prepare("
+        select yoji.value
+        from fields as yoji
+        where yoji.fieldModelId=7140405698650152527
+    ;");
+
+    $sth->execute;
+
+    my @yoji;
+    while (my ($yoji) = map { decode_utf8 $_ } $sth->fetchrow_array) {
+        push @yoji, $yoji;
+    }
+    return @yoji;
+}
+
+sub learnable_yoji {
+    my $kanji = shift;
+
+    my $sth = $yoji_dbh->prepare("
+        select yoji.value
+        from fields as yoji
+        where yoji.fieldModelId=-507262820891124904
+    ;");
+
+    $sth->execute;
+
+    my @yoji;
+    while (my ($yoji) = map { decode_utf8 $_ } $sth->fetchrow_array) {
+        push @yoji, $yoji
+            if all { $kanji->{$_} } split '', $yoji;
+    }
+    return @yoji;
+}
