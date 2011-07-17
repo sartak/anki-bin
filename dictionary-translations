@@ -2,15 +2,46 @@
 # find sentences with a "source" of Dictionary.app which has no
 # listed translation
 
-echo "select sentence.value
-    from fields as sentence
-        join fields as source on (sentence.factId = source.factId)
-        join fields as translation on (sentence.factId = translation.factId)
-    where
-        source.value = 'Dictionary.app'
-        and translation.value = ''
-        and sentence.fieldModelId = 4775683831775348908
-        and source.fieldModelId = -8932143135470038837
-        and translation.fieldModelId = -4172742128414485768;
-" | sqlite3 $ANKI_DECK
+
+# ./dictionary-translations  22.57s user 0.05s system 98% cpu 22.851 total
+#echo "select sentence.value
+#    from fields as sentence
+#        join fields as source on (sentence.factId = source.factId)
+#        join fields as translation on (sentence.factId = translation.factId)
+#    where
+#        source.value = 'Dictionary.app'
+#        and translation.value = ''
+#        and sentence.fieldModelId = 4775683831775348908
+#        and source.fieldModelId = -8932143135470038837
+#        and translation.fieldModelId = -4172742128414485768
+#;" | sqlite3 $ANKI_DECK
+
+
+# ./dictionary-translations  12.23s user 0.04s system 98% cpu 12.516 total
+#echo "select sentence.value
+#    from fields as sentence
+#    where
+#        sentence.fieldModelId = 4775683831775348908
+#        and sentence.factId in (
+#            select source.factId
+#            from fields as source
+#                join fields as translation on (source.factId = translation.factId)
+#            where
+#                source.value = 'Dictionary.app'
+#                and translation.value = ''
+#                and source.fieldModelId = -8932143135470038837
+#                and translation.fieldModelId = -4172742128414485768
+#            )
+#;" | sqlite3 $ANKI_DECK
+
+
+# ./dictionary-translations  0.03s user 0.02s system 87% cpu 0.047 total
+echo "select value from fields where fieldModelId = 4775683831775348908
+        and factId in (
+            select factId from fields where value = 'Dictionary.app' and fieldModelId = -8932143135470038837
+            and factId in (
+                select factId from fields where value = '' and fieldModelId = -4172742128414485768
+            )
+        )
+;" | sqlite3 $ANKI_DECK
 
