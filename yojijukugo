@@ -25,11 +25,17 @@ sub my_kanji {
     my $sth = $japanese_dbh->prepare("
         select kanji.value
         from fields as kanji
+        join fields as reading on (kanji.factId = reading.factId)
         join facts as kanji_fact on (kanji_fact.id = kanji.factId)
         where (
                kanji.fieldModelId=7694462791390410032 -- heisig
             or kanji.fieldModelId=808916364535512610  -- non-heisig
         )
+        and (
+               reading.fieldModelId=1870991842743010604  -- heisig
+            or reading.fieldModelId=-2684691650435204645 -- non-heisig
+        )
+        and reading.value <> ''
         order by kanji_fact.created
     ;");
 
