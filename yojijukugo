@@ -52,7 +52,9 @@ sub my_yoji {
     my $sth = $japanese_dbh->prepare("
         select yoji.value
         from fields as yoji
+        join cards as yoji_card on (yoji.factId = yoji_card.factId)
         where yoji.fieldModelId=7140405698650152527
+        and yoji_card.type>0
     ;");
 
     $sth->execute;
