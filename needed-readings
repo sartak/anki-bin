@@ -34,6 +34,3 @@ while (my ($sentence, $reading_field) = map { decode_utf8 $_ } $sth->fetchrow_ar
     say "  " . join ', ', @needed;
 }
 
-__END__
-real sample output:
-
