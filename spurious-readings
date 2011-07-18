@@ -7,26 +7,28 @@ use DBI;
 
 my $dbh = DBI->connect("dbi:SQLite:dbname=$ENV{ANKI_DECK}");
 my $sth = $dbh->prepare("
-    select sentence.value, reading.value
+    select sentence.value, context.value, reading.value
     from fields as sentence
         join fields as reading on (sentence.factId = reading.factId)
+        join fields as context on (sentence.factId = context.factId)
     where
         reading.fieldModelId=-988607031910086482
         and sentence.fieldModelId=4775683831775348908
+        and context.fieldModelId=-404297951624436245
         and reading.value<>'';
 ");
 
 $sth->execute;
 
 my $i = 0;
-while (my ($sentence, $reading_field) = map { decode_utf8 $_ } $sth->fetchrow_array) {
+while (my ($sentence, $context, $reading_field) = map { decode_utf8 $_ } $sth->fetchrow_array) {
     next if $reading_field !~ /【/; # weirdly formatted reading field
 
     my @readings = map { /^([^【]+)/ } split /<br.*?>/, $reading_field;
     my @spurious;
     for my $kanji (grep defined, map { /(\p{Han}+)/g } @readings) {
         my $regex = join 'っ*', split '', $kanji;
-        next if $sentence =~ $regex;
+        next if "$sentence$context" =~ $regex;
         push @spurious, $kanji;
     }
     next if !@spurious;
