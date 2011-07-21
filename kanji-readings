@@ -20,9 +20,8 @@ my ($kanji, $sentence) = /^(.)\|(.+)$/;
 print "\n\n".++$i.". \e[35m$kanji\e[m:" if $seen{$kanji}++ == 0;
 $sentence =~ s/(\p{Han}*)($kanji)(\p{Han}*)/\e[m$1\e[35m$2\e[m$3\e[37m/g;
 print "  \e[37m$sentence\e[m";
+END { printf "\n[%s] ", $i }
 ';
-
-echo;
 
 echo "select count()
     from fields as reading
