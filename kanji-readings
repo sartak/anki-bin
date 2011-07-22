@@ -2,6 +2,7 @@
 # find unsuspended sentences which contain kanji for which the reading field is empty
 # so I can add that reading field
 
+if [ "x$1" != "x1" ]; then
 echo "select kanji.value, sentence.value
     from fields as sentence
         join fields as kanji on (sentence.value like ('%'||kanji.value||'%'))
@@ -22,6 +23,7 @@ $sentence =~ s/(\p{Han}*)($kanji)(\p{Han}*)/\e[m$1\e[35m$2\e[m$3\e[37m/g;
 print "  \e[37m$sentence\e[m";
 END { printf "\n[%s] ", $i }
 ';
+fi
 
 echo "select count()
     from fields as reading
