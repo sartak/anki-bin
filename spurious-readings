@@ -22,8 +22,6 @@ $sth->execute;
 
 my $i = 0;
 while (my ($sentence, $context, $reading_field) = map { decode_utf8 $_ } $sth->fetchrow_array) {
-    next if $reading_field !~ /【/; # weirdly formatted reading field
-
     my @readings = map { /^([^【]+)/ } split /<br.*?>/, $reading_field;
     my @spurious;
     for my $kanji (grep defined, map { /(\p{Han}+)/g } @readings) {

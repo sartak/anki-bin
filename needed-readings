@@ -21,8 +21,6 @@ $sth->execute;
 
 my $i = 0;
 while (my ($sentence, $reading_field) = map { decode_utf8 $_ } $sth->fetchrow_array) {
-    next unless $reading_field eq '' || $reading_field =~ /【/;
-
     my @needed;
     for my $kanji ($sentence =~ /(\p{Han}|[０１２３４５６７８９])/g) {
         next if $reading_field =~ $kanji;

@@ -61,9 +61,11 @@ $sth->execute;
 while (my ($reading_field) = $sth->fetchrow_array) {
     my @readings = split /<br.*?>/, decode_utf8 $reading_field;
     for (@readings) {
-        my ($word, $reading) = /^([^【]+)【([^】]+)】$/
-            or next; # warn "invalid reading line: $_" and next;
-        $readings_of{$word}{$reading} = 1;
+        if (my ($word, $reading) = /^([^【]+)【([^】]+)】$/) {
+            $readings_of{$word}{$reading} = 1;
+            next;
+        }
+        warn "invalid reading line: $_";
     }
 }
 
