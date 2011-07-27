@@ -16,9 +16,20 @@ echo "select kanji.value, sentence.value
         and reading.value=''
         and sentence_card.type>0
         order by kanji_fact.created;" | sqlite3 $ANKI_DECK | perl5i -nle '
-our (%seen, $i);
+our (%seen, $i, $dbh, $sth);
+BEGIN {
+    use DBI;
+    $dbh = DBI->connect("dbi:SQLite:dbname=$ENV{HOME}/Documents/Anki/core2kcore6k.anki");
+    $sth = $dbh->prepare("
+        select count(*) from fields where fieldModelId=-2643915168054796895 and value like ?
+    ");
+}
 my ($kanji, $sentence) = /^(.)\|(.+)$/;
-print "\n\n".++$i.". \e[35m$kanji\e[m:" if $seen{$kanji}++ == 0;
+if ($seen{$kanji}++ == 0) {
+    $sth->execute("%$kanji%");
+    my $smart_count = ($sth->fetchrow_array)[0];
+    print "\n\n".++$i.". \e[35m$kanji\e[m ($smart_count):";
+}
 $sentence =~ s/(\p{Han}*)($kanji)(\p{Han}*)/\e[m$1\e[35m$2\e[m$3\e[37m/g;
 print "  \e[37m$sentence\e[m";
 END { printf "\n[%s] ", $i }
