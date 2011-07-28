@@ -21,7 +21,12 @@ BEGIN {
     use DBI;
     $dbh = DBI->connect("dbi:SQLite:dbname=$ENV{HOME}/Documents/Anki/core2kcore6k.anki");
     $sth = $dbh->prepare("
-        select count(*) from fields where fieldModelId=-2643915168054796895 and value like ?
+        select count(*)
+            from fields
+                join cards on (cards.factId = fields.factId)
+            where fields.fieldModelId=-2643915168054796895
+                and value like ?
+                and cards.type <= 0
     ");
 }
 my ($kanji, $sentence) = /^(.)\|(.+)$/;
