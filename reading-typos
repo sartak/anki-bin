@@ -53,7 +53,7 @@ my $sth = $dbh->prepare("
         join fieldModels on (fields.fieldModelId = fieldModels.id)
         join models on (fieldModels.modelId = models.id)
     where
-        models.name is 'Sentences'
+        models.name is '文'
         and fieldModels.name like '%読み%'
         and fields.value <> '';
 ");
