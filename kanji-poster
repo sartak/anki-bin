@@ -117,5 +117,11 @@ sub print_kanji {
 
     print "\e[m";
 
-    print "\n" if ++$i % 32 == 0;
+    if (++$i % 32 == 0) {
+        if ($ARGV{gradual}) {
+            scalar <>;
+            print "\e[2J";
+        }
+        print "\n";
+    }
 }
