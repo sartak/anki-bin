@@ -135,7 +135,6 @@ $sth->execute;
 my %count;
 
 while (my ($source, $factid) = map { decode_utf8($_) } $sth->fetchrow_array) {
-    die "$factid|$source" if $source =~ /\n|<br/;
     next if $known_sources{$source};
     next if any { $source =~ $_ } @regex_sources;
 
@@ -145,3 +144,21 @@ while (my ($source, $factid) = map { decode_utf8($_) } $sth->fetchrow_array) {
 for my $source (sort { $count{$b} <=> $count{$a} } keys %count) {
     say "$count{$source}\t$source";
 }
+
+$sth = $dbh->prepare("
+    select fields.value, fields.factId
+    from fields
+        join fieldModels on (fields.fieldModelId = fieldModels.id)
+        join models on (fieldModels.modelId = models.id)
+    where
+        models.name is '文'
+        and fieldModels.name like '%起こり%'
+;");
+
+$sth->execute;
+
+while (my ($source, $factid) = map { decode_utf8($_) } $sth->fetchrow_array) {
+    say "$factid|$source" if $source =~ /\n|<br/;
+    say $source if $source =~ m{(twitter|facebook)\.com/\#\!};
+}
+
