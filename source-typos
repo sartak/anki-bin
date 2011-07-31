@@ -124,6 +124,7 @@ my $sth = $dbh->prepare("
         models.name is '文'
         and fieldModels.name like '%起こり%'
         and fields.value not like 'http%'
+        and fields.value not like '# %'
 ;");
 
 $sth->execute;
