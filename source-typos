@@ -6,7 +6,10 @@ use Encode 'decode_utf8';
 use DBI;
 use List::MoreUtils 'any';
 
-my %known_sources = map { $_ => 1 } (
+my %known_sources;
+my @regex_sources;
+
+map { ref($_) ? (push @regex_sources, $_) : ($known_sources{$_} = 1) } (
     # games
     'jNetHack',
     'クロノ・トリガー',
@@ -16,13 +19,21 @@ my %known_sources = map { $_ => 1 } (
     'ファンタシースター 千年紀の終りに',
     'ファンタシースターII 還らざる時の終わりに',
     'Halo Reach',
+    qr/^ファイナルファンタジー[IVX]+$/,
 
     # novels
+    qr/^デューン砂の惑星 \([1-4]\)$/,
     'ハリー・ポッターと賢者の石',
     'ハリー・ポッターと秘密の部屋',
     'ホビットの冒険',
     '指輪物語',
     '坑夫',
+
+    # manga
+    qr/^ドラゴンボール\d+$/,
+    qr/^北斗の拳\d+$/,
+    qr/^天才バカボン\d+$/,
+    qr/^ヒカルの碁\d+$/,
 
     # movies
     'The Matrix',
@@ -38,6 +49,7 @@ my %known_sources = map { $_ => 1 } (
     'Babel',
 
     # tv
+    qr/^ドラゴンボール改\d+$/,
     'あやかの突撃英会話',
     'ドラゴンボール改',
     'ロス・タイム・ライフ',
@@ -91,33 +103,16 @@ my %known_sources = map { $_ => 1 } (
     '読売ニュースポッドキャスト',
     'モヤモヤとーく',
 
+    # conversations
+    qr/^Personal correspondence with .+/,
+    qr/^@\w+$/,
+
     # irl
     '中村先生',
     '高橋先生',
     '公共交通機関',
+    qr/^Conversation at .+/,
 );
-
-my @source_regexes = (
-    # novels
-    qr/^デューン砂の惑星 \([1-4]\)$/,
-
-    # manga
-    qr/^ドラゴンボール\d+$/,
-    qr/^北斗の拳\d+$/,
-    qr/^天才バカボン\d+$/,
-    qr/^ヒカルの碁\d+$/,
-
-    # tv
-    qr/^ドラゴンボール改\d+$/,
-
-    # games
-    qr/^ファイナルファンタジー[IVX]+$/,
-
-    # conversations
-    qr/^Personal correspondence with .+/,
-    qr/^@\w+$/,
-);
-
 
 my $dbh = DBI->connect("dbi:SQLite:dbname=$ENV{ANKI_DECK}");
 my $sth = $dbh->prepare("
@@ -138,7 +133,7 @@ my %count;
 while (my ($source, $factid) = map { decode_utf8($_) } $sth->fetchrow_array) {
     die "$factid|$source" if $source =~ /\n|<br/;
     next if $known_sources{$source};
-    next if any { $source =~ $_ } @source_regexes;
+    next if any { $source =~ $_ } @regex_sources;
 
     $count{$source}++;
 }
