@@ -7,7 +7,7 @@ use DBI;
 
 my $dbh = DBI->connect("dbi:SQLite:dbname=$ENV{ANKI_DECK}");
 my $sth = $dbh->prepare("
-    select kanji.value, cards.noCount, cards.reps
+    select kanji.value, cards.noCount, cards.reps, (100 * cards.yesCount) / cards.reps as difficulty
     from fields as kanji
         join fieldModels on (kanji.fieldModelId = fieldModels.id)
         join fields as reading on (kanji.factId = reading.factId)
@@ -17,13 +17,16 @@ my $sth = $dbh->prepare("
         fieldModels.name = '漢字'
         and cardModels.name = '書け'
         and reading.value = ''
-        order by cards.noCount desc
+        and cards.noCount > 5
+        order by difficulty asc
         limit 20
 ;");
 
 $sth->execute;
 
-while (my ($kanji, $wrong, $reps) = map { decode_utf8($_) } $sth->fetchrow_array) {
-    say "$kanji: $wrong/$reps";
+while (my ($kanji, $wrong, $reps, $difficulty) = map { decode_utf8($_) } $sth->fetchrow_array) {
+    say sprintf "%s: %d/%d (%d%%)", $kanji, $wrong, $reps, $difficulty;
 }
+
+__END__
 
