@@ -47,9 +47,11 @@ map { ref($_) ? (push @regex_sources, $_) : ($known_sources{$_} = 1) } (
     "Ocean's 11",
     'Constantine',
     'Babel',
+    'ハリー・ポッターと賢者の石(映画)',
 
     # tv
     qr/^ドラゴンボール改\d+$/,
+    qr/^北斗の拳\d+話目$/,
     'あやかの突撃英会話',
     'ドラゴンボール改',
     'ロス・タイム・ライフ',
@@ -65,6 +67,7 @@ map { ref($_) ? (push @regex_sources, $_) : ($known_sources{$_} = 1) } (
     'A Dictionary of Japanese Particles',
     'ドラえもん四字熟語100',
     '大辞泉',
+    'ドラえもんのまんがで英語辞典覚える',
 
     # reference books
     'モダンPerl入門',
