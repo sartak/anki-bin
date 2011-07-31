@@ -1,0 +1,148 @@
+#!/usr/bin/env perl
+use 5.14.0;
+use warnings;
+use utf8::all;
+use Encode 'decode_utf8';
+use DBI;
+use List::MoreUtils 'any';
+
+my %known_sources = map { $_ => 1 } (
+    # games
+    'jNetHack',
+    'クロノ・トリガー',
+    'ブレス オブ ファイア 竜の戦士',
+    'マックスウェルの不思議なノート',
+    'ポケットモンスター ファイアレッド',
+    'ファンタシースター 千年紀の終りに',
+    'ファンタシースターII 還らざる時の終わりに',
+    'Halo Reach',
+
+    # novels
+    'ハリー・ポッターと賢者の石',
+    'ハリー・ポッターと秘密の部屋',
+    'ホビットの冒険',
+    '指輪物語',
+    '坑夫',
+
+    # movies
+    'The Matrix',
+    'The Matrix: Reloaded',
+    'The Matrix: Revolutions',
+    'ブレイド',
+    'ブレイド2',
+    'アキラ',
+    'Die Hard 2',
+    'Return of the King',
+    "Ocean's 11",
+    'Constantine',
+    'Babel',
+
+    # tv
+    'あやかの突撃英会話',
+    'ドラゴンボール改',
+    'ロス・タイム・ライフ',
+
+    # learning tools
+    'Dictionary.app',
+    'Tae Kim',
+    'Smart.fm',
+    'MFSP',
+    'Making Out in Japanese',
+    'Dirty Guide to Japanese',
+    'Genki',
+    'A Dictionary of Japanese Particles',
+    'ドラえもん四字熟語100',
+    '大辞泉',
+
+    # reference books
+    'モダンPerl入門',
+    'CPANモジュールガイド',
+
+    # songs
+    'Mr. Children - 潜水',
+    "L'Arc~en~Ciel - Dune",
+    'Gackt - Mirror',
+    '高田雅史 - 俺の右手はゴッドハンド',
+    '分島花音 - アンニュイ気分！',
+    'Malice Mizer - Syunikiss',
+    'Perfume - 引力',
+    "L'Arc~en~Ciel - 接吻",
+
+    # apps
+    'RT',
+    'Jifty',
+    'Facebook',
+    'OS X',
+    'Gmail',
+    'Echofon',
+    'YouTube',
+    'Twitter',
+    'Foursquare',
+    'Google Reader',
+    'Firefox',
+    'Skype',
+    'NetNewsWire',
+    'Last.fm',
+    'iOS',
+    'Japanese.app',
+    'Amazon',
+
+    # podcast
+    '読売ニュースポッドキャスト',
+    'モヤモヤとーく',
+
+    # irl
+    '中村先生',
+    '高橋先生',
+    '公共交通機関',
+);
+
+my @source_regexes = (
+    # novels
+    qr/^デューン砂の惑星 \([1-4]\)$/,
+
+    # manga
+    qr/^ドラゴンボール\d+$/,
+    qr/^北斗の拳\d+$/,
+    qr/^天才バカボン\d+$/,
+    qr/^ヒカルの碁\d+$/,
+
+    # tv
+    qr/^ドラゴンボール改\d+$/,
+
+    # games
+    qr/^ファイナルファンタジー[IVX]+$/,
+
+    # conversations
+    qr/^Personal correspondence with .+/,
+    qr/^@\w+$/,
+);
+
+
+my $dbh = DBI->connect("dbi:SQLite:dbname=$ENV{ANKI_DECK}");
+my $sth = $dbh->prepare("
+    select fields.value, fields.factId
+    from fields
+        join fieldModels on (fields.fieldModelId = fieldModels.id)
+        join models on (fieldModels.modelId = models.id)
+    where
+        models.name is '文'
+        and fieldModels.name like '%起こり%'
+        and fields.value not like 'http%'
+;");
+
+$sth->execute;
+
+my %count;
+
+while (my ($source, $factid) = map { decode_utf8($_) } $sth->fetchrow_array) {
+    die "$factid|$source" if $source =~ /\n|<br/;
+    next if $known_sources{$source};
+    next if any { $source =~ $_ } @source_regexes;
+
+    $count{$source}++;
+}
+
+for my $source (sort { $count{$b} <=> $count{$a} } keys %count) {
+    say "$count{$source}\t$source";
+}

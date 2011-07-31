@@ -11,6 +11,7 @@ $ENV{ANKI_DECK} = $new_deck;
 my @scripts = qw/
     anki-tidy
     smartfm-divergence
+    source-typos
     reading-typos
     spurious-readings
     needed-readings
