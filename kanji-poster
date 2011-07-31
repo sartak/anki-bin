@@ -8,6 +8,7 @@ use JSON;
 use autodie;
 use Getopt::Whatever;
 use File::Slurp 'slurp', 'write_file';
+use Lingua::JA::Heisig 'kanji';
 
 my $status_file = "$ENV{HOME}/.kanji-poster";
 my %old_kanji_status;
@@ -35,9 +36,11 @@ my $sentence_sth = $dbh->prepare("
     select sentence.value
     from fields as sentence
         join fieldModels on (fieldModels.id = sentence.fieldModelId)
+        join models on (fieldModels.modelId = models.id)
         join cards on (cards.factId = sentence.factId)
     where
         fieldModels.name = '日本語'
+        and models.name = '文'
         and cards.type>0
 ;");
 
@@ -47,7 +50,7 @@ my %kanji_status;
 my @kanji;
 
 while (my ($kanji, $reading) = map { decode_utf8($_) } $kanji_sth->fetchrow_array) {
-    my $status = 'learned';
+    my $status = 'heisig';
 
     $status = 'reading' if length $reading;
 
@@ -61,7 +64,7 @@ $sentence_sth->execute;
 while (my ($sentence) = map { decode_utf8($_) } $sentence_sth->fetchrow_array) {
     for my $kanji ($sentence =~ /(\p{Han})/g) {
         $kanji_status{$kanji} = 'sentence'
-            if exists $kanji_status{$kanji} && $kanji_status{$kanji} eq 'learned';
+            if ($kanji_status{$kanji}||'heisig') eq 'heisig';
     }
 }
 
@@ -71,7 +74,31 @@ if ($ARGV{commit}) {
 
 my $i = 0;
 for my $kanji (@kanji) {
-    my $status = $kanji_status{$kanji};
+    print_kanji($kanji);
+}
+
+if (@kanji < 2048) {
+    print "\e[1;31m";
+    for ($i+1 .. $i+32) {
+        print "ー";
+        print "\n" if $_ % 32 == 0;
+    }
+}
+
+for my $kanji ((kanji)[@kanji..2041]) {
+    print_kanji($kanji);
+}
+
+print "\n";
+
+
+if ($ARGV{commit}) {
+    write_file $status_file, encode_utf8 to_json(\%kanji_status);
+}
+
+sub print_kanji {
+    my $kanji = shift;
+    my $status = $kanji_status{$kanji} || '';
     my $old_status = $old_kanji_status{$kanji} || '';
 
     if ($status eq $old_status) {
@@ -92,9 +119,3 @@ for my $kanji (@kanji) {
 
     print "\n" if ++$i % 32 == 0;
 }
-print "\n";
-
-if ($ARGV{commit}) {
-    write_file $status_file, encode_utf8 to_json(\%kanji_status);
-}
-
