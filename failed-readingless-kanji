@@ -1,0 +1,29 @@
+#!/usr/bin/env perl
+use 5.14.0;
+use warnings;
+use utf8::all;
+use Encode 'decode_utf8';
+use DBI;
+
+my $dbh = DBI->connect("dbi:SQLite:dbname=$ENV{ANKI_DECK}");
+my $sth = $dbh->prepare("
+    select kanji.value, cards.noCount, cards.yesCount
+    from fields as kanji
+        join fieldModels on (kanji.fieldModelId = fieldModels.id)
+        join fields as reading on (kanji.factId = reading.factId)
+        join cards on (cards.factId = kanji.factId)
+        join cardModels on (cards.cardModelId = cardModels.id)
+    where
+        fieldModels.name = '漢字'
+        and cardModels.name = '書け'
+        and reading.value = ''
+        order by cards.noCount desc
+        limit 20
+;");
+
+$sth->execute;
+
+while (my ($kanji, $wrong, $right) = map { decode_utf8($_) } $sth->fetchrow_array) {
+    say "$kanji: $wrong/" . ($wrong+$right);
+}
+
