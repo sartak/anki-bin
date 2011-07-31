@@ -88,7 +88,7 @@ for my $kanji (@kanji) {
 
     print $kanji;
 
-    print "\e[m" unless $status eq 'learned';
+    print "\e[m";
 
     print "\n" if ++$i % 32 == 0;
 }
