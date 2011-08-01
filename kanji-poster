@@ -48,6 +48,7 @@ $kanji_sth->execute;
 
 my %kanji_status;
 my @kanji;
+my $has_changes = 0;
 
 while (my ($kanji, $reading) = map { decode_utf8($_) } $kanji_sth->fetchrow_array) {
     my $status = 'heisig';
@@ -88,7 +89,7 @@ for my $kanji ((kanji)[@kanji..2041]) {
 print "\n";
 
 my $write_file = $ARGV{commit};
-if (!exists($ARGV{commit})) {
+if (!exists($ARGV{commit}) && $has_changes) {
     local $| = 1;
     print "Do you want to commit? [yN] ";
     my $commit = <>;
@@ -111,6 +112,8 @@ sub print_kanji {
         print "\e[1;37m";
         goto PRINT_KANJI;
     }
+
+    $has_changes = 1;
 
     given ($status) {
         when ('sentence') { print "\e[1;32m" }
