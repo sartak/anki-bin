@@ -68,10 +68,6 @@ while (my ($sentence) = map { decode_utf8($_) } $sentence_sth->fetchrow_array) {
     }
 }
 
-if ($ARGV{commit}) {
-    %old_kanji_status = %kanji_status;
-}
-
 my $i = 0;
 for my $kanji (@kanji) {
     print_kanji($kanji);
