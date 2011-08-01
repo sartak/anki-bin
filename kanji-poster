@@ -91,9 +91,19 @@ for my $kanji ((kanji)[@kanji..2041]) {
 
 print "\n";
 
+my $write_file = $ARGV{commit};
+if (!exists($ARGV{commit})) {
+    local $| = 1;
+    print "Do you want to commit? [yN] ";
+    my $commit = <>;
+    if ($commit =~ /^y/i) {
+        $write_file = 1;
+    }
+}
 
-if ($ARGV{commit}) {
+if ($write_file) {
     write_file $status_file, encode_utf8 to_json(\%kanji_status);
+    say "Committed.";
 }
 
 sub print_kanji {
