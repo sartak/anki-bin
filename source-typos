@@ -20,6 +20,7 @@ map { ref($_) ? (push @regex_sources, $_) : ($known_sources{$_} = 1) } (
     'ファンタシースターII 還らざる時の終わりに',
     'Halo Reach',
     qr/^ファイナルファンタジー[IVX]+$/,
+    'ファイナルファンタジータクティクス 獅子戦争',
 
     # novels
     qr/^デューン砂の惑星 \([1-4]\)$/,
