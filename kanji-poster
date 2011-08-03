@@ -108,7 +108,7 @@ sub print_kanji {
     my $status = $kanji_status{$kanji} || '';
     my $old_status = $old_kanji_status{$kanji} || '';
 
-    if ($status eq $old_status) {
+    if (!$ARGV{full} && $status eq $old_status) {
         print "\e[1;37m";
         goto PRINT_KANJI;
     }
