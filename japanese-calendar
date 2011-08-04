@@ -1,0 +1,151 @@
+#!/usr/bin/env perl
+use 5.14.0;
+use warnings;
+use utf8::all;
+use Encode 'decode_utf8', 'encode_utf8';
+use DBI;
+use LWP::Simple;
+use DateTime;
+
+#my $start = DateTime->now(time_zone => "America/New_York")->set(day => 1, hour => 0, minute => 0, second => 0)->epoch;
+my $start = time - 60*60*24*40;
+my %day;
+
+my $dbh = DBI->connect("dbi:SQLite:dbname=$ENV{ANKI_DECK}");
+
+my %query_for = (
+    'Cards' => "
+        select date(cards.firstAnswered, 'unixepoch', 'localtime'), count(*)
+            from cards
+            join facts on (cards.factId = facts.id)
+            join models on (facts.modelId = models.id)
+        where
+            models.name not like '%漢字%'
+            and cards.type >= 0
+            and cards.firstAnswered >= $start
+            group by date(cards.firstAnswered, 'unixepoch', 'localtime')
+    ;",
+    'Kanji' => "
+        select date(cards.created, 'unixepoch', 'localtime'), fields.value
+            from cards
+            join fields on (cards.factId = fields.factId)
+            join fieldModels on (fields.fieldModelId = fieldModels.id)
+            join cardModels on (cards.cardModelId = cardModels.id)
+            join facts on (cards.factId = facts.id)
+            join models on (facts.modelId = models.id)
+        where
+            models.name like '%漢字%'
+            and fieldModels.name = '漢字'
+            and cardModels.name = '書け'
+            and cards.type >= 0
+            and cards.created >= $start
+    ;",
+    'Tae Kim' => "
+        select date(cards.firstAnswered, 'unixepoch', 'localtime'), count(*)
+            from cards
+            join facts on (cards.factId = facts.id)
+            join fields as source on (source.factId = facts.id)
+            join fieldModels on (source.fieldModelId = fieldModels.id)
+            join models on (facts.modelId = models.id)
+        where
+            models.name = '文'
+            and source.value = 'Tae Kim'
+            and fieldModels.name = 'Source'
+            and cards.type >= 0
+            and cards.firstAnswered >= $start
+            group by date(cards.firstAnswered, 'unixepoch', 'localtime')
+    ;",
+    'Karaoke' => "
+        select date(cards.firstAnswered, 'unixepoch', 'localtime'), count(*)
+            from cards
+        where
+            cards.type >= 0
+            and cards.tags like '%カラオケ%'
+            and cards.firstAnswered >= $start
+            group by date(cards.firstAnswered, 'unixepoch', 'localtime')
+    ;",
+    'Game' => "
+        select date(cards.firstAnswered, 'unixepoch', 'localtime'), count(*)
+            from cards
+        where
+            cards.type >= 0
+            and cards.tags like '%ゲーム%'
+            and cards.firstAnswered >= $start
+            group by date(cards.firstAnswered, 'unixepoch', 'localtime')
+    ;",
+    'Map' => "
+        select date(cards.firstAnswered, 'unixepoch', 'localtime'), fields.value
+            from cards
+            join fields on (cards.factId = fields.factId)
+            join fieldModels on (fields.fieldModelId = fieldModels.id)
+            join facts on (cards.factId = facts.id)
+            join models on (facts.modelId = models.id)
+        where
+            models.name = '地図'
+            and fieldModels.name = '名前'
+            and cards.type >= 0
+            and cards.firstAnswered >= $start
+    ;",
+    'Yojijukugo' => "
+        select date(cards.firstAnswered, 'unixepoch', 'localtime'), fields.value
+            from cards
+            join fields on (cards.factId = fields.factId)
+            join fieldModels on (fields.fieldModelId = fieldModels.id)
+            join facts on (cards.factId = facts.id)
+            join models on (facts.modelId = models.id)
+        where
+            models.name = '四字熟語'
+            and fieldModels.name = '四字熟語'
+            and cards.type >= 0
+            and cards.firstAnswered >= $start
+    ;",
+    'Reviews' => "
+        select day, reps
+            from stats
+        where
+            type = 1 -- daily not total stats
+            and reps > 0
+            and strftime('%s', day) - $start + 60*60*24 - 1 >= 0 -- weird comparison bug, also need to catch the full day not just midnight
+    ;",
+);
+
+# TODO:
+# write: scrape Twitter
+# yomi: scrape RT?
+
+for my $achievement (keys %query_for) {
+    my $sth = $dbh->prepare($query_for{$achievement});
+    $sth->execute;
+    while (my ($date, $value) = map { decode_utf8($_) } $sth->fetchrow_array) {
+        if (defined $day{$date}{$achievement} && $achievement ne 'Kanji') {
+            $value = "; $value";
+        }
+        $day{$date}{$achievement} .= $value;
+    }
+}
+
+my $goi = LWP::Simple::get('http://sartak.org/%E8%AA%9E%E5%BD%99');
+for my $day (keys %day) {
+    while ($goi =~ /(\d+) for $day/g) {
+        $day{$day}{Vocabulary} = $1
+            if $1 > ($day{$day}{Vocabulary}||0);
+    }
+}
+
+my $twitter = LWP::Simple::get('http://twitter.com/sartak');
+
+
+for my $day (sort keys %day) {
+    my $cards = $day{$day};
+    say $day;
+    for my $achievement (sort keys %$cards) {
+        my $value = $cards->{$achievement};
+        print "    $achievement";
+
+        my $count = $achievement eq 'Kanji' ? length($value) : split '; ', $value;
+        print " ($count)" if $count > 1;
+
+        print ": $value\n";
+    }
+    say "";
+}
