@@ -130,7 +130,7 @@ for my $achievement (keys %query_for) {
     }
 }
 
-my $goi = LWP::Simple::get('http://sartak.org/%E8%AA%9E%E5%BD%99');
+my $goi = LWP::Simple::get('http://sartak.org/%E8%AA%9E%E5%BD%99.html');
 for my $day (keys %day) {
     while ($goi =~ /(\d+) for $day/g) {
         $day{$day}{Vocabulary} = $1
