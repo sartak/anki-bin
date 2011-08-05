@@ -6,7 +6,6 @@ use Encode 'decode_utf8', 'encode_utf8';
 use DBI;
 use LWP::Simple;
 use DateTime;
-use List::MoreUtils 'uniq';
 
 #my $start = DateTime->now(time_zone => "America/New_York")->set(day => 1, hour => 0, minute => 0, second => 0)->epoch;
 my $start = time - 60*60*24*40;
@@ -147,13 +146,24 @@ for my $day (sort keys %day) {
     say $day;
     for my $achievement (sort keys %$cards) {
         my $value = $cards->{$achievement};
-        print "    $achievement";
+        print "    $achievement: ";
 
         my @values = split '; ', $value;
-        my $count = $achievement eq 'Kanji' ? length($value) : @values;
-        print " ($count)" if $count > 1;
 
-        say ": " . join '; ', uniq @values;
+        my %seen;
+        $seen{$_}++ for @values;
+
+        if (keys(%seen) > 1) {
+            say "";
+            say "        $_ ($seen{$_})" for sort { $seen{$b} <=> $seen{$a} } keys %seen;
+        }
+        else {
+            my $value = (keys %seen)[0];
+            print $value;
+            print " ($seen{$value})" if $seen{$value} > 1;
+            print " (".length($value).")" if $achievement eq 'Kanji';
+            say "";
+        }
     }
     say "";
 }
