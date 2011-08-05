@@ -131,9 +131,12 @@ for my $achievement (keys %query_for) {
 
 my $goi = LWP::Simple::get('http://sartak.org/%E8%AA%9E%E5%BD%99.html');
 for my $day (keys %day) {
-    while ($goi =~ /(\d+) for $day/g) {
-        $day{$day}{Vocabulary} = $1
-            if $1 > ($day{$day}{Vocabulary}||0);
+    while ($goi =~ /\b(\w+): #\d+ for $day/g) {
+        my $value = $1;
+        if ($day{$day}{Vocabulary}) {
+            $value = ", $value";
+        }
+        $day{$day}{Vocabulary} .= $value;
     }
 }
 
@@ -161,6 +164,7 @@ for my $day (sort keys %day) {
             print $value;
             print " ($seen{$value})" if $seen{$value} > 1;
             print " (".length($value).")" if $achievement eq 'Kanji';
+            print " (".split(', ', $value).")" if $achievement eq 'Vocabulary';
             say "";
         }
     }
