@@ -50,7 +50,7 @@ my %query_for = (
         where
             models.name = '文'
             and source.value = 'Tae Kim'
-            and fieldModels.name = 'Source'
+            and fieldModels.name = '起こり'
             and cards.type >= 0
             and cards.firstAnswered >= $start
             group by date(cards.firstAnswered, 'unixepoch', 'localtime')
