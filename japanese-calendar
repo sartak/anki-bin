@@ -67,7 +67,7 @@ my %query_for = (
             and cards.firstAnswered >= $start
     ;",
     'Game' => "
-        select date(cards.firstAnswered, 'unixepoch', 'localtime'), fields.value
+        select date(cards.created, 'unixepoch', 'localtime'), fields.value
             from cards
             join facts on (cards.factId = facts.id)
             join fields on (fields.factId = facts.id)
@@ -76,7 +76,7 @@ my %query_for = (
             cards.type >= 0
             and fieldModels.name is '起こり'
             and facts.tags like '%ゲーム%'
-            and cards.firstAnswered >= $start
+            and cards.created >= $start
     ;",
     'Map' => "
         select date(cards.firstAnswered, 'unixepoch', 'localtime'), fields.value
