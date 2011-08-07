@@ -6,13 +6,18 @@ use utf8::all;
 
 my $db = Anki::Database->new(file => $ENV{ANKI_DECK});
 my $sth = $db->prepare("
-    select value from fields where fieldModelId = 4775683831775348908
-            and factId in (
-                select factId from fields where value in ('Dictionary.app', 'Smart.fm') and fieldModelId = -8932143135470038837
+    select value from fields
+        where fieldModelId = 4775683831775348908
+        and factId in (
+            select factId from fields
+                where value in ('Dictionary.app', 'Smart.fm')
+                and fieldModelId = -8932143135470038837
                 and factId in (
-                    select factId from fields where value = '' and fieldModelId = -4172742128414485768
+                    select factId from fields
+                        where value = ''
+                        and fieldModelId = -4172742128414485768
                 )
-            )
+        )
 ;");
 
 $sth->execute;
