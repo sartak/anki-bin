@@ -119,10 +119,7 @@ for my $achievement (keys %query_for) {
     my $sth = $dbh->prepare($query_for{$achievement});
     $sth->execute;
     while (my ($date, $value) = map { decode_utf8($_) } $sth->fetchrow_array) {
-        if (defined $day{$date}{$achievement} && $achievement ne 'Kanji') {
-            $value = "; $value";
-        }
-        $day{$date}{$achievement} .= $value;
+        push @{ $day{$date}{$achievement} }, $value;
     }
 }
 
@@ -130,10 +127,7 @@ my $goi = LWP::Simple::get('http://sartak.org/%E8%AA%9E%E5%BD%99.html');
 for my $day (keys %day) {
     while ($goi =~ /\b(\w+): #\d+ for $day/g) {
         my $value = $1;
-        if ($day{$day}{Vocabulary}) {
-            $value = ", $value";
-        }
-        $day{$day}{Vocabulary} .= $value;
+        push @{ $day{$day}{Vocabulary} }, $value;
     }
 }
 
@@ -147,34 +141,39 @@ for my $tweet (@{ $twitter->user_timeline({id => 'sartak'}) }) {
     next if length($j_chars) < length($text) / 3;
 
     my $day = $tweet->created_at->ymd;
-    if ($day{$day}{Write}) {
-        $text = "; $text";
-    }
-    $day{$day}{Write} .= $text;
+    push @{ $day{$day}{Write} }, $text;
 }
 
 for my $day (sort keys %day) {
     my $cards = $day{$day};
     say $day;
     for my $achievement (sort keys %$cards) {
-        my $value = $cards->{$achievement};
+        my @values = @{ $cards->{$achievement} };
         print "    $achievement: ";
-
-        my @values = split '; ', $value;
 
         my %seen;
         $seen{$_}++ for @values;
 
-        if (keys(%seen) > 1) {
+        if ($achievement eq 'Kanji') {
+            say join('', @values) . " (" . @values . ")";
+        }
+        elsif ($achievement eq 'Vocabulary') {
+            say join(', ', @values) . " (" . @values . ")";
+        }
+        elsif (keys(%seen) > 1) {
             say "";
-            say "        $_ ($seen{$_})" for sort { $seen{$b} <=> $seen{$a} } keys %seen;
+
+            my %seen2;
+            for (grep { !$seen2{$_}++ } @values) {
+                print "        $_";
+                print " ($seen{$_})" unless $achievement eq 'Write';
+                say "";
+            }
         }
         else {
-            my $value = (keys %seen)[0];
+            my $value = $values[0];
             print $value;
             print " ($seen{$value})" if $seen{$value} > 1;
-            print " (".length($value).")" if $achievement eq 'Kanji';
-            print " (".split(', ', $value).")" if $achievement eq 'Vocabulary';
             say "";
         }
     }
