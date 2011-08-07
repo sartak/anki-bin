@@ -132,7 +132,14 @@ for my $day (keys %day) {
 }
 
 my $twitter = Net::Twitter->new(traits => [qw/API::REST InflateObjects/]);
-for my $tweet (@{ $twitter->user_timeline({id => 'sartak'}) }) {
+my @tweets;
+for (my $page = 1; @tweets == 0 || $tweets[-1]->created_at->epoch >= $start; ++$page) {
+    push @tweets, @{ $twitter->user_timeline({id => 'sartak', page => $page }) };
+}
+
+for my $tweet (@tweets) {
+    last if $tweet->created_at->epoch < $start;
+
     my $text = $tweet->text;
     $text =~ s/\bRT @.*//;
 
