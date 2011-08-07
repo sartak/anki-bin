@@ -124,31 +124,41 @@ for my $achievement (keys %query_for) {
 }
 
 my $goi = LWP::Simple::get('http://sartak.org/%E8%AA%9E%E5%BD%99.html');
-for my $day (keys %day) {
-    while ($goi =~ /\b(\w+): #\d+ for $day/g) {
-        my $value = $1;
-        push @{ $day{$day}{Vocabulary} }, $value;
+if (defined $goi) {
+    for my $day (keys %day) {
+        while ($goi =~ /\b(\w+): #\d+ for $day/g) {
+            my $value = $1;
+            push @{ $day{$day}{Vocabulary} }, $value;
+        }
     }
 }
-
-my $twitter = Net::Twitter->new(traits => [qw/API::REST InflateObjects/]);
-my @tweets;
-for (my $page = 1; @tweets == 0 || $tweets[-1]->created_at->epoch >= $start; ++$page) {
-    push @tweets, @{ $twitter->user_timeline({id => 'sartak', page => $page }) };
+else {
+    warn "Unable to fetch vocabulary\n";
 }
 
-for my $tweet (@tweets) {
-    last if $tweet->created_at->epoch < $start;
+eval {
+    my $twitter = Net::Twitter->new(traits => [qw/API::REST InflateObjects/]);
+    my @tweets;
+    for (my $page = 1; @tweets == 0 || $tweets[-1]->created_at->epoch >= $start; ++$page) {
+        push @tweets, @{ $twitter->user_timeline({id => 'sartak', page => $page }) };
+    }
 
-    my $text = $tweet->text;
-    $text =~ s/\bRT @.*//;
+    for my $tweet (@tweets) {
+        last if $tweet->created_at->epoch < $start;
 
-    # at least 33% kanji/kana
-    (my $j_chars = $text) =~ s/[^\p{Han}\p{Hiragana}\p{Katakana}]+//g;
-    next if length($j_chars) < length($text) / 3;
+        my $text = $tweet->text;
+        $text =~ s/\bRT @.*//;
 
-    my $day = $tweet->created_at->ymd;
-    push @{ $day{$day}{Write} }, $text;
+        # at least 33% kanji/kana
+        (my $j_chars = $text) =~ s/[^\p{Han}\p{Hiragana}\p{Katakana}]+//g;
+        next if length($j_chars) < length($text) / 3;
+
+        my $day = $tweet->created_at->ymd;
+        push @{ $day{$day}{Write} }, $text;
+    }
+};
+if ($@) {
+    warn "Twitter error: $@\n";
 }
 
 for my $day (sort keys %day) {
