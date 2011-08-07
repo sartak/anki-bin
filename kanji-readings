@@ -1,62 +1,99 @@
-#!/bin/sh
-# find unsuspended sentences which contain kanji for which the reading field is empty
-# so I can add that reading field
+#!/usr/bin/env perl
+use 5.14.0;
+use warnings;
+use utf8::all;
+use Anki::Database;
+use List::MoreUtils 'uniq';
 
-if [ "x$1" != "x1" ]; then
-echo "select kanji.value, sentence.value
-    from fields as sentence
-        join fields as kanji on (sentence.value like ('%'||kanji.value||'%'))
-        join fields as reading on (kanji.factId = reading.factId)
-        join cards as sentence_card on (sentence_card.factId = sentence.factId)
-        join facts as kanji_fact on (kanji_fact.id = kanji.factId)
-    where
-        reading.fieldModelId=1870991842743010604
-        and sentence.fieldModelId=4775683831775348908
-        and kanji.fieldModelId=7694462791390410032
-        and reading.value=''
-        and sentence_card.type>0
-        order by kanji_fact.created;" | sqlite3 $ANKI_DECK | perl5i -nle '
-our (%seen, $i, $dbh, $sth);
-BEGIN {
-    use DBI;
-    $dbh = DBI->connect("dbi:SQLite:dbname=$ENV{HOME}/Documents/Anki/core2kcore6k.anki");
-    $sth = $dbh->prepare("
-        select count(*)
-            from fields
-                join cards on (cards.factId = fields.factId)
-            where fields.fieldModelId=-2643915168054796895
-                and value like ?
-                and cards.type <= 0
-    ");
+my $db = Anki::Database->new(file => $ENV{ANKI_DECK});
+my $sth = $db->prepare("
+    select kanji.value
+        from fields as kanji
+            join fieldModels as kanjiFieldModel on (kanji.fieldModelId = kanjiFieldModel.id)
+            join fields as reading on (kanji.factId = reading.factId)
+            join fieldModels as readingFieldModel on (reading.fieldModelId = readingFieldModel.id)
+            join facts on (kanji.factId = facts.id)
+        where
+            kanjiFieldModel.name = '漢字'
+            and readingFieldModel.name = '読み'
+            and reading.value = ''
+            order by facts.created
+;");
+$sth->execute;
+
+my @no_readings;
+while (my ($kanji) = $sth->fetchrow_array) {
+    push @no_readings, $kanji;
 }
-my ($kanji, $sentence) = /^(.)\|(.+)$/;
-if ($seen{$kanji}++ == 0) {
-    $sth->execute("%$kanji%");
-    my $smart_count = ($sth->fetchrow_array)[0];
-    print "\n\n".++$i.". \e[35m$kanji\e[m ($smart_count):";
+
+my $re = do {
+    my $re = '([' . join('', @no_readings) . '])';
+    qr/$re/;
+};
+
+$sth = $db->prepare("
+    select sentence.value
+        from fields as sentence
+            join cards on (sentence.factId = cards.factId)
+        where
+            sentence.fieldModelId=4775683831775348908
+            and cards.type > 0
+            order by cards.created
+;");
+
+$sth->execute;
+
+my %sentences_for;
+
+while (my ($sentence) = $sth->fetchrow_array) {
+    while ($sentence =~ m{$re}g) {
+        push @{ $sentences_for{$1} }, $sentence;
+    }
 }
-$sentence =~ s/(\p{Han}*)($kanji)(\p{Han}*)/\e[m$1\e[35m$2\e[m$3\e[37m/g;
-print "  \e[37m$sentence\e[m";
-END { printf "\n[%s] ", $i }
-';
-fi
 
-echo "select count()
-    from fields as reading
-    where
-        reading.fieldModelId=1870991842743010604
-        group by (reading.value = '');
-        " | sqlite3 $ANKI_DECK | perl -e 'my ($with_reading, $without_reading) = map { chomp; $_ } <>; my $kanji = $with_reading + $without_reading; printf "Coverage: %d/%d (%.2f%%)\n", $with_reading, $kanji, 100*$with_reading/$kanji';
+my $ankidir = "$ENV{HOME}/Documents/Anki";
+my $core_deck = "$ankidir/core2kcore6k.anki";
+my $core_db = Anki::Database->new(file => $core_deck);
+$sth = $core_db->prepare("
+    select count(*)
+        from fields
+            join cards on (cards.factId = fields.factId)
+        where fields.fieldModelId=-2643915168054796895
+            and value like ?
+            and cards.type <= 0
+");
 
-# example output
-# 35. 球:
-#   皆の者よ ここは地球という星だ
-#   ガラスの球をみつけた
-#   おまえどこからきた　地球か？
-#
-# 38. 直:
-#  直ぐ行きます。
-#  正直ねむい
-#
-# 48. 縄:
-#  沖縄はずっと南の方だ
+my $i = 0;
+for my $kanji (@no_readings) {
+    my @sentences = uniq @{ $sentences_for{$kanji} || next };
+
+    my $smart_count = do {
+        $sth->execute("%$kanji%");
+        ($sth->fetchrow_array)[0]
+    };
+
+    say ++$i . ". \e[35m$kanji\e[m ($smart_count):";
+    for my $sentence (@sentences) {
+        $sentence =~ s/(\p{Han}*)($kanji)(\p{Han}*)/\e[m$1\e[35m$2\e[m$3\e[37m/g;
+        say "  \e[37m$sentence\e[m";
+    }
+    say "\n";
+}
+
+print "[$i] ";
+
+$sth = $db->prepare("
+    select count(*)
+        from fields
+        join fieldModels on (fields.fieldModelId = fieldModels.id)
+        join models on (fieldModels.modelId = models.id)
+        where
+            fieldModels.name = '読み'
+            and models.name like '%漢字%'
+;");
+$sth->execute;
+my ($kanji_count) = $sth->fetchrow_array;
+
+my $with_reading = $kanji_count - @no_readings;
+printf "Coverage: %d/%d (%.2f%%)\n", $with_reading, $kanji_count, 100*$with_reading/$kanji_count;
+
