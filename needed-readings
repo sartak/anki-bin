@@ -10,10 +10,14 @@ my $sth = $db->prepare("
     from fields as sentence
         join fields as reading on (sentence.factId = reading.factId)
         join cards as sentence_card on (sentence.factId = sentence_card.factId)
+        join fieldModels as sentenceModel on (sentence.fieldModelId = sentenceModel.id)
+        join fieldModels as readingModel on (reading.fieldModelId = readingModel.id)
+        join models on (sentenceModel.modelId = models.id)
     where
-        reading.fieldModelId=-988607031910086482
-        and sentence.fieldModelId=4775683831775348908
-        and sentence_card.type>0;
+        models.name = '文'
+        and readingModel.name = '読み'
+        and sentenceModel.name = '日本語'
+        and sentence_card.type > 0;
 ");
 
 $sth->execute;

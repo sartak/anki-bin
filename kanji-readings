@@ -40,8 +40,11 @@ $sth = $db->prepare("
     select sentence.value
         from fields as sentence
             join cards on (sentence.factId = cards.factId)
+            join fieldModels on (sentence.fieldModelId = fieldModels.id)
+            join models on (fieldModels.modelId = models.id)
         where
-            sentence.fieldModelId=4775683831775348908
+            fieldModels.name = '日本語'
+            and models.name = '文'
             and cards.type > 0
             order by cards.created
 ;");
@@ -96,8 +99,7 @@ sub kanji_count {
                 from fields
                     join cards on (cards.factId = fields.factId)
                 where
-                    fields.fieldModelId=-2643915168054796895
-                    and value like ?
+                    value like ?
                     and cards.type <= 0
         ");
 

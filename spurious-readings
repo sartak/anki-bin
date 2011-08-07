@@ -10,11 +10,16 @@ my $sth = $db->prepare("
     from fields as sentence
         join fields as reading on (sentence.factId = reading.factId)
         join fields as context on (sentence.factId = context.factId)
+        join fieldModels as sentenceModel on (sentence.fieldModelId = sentenceModel.id)
+        join fieldModels as readingModel  on (reading.fieldModelId  = readingModel.id)
+        join fieldModels as contextModel  on (context.fieldModelId  = contextModel.id)
+        join models on (sentenceModel.modelId = models.id)
     where
-        reading.fieldModelId=-988607031910086482
-        and sentence.fieldModelId=4775683831775348908
-        and context.fieldModelId=-404297951624436245
-        and reading.value<>'';
+        models.name             = '文'
+        and sentenceModel.name  = '日本語'
+        and readingModel.name   = '読み'
+        and contextModel.name   = '前後関係'
+        and reading.value      <> '';
 ");
 
 $sth->execute;

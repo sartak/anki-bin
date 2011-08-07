@@ -26,19 +26,16 @@ for (@learnable) {
 sub my_kanji {
     my $sth = $japanese_db->prepare("
         select kanji.value
-        from fields as kanji
-        join fields as reading on (kanji.factId = reading.factId)
-        join facts as kanji_fact on (kanji_fact.id = kanji.factId)
-        where (
-               kanji.fieldModelId=7694462791390410032 -- heisig
-            or kanji.fieldModelId=808916364535512610  -- non-heisig
-        )
-        and (
-               reading.fieldModelId=1870991842743010604  -- heisig
-            or reading.fieldModelId=-2684691650435204645 -- non-heisig
-        )
-        and reading.value <> ''
-        order by kanji_fact.created
+            from fields as kanji
+                join fieldModels as kanjiFieldModel on (kanji.fieldModelId = kanjiFieldModel.id)
+                join fields as reading on (kanji.factId = reading.factId)
+                join fieldModels as readingFieldModel on (reading.fieldModelId = readingFieldModel.id)
+                join facts on (kanji.factId = facts.id)
+            where
+                kanjiFieldModel.name = '漢字'
+                and readingFieldModel.name = '読み'
+                and reading.value <> ''
+                order by facts.created
     ;");
 
     $sth->execute;
@@ -53,10 +50,12 @@ sub my_kanji {
 sub my_yoji {
     my $sth = $japanese_db->prepare("
         select yoji.value
-        from fields as yoji
-        join cards as yoji_card on (yoji.factId = yoji_card.factId)
-        where yoji.fieldModelId=7140405698650152527
-        and yoji_card.type>0
+            from fields as yoji
+            join fieldModels on (yoji.fieldModelId = fieldModels.id)
+            join cards as yoji_card on (yoji.factId = yoji_card.factId)
+        where
+            fieldModels.name = '四字熟語'
+            and yoji_card.type > 0
     ;");
 
     $sth->execute;
@@ -74,13 +73,18 @@ sub learnable_yoji {
     my $sth = $yoji_db->prepare("
         select yoji.value, reading.value, meaning.value, frequency.value
         from fields as yoji
-        join fields as frequency on (yoji.factId = frequency.factId)
-        join fields as reading on (yoji.factId = reading.factid)
-        join fields as meaning on (yoji.factId = meaning.factid)
-        where yoji.fieldModelId=-507262820891124904
-        and frequency.fieldModelId=-407147889135299611
-        and reading.fieldModelId=167494270935804676
-        and meaning.fieldModelId=-6330489706848322249
+            join fields as frequency on (yoji.factId = frequency.factId)
+            join fields as reading on (yoji.factId = reading.factid)
+            join fields as meaning on (yoji.factId = meaning.factid)
+            join fieldModels as yojiModel on (yoji.fieldModelId = yojiModel.id)
+            join fieldModels as frequencyModel on (frequency.fieldModelId = frequencyModel.id)
+            join fieldModels as readingModel on (reading.fieldModelId = readingModel.id)
+            join fieldModels as meaningModel on (meaning.fieldModelId = meaningModel.id)
+        where
+            yojiModel.name = '四字熟語'
+            and frequencyModel.name = 'Frequency'
+            and readingModel.name = '読み'
+            and meaningModel.name = 'Meaning'
         order by frequency.value
     ;");
 
