@@ -1,25 +1,44 @@
 #!/usr/bin/env perl
-use 5.12.0;
+use 5.14.0;
 use warnings;
-use File::Temp;
-use IPC::System::Simple 'run';
+use utf8::all;
+use Anki::Database;
+use List::MoreUtils 'all';
+use Array::Diff;
 
 my $ankidir = "$ENV{HOME}/Documents/Anki";
+my $smart_deck = "$ankidir/core2kcore6k.anki";
 
-my $dir = File::Temp->newdir;
+my $japanese_db = Anki::Database->new(file => $ENV{ANKI_DECK});
+my $smart_db = Anki::Database->new(file => $smart_deck);
 
-# find smart.fm cards from my deck
-run(qq{
-    echo "select sentence.value from fields as sentence join fields as source on (sentence.factId = source.factId) where sentence.fieldModelId=4775683831775348908 and source.fieldModelId=-8932143135470038837 and source.value like '%Smart.fm%' order by sentence.value;" | sqlite3 $ENV{ANKI_DECK} > $dir/my-cards.txt
-});
+my $sth = $japanese_db->prepare("
+    select sentence.value
+    from fields as sentence
+        join fields as source on (source.factId = sentence.factId)
+        join fieldModels as sentenceModel on (sentence.fieldModelId = sentenceModel.id)
+        join fieldModels as sourceModel on (source.fieldModelId = sourceModel.id)
+    where
+        sentenceModel.name = '日本語'
+        and sourceModel.name = '起こり'
+        and source.value = 'Smart.fm'
+;");
+$sth->execute;
+my @japanese = sort map { $_->[0] } @{ $sth->fetchall_arrayref };
 
-# find unsuspended smart.fm
-run(qq{
-    echo "select value from fields join facts on (fields.factId = facts.id) join cards on (cards.factId = facts.id) where fields.fieldModelId=-2643915168054796895 and cards.type>0 order by fields.value;" | sqlite3 $ankidir/core2kcore6k.anki > $dir/smartfm.txt
-});
+$sth = $smart_db->prepare("
+    select sentence.value
+    from fields as sentence
+        join fieldModels on (sentence.fieldModelId = fieldModels.id)
+        join cards on (sentence.factId = cards.factId)
+    where
+        fieldModels.name = 'Expression'
+        and cards.type > 0
+;");
+$sth->execute;
+my @smart = sort map { $_->[0] } @{ $sth->fetchall_arrayref };
 
-# diff! use system instead of run because diff uses status codes for non-errors
-system(qq{
-    diff -ub $dir/my-cards.txt $dir/smartfm.txt
-});
+my $diff = Array::Diff->diff(\@smart, \@japanese);
+say "+$_" for @{ $diff->added };
+say "-$_" for @{ $diff->deleted };
 
