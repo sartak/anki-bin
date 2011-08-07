@@ -1,9 +1,11 @@
-#!/bin/sh
+#!/usr/bin/env perl
+use 5.14.0;
+use warnings;
+use Anki::Database;
+use utf8::all;
 
-# we return factId because you can search for fid:5593423642400193445
-# in Anki (which is useful when the value is too ambiguous)
-
-echo '
+my $db = Anki::Database->new(file => $ENV{ANKI_DECK});
+my $sth = $db->prepare('
     select fields.factId, fields.value from fields
     where
 
@@ -12,4 +14,12 @@ echo '
 
     -- fields with leading or trailing whitespace
     or fields.value like " %" or fields.value like "% "
-;' | sqlite3 $ANKI_DECK | perl -ple 's/(\|)(\s+)|(\s+)$/$1\e[1;41m$+\e[m/g'
+;');
+
+$sth->execute;
+
+while (my ($fid, $sentence) = $sth->fetchrow_array) {
+    $sentence =~ s/^(\s+)|(\s+)$/\e[1;41m$+\e[m/g;
+    say "$fid|$sentence";
+}
+
