@@ -7,15 +7,21 @@ use utf8::all;
 my $db = Anki::Database->new(file => $ENV{ANKI_DECK});
 my $sth = $db->prepare("
     select value from fields
-        where fieldModelId = 4775683831775348908
+    join fieldModels on (fields.fieldModelId = fieldModels.id)
+    where
+        fieldModels.name = '日本語'
         and factId in (
             select factId from fields
-                where value in ('Dictionary.app', 'Smart.fm')
-                and fieldModelId = -8932143135470038837
+            join fieldModels on (fields.fieldModelId = fieldModels.id)
+            where
+                fieldModels.name = '起こり'
+                and value in ('Dictionary.app', 'Smart.fm')
                 and factId in (
                     select factId from fields
-                        where value = ''
-                        and fieldModelId = -4172742128414485768
+                    join fieldModels on (fields.fieldModelId = fieldModels.id)
+                    where
+                        fieldModels.name = '読み'
+                        and value = ''
                 )
         )
 ;");
