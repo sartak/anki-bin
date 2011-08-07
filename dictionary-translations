@@ -20,7 +20,7 @@ my $sth = $db->prepare("
                     select factId from fields
                     join fieldModels on (fields.fieldModelId = fieldModels.id)
                     where
-                        fieldModels.name = '読み'
+                        fieldModels.name = '翻訳'
                         and value = ''
                 )
         )
