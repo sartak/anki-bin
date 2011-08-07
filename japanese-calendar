@@ -2,8 +2,8 @@
 use 5.14.0;
 use warnings;
 use utf8::all;
-use Encode 'decode_utf8', 'encode_utf8';
-use DBI;
+use Encode 'encode_utf8';
+use Anki::Database;
 use LWP::Simple;
 use DateTime;
 use Net::Twitter;
@@ -11,7 +11,7 @@ use Net::Twitter;
 my $start = DateTime->now(time_zone => "America/New_York")->set(day => 1, hour => 0, minute => 0, second => 0)->epoch;
 my %day;
 
-my $dbh = DBI->connect("dbi:SQLite:dbname=$ENV{ANKI_DECK}");
+my $db = Anki::Database->new(file => $ENV{ANKI_DECK});
 
 my %query_for = (
     'Cards' => "
@@ -116,9 +116,9 @@ my %query_for = (
 );
 
 for my $achievement (keys %query_for) {
-    my $sth = $dbh->prepare($query_for{$achievement});
+    my $sth = $db->prepare($query_for{$achievement});
     $sth->execute;
-    while (my ($date, $value) = map { decode_utf8($_) } $sth->fetchrow_array) {
+    while (my ($date, $value) = $sth->fetchrow_array) {
         push @{ $day{$date}{$achievement} }, $value;
     }
 }

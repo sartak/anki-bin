@@ -2,15 +2,14 @@
 use 5.14.0;
 use warnings;
 use utf8::all;
-use Encode 'decode_utf8';
-use DBI;
+use Anki::Database;
 use List::MoreUtils 'all';
 
 my $ankidir = "$ENV{HOME}/Documents/Anki";
 my $yoji_deck = "$ankidir/yojijukugo.anki";
 
-my $japanese_dbh = DBI->connect("dbi:SQLite:dbname=$ENV{ANKI_DECK}");
-my $yoji_dbh = DBI->connect("dbi:SQLite:dbname=$yoji_deck");
+my $japanese_db = Anki::Database->new(file => $ENV{ANKI_DECK});
+my $yoji_db = Anki::Database->new(file => $yoji_deck);
 
 my %seen_kanji = map { $_ => 1 } my_kanji();
 my %seen_yoji  = map { $_ => 1 } my_yoji();
@@ -25,7 +24,7 @@ for (@learnable) {
 }
 
 sub my_kanji {
-    my $sth = $japanese_dbh->prepare("
+    my $sth = $japanese_db->prepare("
         select kanji.value
         from fields as kanji
         join fields as reading on (kanji.factId = reading.factId)
@@ -45,14 +44,14 @@ sub my_kanji {
     $sth->execute;
 
     my @kanji;
-    while (my ($kanji) = map { decode_utf8 $_ } $sth->fetchrow_array) {
+    while (my ($kanji) = $sth->fetchrow_array) {
         push @kanji, $kanji;
     }
     return @kanji;
 }
 
 sub my_yoji {
-    my $sth = $japanese_dbh->prepare("
+    my $sth = $japanese_db->prepare("
         select yoji.value
         from fields as yoji
         join cards as yoji_card on (yoji.factId = yoji_card.factId)
@@ -63,7 +62,7 @@ sub my_yoji {
     $sth->execute;
 
     my @yoji;
-    while (my ($yoji) = map { decode_utf8 $_ } $sth->fetchrow_array) {
+    while (my ($yoji) = $sth->fetchrow_array) {
         push @yoji, $yoji;
     }
     return @yoji;
@@ -72,7 +71,7 @@ sub my_yoji {
 sub learnable_yoji {
     my $kanji = shift;
 
-    my $sth = $yoji_dbh->prepare("
+    my $sth = $yoji_db->prepare("
         select yoji.value, reading.value, meaning.value, frequency.value
         from fields as yoji
         join fields as frequency on (yoji.factId = frequency.factId)
@@ -88,7 +87,7 @@ sub learnable_yoji {
     $sth->execute;
 
     my @yoji;
-    while (my ($yoji, $reading, $meaning, $frequency) = map { decode_utf8 $_ } $sth->fetchrow_array) {
+    while (my ($yoji, $reading, $meaning, $frequency) = $sth->fetchrow_array) {
         push @yoji, [$yoji, $reading, $meaning, $frequency]
             if all { $kanji->{$_} } split '', $yoji;
     }

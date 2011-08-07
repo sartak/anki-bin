@@ -2,8 +2,7 @@
 use 5.14.0;
 use warnings;
 use utf8::all;
-use Encode 'decode_utf8';
-use DBI;
+use Anki::Database;
 use List::Util 'first';
 
 my %known_sources;
@@ -138,8 +137,8 @@ for my $type (keys %sources) {
     }
 }
 
-my $dbh = DBI->connect("dbi:SQLite:dbname=$ENV{ANKI_DECK}");
-my $sth = $dbh->prepare("
+my $db = Anki::Database->new(file => $ENV{ANKI_DECK});
+my $sth = $db->prepare("
     select fields.value, fields.factId, facts.tags
     from fields
         join fieldModels on (fields.fieldModelId = fieldModels.id)
@@ -156,7 +155,7 @@ $sth->execute;
 
 my %count;
 
-while (my ($source, $factid, $tags) = map { decode_utf8($_) } $sth->fetchrow_array) {
+while (my ($source, $factid, $tags) = $sth->fetchrow_array) {
     my $source_template = $known_sources{$source} || first { $source =~ $_ } @regex_sources;
     if ($source_template) {
         my $type = $type_of{$source_template};
@@ -175,7 +174,7 @@ for my $source (sort { $count{$b} <=> $count{$a} } keys %count) {
     say "$count{$source}\t$source";
 }
 
-$sth = $dbh->prepare("
+$sth = $db->prepare("
     select fields.value, fields.factId
     from fields
         join fieldModels on (fields.fieldModelId = fieldModels.id)
@@ -187,7 +186,7 @@ $sth = $dbh->prepare("
 
 $sth->execute;
 
-while (my ($source, $factid) = map { decode_utf8($_) } $sth->fetchrow_array) {
+while (my ($source, $factid) = $sth->fetchrow_array) {
     say "$factid|$source" if $source =~ /\n|<br/;
     say $source if $source =~ m{(twitter|facebook)\.com/\#\!};
 }

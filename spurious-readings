@@ -2,11 +2,10 @@
 use 5.14.0;
 use warnings;
 use utf8::all;
-use Encode 'decode_utf8';
-use DBI;
+use Anki::Database;
 
-my $dbh = DBI->connect("dbi:SQLite:dbname=$ENV{ANKI_DECK}");
-my $sth = $dbh->prepare("
+my $db = Anki::Database->new(file => $ENV{ANKI_DECK});
+my $sth = $db->prepare("
     select sentence.value, context.value, reading.value
     from fields as sentence
         join fields as reading on (sentence.factId = reading.factId)
@@ -21,7 +20,7 @@ my $sth = $dbh->prepare("
 $sth->execute;
 
 my $i = 0;
-while (my ($sentence, $context, $reading_field) = map { decode_utf8 $_ } $sth->fetchrow_array) {
+while (my ($sentence, $context, $reading_field) = $sth->fetchrow_array) {
     my @readings = map { /^([^【]+)/ } split /<br.*?>/, $reading_field;
     my @spurious;
     for my $kanji (grep defined, map { /(\p{Han}+)/g } @readings) {
