@@ -6,6 +6,11 @@ use Anki::Database;
 use List::MoreUtils 'uniq';
 
 my $db = Anki::Database->new(file => $ENV{ANKI_DECK});
+
+my $ankidir = "$ENV{HOME}/Documents/Anki";
+my $core_deck = "$ankidir/core2kcore6k.anki";
+my $core_db = Anki::Database->new(file => $core_deck);
+
 my $sth = $db->prepare("
     select kanji.value
         from fields as kanji
@@ -51,28 +56,13 @@ while (my ($sentence) = $sth->fetchrow_array) {
     }
 }
 
-my $ankidir = "$ENV{HOME}/Documents/Anki";
-my $core_deck = "$ankidir/core2kcore6k.anki";
-my $core_db = Anki::Database->new(file => $core_deck);
-$sth = $core_db->prepare("
-    select count(*)
-        from fields
-            join cards on (cards.factId = fields.factId)
-        where fields.fieldModelId=-2643915168054796895
-            and value like ?
-            and cards.type <= 0
-");
-
 my $i = 0;
 for my $kanji (@no_readings) {
     my @sentences = uniq @{ $sentences_for{$kanji} || next };
 
-    my $smart_count = do {
-        $sth->execute("%$kanji%");
-        ($sth->fetchrow_array)[0]
-    };
+    my ($smart_count, $regular_count) = kanji_count($kanji);
 
-    say ++$i . ". \e[35m$kanji\e[m ($smart_count):";
+    say ++$i . ". \e[35m$kanji\e[m ($smart_count+$regular_count):";
     for my $sentence (@sentences) {
         $sentence =~ s/(\p{Han}*)($kanji)(\p{Han}*)/\e[m$1\e[35m$2\e[m$3\e[37m/g;
         say "  \e[37m$sentence\e[m";
@@ -97,3 +87,40 @@ my ($kanji_count) = $sth->fetchrow_array;
 my $with_reading = $kanji_count - @no_readings;
 printf "Coverage: %d/%d (%.2f%%)\n", $with_reading, $kanji_count, 100*$with_reading/$kanji_count;
 
+sub kanji_count {
+    my $kanji = shift;
+
+    my $core_count = do {
+        my $sth = $core_db->prepare("
+            select count(*)
+                from fields
+                    join cards on (cards.factId = fields.factId)
+                where
+                    fields.fieldModelId=-2643915168054796895
+                    and value like ?
+                    and cards.type <= 0
+        ");
+
+        $sth->execute("%$kanji%");
+        ($sth->fetchrow_array)[0];
+    };
+
+    my $regular_count = do {
+        my $sth = $db->prepare("
+            select count(*)
+                from fields
+                    join fieldModels on (fieldModels.id = fields.fieldModelId)
+                    join models on (models.id = fieldModels.modelId)
+                    join cards on (cards.factId = fields.factId)
+                where
+                    fieldModels.name = '日本語'
+                    and models.name = '文'
+                    and fields.value like ?
+                    and cards.type <= 0
+        ");
+        $sth->execute("%$kanji%");
+        ($sth->fetchrow_array)[0];
+    };
+
+    return ($core_count, $regular_count);
+}
