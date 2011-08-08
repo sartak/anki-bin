@@ -120,8 +120,11 @@ my %sources = (
 );
 
 my %expected_tags = (
-    games => 'ゲーム',
-    songs => 'カラオケ',
+    games      => 'ゲーム',
+    songs      => 'カラオケ',
+    novels     => '読み物',
+    manga      => '読み物',
+    references => '読み物',
 );
 
 for my $type (keys %sources) {
