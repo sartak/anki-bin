@@ -125,6 +125,21 @@ my %query_for = (
             and reps > 0
             and strftime('%s', day) - $start + 60*60*24 - 1 >= 0 -- weird comparison bug, also need to catch the full day not just midnight
     ;",
+    'Shinbun' => "
+        select date(cards.firstAnswered, 'unixepoch', 'localtime'), count(*)
+            from cards
+            join facts on (cards.factId = facts.id)
+            join fields as source on (source.factId = facts.id)
+            join fieldModels on (source.fieldModelId = fieldModels.id)
+            join models on (facts.modelId = models.id)
+        where
+            models.name = '文'
+            and source.value like 'http://mainichi.jp%'
+            and fieldModels.name = '起こり'
+            and cards.type >= 0
+            and cards.firstAnswered >= $start
+            group by date(cards.firstAnswered, 'unixepoch', 'localtime')
+    ;",
 );
 
 for my $achievement (keys %query_for) {
