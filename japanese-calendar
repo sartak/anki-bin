@@ -188,38 +188,53 @@ if ($@) {
     warn "Twitter error: $@\n";
 }
 
+my @sort = (
+    'Reviews', 'Cards', 'Vocabulary', 'Kanji', 'Read', 'Write', 'Game', 'Yomi', 'Shinbun',
+    'Tae Kim', 'Movie', 'Karaoke', 'Map', 'Yojijukugo', 'Kanken', 'Content', 'Lesson',
+);
+
 for my $day (sort keys %day) {
     my $cards = $day{$day};
     say $day;
-    for my $achievement (sort keys %$cards) {
-        my @values = @{ $cards->{$achievement} };
-        print "    $achievement: ";
 
-        my %seen;
-        $seen{$_}++ for @values;
+    for my $achievement (@sort) {
+        show_achievement($achievement, delete $cards->{$achievement});
+    }
 
-        if ($achievement eq 'Kanji') {
-            say join('', @values) . " (" . @values . ")";
-        }
-        elsif ($achievement eq 'Vocabulary') {
-            say join(', ', @values) . " (" . @values . ")";
-        }
-        elsif (keys(%seen) > 1) {
-            say "";
+    die join ', ', keys %$cards if keys %$cards;
 
-            my %seen2;
-            for (grep { !$seen2{$_}++ } @values) {
-                print "        $_";
-                print " ($seen{$_})" unless $achievement eq 'Write';
-                say "";
-            }
-        }
-        else {
-            my $value = $values[0];
-            print $value;
-            print " ($seen{$value})" if $seen{$value} > 1;
+    say "";
+}
+
+sub show_achievement {
+    my $achievement = shift;
+    my @values = @{ shift || return };
+
+    print "    $achievement: ";
+
+    my %seen;
+    $seen{$_}++ for @values;
+
+    if ($achievement eq 'Kanji') {
+        say join('', @values) . " (" . @values . ")";
+    }
+    elsif ($achievement eq 'Vocabulary') {
+        say join(', ', @values) . " (" . @values . ")";
+    }
+    elsif (keys(%seen) > 1) {
+        say "";
+
+        my %seen2;
+        for (grep { !$seen2{$_}++ } @values) {
+            print "        $_";
+            print " ($seen{$_})" unless $achievement eq 'Write';
             say "";
         }
     }
-    say "";
+    else {
+        my $value = $values[0];
+        print $value;
+        print " ($seen{$value})" if $seen{$value} > 1;
+        say "";
+    }
 }
