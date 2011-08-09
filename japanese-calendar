@@ -176,9 +176,9 @@ eval {
         my $text = $tweet->text;
         $text =~ s/\bRT @.*//;
 
-        # at least 33% kanji/kana
+        # *any* kana/kanji is good, but I may discard the tweet later
         (my $j_chars = $text) =~ s/[^\p{Han}\p{Hiragana}\p{Katakana}]+//g;
-        next if length($j_chars) < length($text) / 3;
+        next if !length($j_chars);
 
         my $day = $tweet->created_at->ymd;
         push @{ $day{$day}{Write} }, $text;
