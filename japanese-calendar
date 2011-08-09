@@ -181,7 +181,7 @@ eval {
         next if !length($j_chars);
 
         my $day = $tweet->created_at->ymd;
-        push @{ $day{$day}{Write} }, $text;
+        unshift @{ $day{$day}{Write} }, $text;
     }
 };
 if ($@) {
