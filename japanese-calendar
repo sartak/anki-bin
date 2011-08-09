@@ -79,7 +79,7 @@ my %query_for = (
             and facts.tags like '%ゲーム%'
             and cards.created >= $start
     ;",
-    'Reading' => "
+    'Read' => "
         select date(cards.created, 'unixepoch', 'localtime'), fields.value
             from cards
             join facts on (cards.factId = facts.id)
