@@ -67,6 +67,7 @@ my %sources = (
         'Genki',
         'A Dictionary of Japanese Particles',
         'ドラえもん四字熟語100',
+        '大辞泉',
         '大辞林',
         'ドラえもんのまんがで英語辞典覚える',
     ],
