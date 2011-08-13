@@ -91,6 +91,18 @@ my %query_for = (
             and facts.tags like '%読み物%'
             and cards.created >= $start
     ;",
+    'Movie' => "
+        select date(cards.created, 'unixepoch', 'localtime'), fields.value
+            from cards
+            join facts on (cards.factId = facts.id)
+            join fields on (fields.factId = facts.id)
+            join fieldModels on (fields.fieldModelId = fieldModels.id)
+        where
+            cards.type >= 0
+            and fieldModels.name is '起こり'
+            and facts.tags like '%映画%'
+            and cards.created >= $start
+    ;",
     'Map' => "
         select date(cards.firstAnswered, 'unixepoch', 'localtime'), fields.value
             from cards
