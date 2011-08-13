@@ -49,6 +49,7 @@ my %sources = (
         'Constantine',
         'Babel',
         'ハリー・ポッターと賢者の石(映画)',
+        'GoldenEye',
     ],
     television => [
         qr/^ドラゴンボール改\d+$/,
@@ -126,6 +127,7 @@ my %expected_tags = (
     novels     => '読み物',
     manga      => '読み物',
     references => '読み物',
+    movies     => '映画',
 );
 
 for my $type (keys %sources) {
