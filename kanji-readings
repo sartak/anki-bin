@@ -61,15 +61,28 @@ while (my ($sentence) = $sth->fetchrow_array) {
 
 my $i = 0;
 for my $kanji (@no_readings) {
-    my %seen_combo;
     my @sentences = uniq @{ $sentences_for{$kanji} || next };
+    my %skip;
+
+    for my $source_sentence (@sentences) {
+        next if $skip{$source_sentence};
+        for my $word ($source_sentence =~ /\p{Han}$kanji/g, $source_sentence =~ /$kanji\p{Han}/g) {
+            for my $skip_sentence (@sentences) {
+                next if $source_sentence eq $skip_sentence;
+                if ($skip_sentence =~ $word) {
+                    $skip{$skip_sentence}++;
+                }
+            }
+        }
+    }
+
+    @sentences = grep { !$skip{$_} } @sentences;
 
     my ($smart_count, $regular_count) = kanji_count($kanji);
 
     say ++$i . ". \e[35m$kanji\e[m ($smart_count+$regular_count=".($smart_count+$regular_count)."):";
     for my $sentence (@sentences) {
-        no warnings 'exiting';
-        $sentence =~ s/(\p{Han}*)($kanji)(\p{Han}*)/$seen_combo{"$1$2$3"}++ ? next : "\e[m$1\e[35m$2\e[m$3\e[37m"/eg;
+        $sentence =~ s/(\p{Han}*)($kanji)(\p{Han}*)/\e[m$1\e[35m$2\e[m$3\e[37m/g;
         say "  \e[37m$sentence\e[m";
     }
     say "\n";
