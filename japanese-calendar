@@ -8,7 +8,7 @@ use LWP::Simple;
 use DateTime;
 use Net::Twitter;
 
-my $drift = 5; # hours
+my $drift = 0; # hours
 
 my $start = DateTime->now(time_zone => "America/New_York")->set(day => 1, hour => 0, minute => 0, second => 0)->epoch;
 my %day;
