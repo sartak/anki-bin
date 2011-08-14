@@ -152,7 +152,7 @@ for my $achievement (keys %query_for) {
     my $sth = $db->prepare($query_for{$achievement});
     $sth->execute;
     while (my ($epoch, $value) = $sth->fetchrow_array) {
-        my $dt = DateTime->from_epoch(epoch => $epoch);
+        my $dt = DateTime->from_epoch(epoch => $epoch)->set_time_zone('America/New_York');
         $dt->add(hours => $drift);
         my $date = $dt->ymd;
         push @{ $day{$date}{$achievement} }, $value;
