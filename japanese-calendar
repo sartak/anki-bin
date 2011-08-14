@@ -15,18 +15,20 @@ my $db = Anki::Database->new(file => $ENV{ANKI_DECK});
 
 my %query_for = (
     'Cards' => "
-        select date(cards.firstAnswered, 'unixepoch', 'localtime'), count(*)
+        select cards.firstAnswered, source.value
             from cards
             join facts on (cards.factId = facts.id)
             join models on (facts.modelId = models.id)
+            join fields as source on (source.factId = facts.id)
+            join fieldModels on (source.fieldModelId = fieldModels.id)
         where
             models.name not like '%漢字%'
+            and fieldModels.name = '起こり'
             and cards.type >= 0
             and cards.firstAnswered >= $start
-            group by date(cards.firstAnswered, 'unixepoch', 'localtime')
     ;",
     'Kanji' => "
-        select date(cards.created, 'unixepoch', 'localtime'), fields.value
+        select cards.created, fields.value
             from cards
             join fields on (cards.factId = fields.factId)
             join fieldModels on (fields.fieldModelId = fieldModels.id)
@@ -41,7 +43,7 @@ my %query_for = (
             and cards.created >= $start
     ;",
     'Tae Kim' => "
-        select date(cards.firstAnswered, 'unixepoch', 'localtime'), count(*)
+        select cards.firstAnswered, 1
             from cards
             join facts on (cards.factId = facts.id)
             join fields as source on (source.factId = facts.id)
@@ -53,10 +55,9 @@ my %query_for = (
             and fieldModels.name = '起こり'
             and cards.type >= 0
             and cards.firstAnswered >= $start
-            group by date(cards.firstAnswered, 'unixepoch', 'localtime')
     ;",
     'Karaoke' => "
-        select date(cards.firstAnswered, 'unixepoch', 'localtime'), fields.value
+        select cards.firstAnswered, fields.value
             from cards
             join facts on (cards.factId = facts.id)
             join fields on (fields.factId = facts.id)
@@ -68,7 +69,7 @@ my %query_for = (
             and cards.firstAnswered >= $start
     ;",
     'Game' => "
-        select date(cards.created, 'unixepoch', 'localtime'), fields.value
+        select cards.created, fields.value
             from cards
             join facts on (cards.factId = facts.id)
             join fields on (fields.factId = facts.id)
@@ -80,7 +81,7 @@ my %query_for = (
             and cards.created >= $start
     ;",
     'Read' => "
-        select date(cards.created, 'unixepoch', 'localtime'), fields.value
+        select cards.created, fields.value
             from cards
             join facts on (cards.factId = facts.id)
             join fields on (fields.factId = facts.id)
@@ -92,7 +93,7 @@ my %query_for = (
             and cards.created >= $start
     ;",
     'Movie' => "
-        select date(cards.created, 'unixepoch', 'localtime'), fields.value
+        select cards.created, fields.value
             from cards
             join facts on (cards.factId = facts.id)
             join fields on (fields.factId = facts.id)
@@ -104,7 +105,7 @@ my %query_for = (
             and cards.created >= $start
     ;",
     'Map' => "
-        select date(cards.firstAnswered, 'unixepoch', 'localtime'), fields.value
+        select cards.firstAnswered, fields.value
             from cards
             join fields on (cards.factId = fields.factId)
             join fieldModels on (fields.fieldModelId = fieldModels.id)
@@ -117,7 +118,7 @@ my %query_for = (
             and cards.firstAnswered >= $start
     ;",
     'Yojijukugo' => "
-        select date(cards.firstAnswered, 'unixepoch', 'localtime'), fields.value
+        select cards.firstAnswered, fields.value
             from cards
             join fields on (cards.factId = fields.factId)
             join fieldModels on (fields.fieldModelId = fieldModels.id)
@@ -129,16 +130,8 @@ my %query_for = (
             and cards.type >= 0
             and cards.firstAnswered >= $start
     ;",
-    'Reviews' => "
-        select day, reps
-            from stats
-        where
-            type = 1 -- daily not total stats
-            and reps > 0
-            and strftime('%s', day) - $start + 60*60*24 - 1 >= 0 -- weird comparison bug, also need to catch the full day not just midnight
-    ;",
     'Shinbun' => "
-        select date(cards.firstAnswered, 'unixepoch', 'localtime'), count(*)
+        select cards.firstAnswered, count(*)
             from cards
             join facts on (cards.factId = facts.id)
             join fields as source on (source.factId = facts.id)
@@ -150,17 +143,33 @@ my %query_for = (
             and fieldModels.name = '起こり'
             and cards.type >= 0
             and cards.firstAnswered >= $start
-            group by date(cards.firstAnswered, 'unixepoch', 'localtime')
     ;",
 );
 
 for my $achievement (keys %query_for) {
     my $sth = $db->prepare($query_for{$achievement});
     $sth->execute;
-    while (my ($date, $value) = $sth->fetchrow_array) {
+    while (my ($epoch, $value) = $sth->fetchrow_array) {
+        my $dt = DateTime->from_epoch(epoch => $epoch);
+        my $date = $dt->ymd;
         push @{ $day{$date}{$achievement} }, $value;
     }
 }
+
+# Reviews
+my $sth = $db->prepare("
+    select day, reps
+        from stats
+    where
+        type = 1 -- daily not total stats
+        and reps > 0
+        and strftime('%s', day) - $start + 60*60*24 - 1 >= 0 -- weird comparison bug, also need to catch the full day not just midnight
+;");
+$sth->execute;
+while (my ($date, $value) = $sth->fetchrow_array) {
+    push @{ $day{$date}{Reviews} }, $value;
+}
+
 
 my $goi = LWP::Simple::get('http://sartak.org/%E8%AA%9E%E5%BD%99.html');
 if (defined $goi) {
@@ -222,19 +231,23 @@ sub show_achievement {
     my $achievement = shift;
     my @values = @{ shift || return };
 
-    print "    $achievement: ";
+    print "    $achievement";
 
     my %seen;
     $seen{$_}++ for @values;
 
     if ($achievement eq 'Kanji') {
-        say join('', @values) . " (" . @values . ")";
+        say " (" . @values . "): " . join('', @values);
     }
     elsif ($achievement eq 'Vocabulary') {
-        say join(', ', @values) . " (" . @values . ")";
+        say " (" . @values . "): " . join(', ', @values);
+    }
+    elsif ($achievement eq 'Tae Kim') {
+        say ": " . @values;
     }
     elsif (keys(%seen) > 1) {
-        say "";
+        my $sum = @values;
+        say " ($sum): ";
 
         my %seen2;
         for (grep { !$seen2{$_}++ } @values) {
@@ -245,8 +258,7 @@ sub show_achievement {
     }
     else {
         my $value = $values[0];
-        print $value;
         print " ($seen{$value})" if $seen{$value} > 1;
-        say "";
+        say ": $value";
     }
 }
