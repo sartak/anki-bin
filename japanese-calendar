@@ -8,6 +8,8 @@ use LWP::Simple;
 use DateTime;
 use Net::Twitter;
 
+my $drift = 5; # hours
+
 my $start = DateTime->now(time_zone => "America/New_York")->set(day => 1, hour => 0, minute => 0, second => 0)->epoch;
 my %day;
 
@@ -151,7 +153,7 @@ for my $achievement (keys %query_for) {
     $sth->execute;
     while (my ($epoch, $value) = $sth->fetchrow_array) {
         my $dt = DateTime->from_epoch(epoch => $epoch);
-        $dt->add(hours => 5);
+        $dt->add(hours => $drift);
         my $date = $dt->ymd;
         push @{ $day{$date}{$achievement} }, $value;
     }
@@ -202,7 +204,7 @@ eval {
         (my $j_chars = $text) =~ s/[^\p{Han}\p{Hiragana}\p{Katakana}]+//g;
         next if !length($j_chars);
 
-        my $day = $tweet->created_at->set_time_zone('America/New_York')->add(hours => 5)->ymd;
+        my $day = $tweet->created_at->set_time_zone('America/New_York')->add(hours => $drift)->ymd;
         unshift @{ $day{$day}{Write} }, $text;
     }
 };
