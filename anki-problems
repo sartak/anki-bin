@@ -12,6 +12,7 @@ my @scripts = qw/
     anki-tidy
     smartfm-divergence
     source-typos
+    context-typos
     tag-typos
     reading-typos
     spurious-readings

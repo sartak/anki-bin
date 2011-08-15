@@ -1,0 +1,23 @@
+#!/usr/bin/env perl
+use 5.14.0;
+use warnings;
+use utf8::all;
+use Anki::Database;
+use List::Util 'first';
+
+my $db = Anki::Database->new(file => $ENV{ANKI_DECK});
+my $sth = $db->prepare(q{
+    select context.factId, context.value
+    from fields as context
+    join fieldModels on (context.fieldModelId = fieldModels.id)
+    where
+        fieldModels.name = '前後関係'
+        and context.value like '%ibid%'
+;});
+
+$sth->execute;
+
+while (my ($fid, $context) = $sth->fetchrow_array) {
+    say "$fid|$context";
+}
+
