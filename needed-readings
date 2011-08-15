@@ -17,7 +17,7 @@ my $sth = $db->prepare("
         models.name = '文'
         and readingModel.name = '読み'
         and sentenceModel.name = '日本語'
-        and sentence_card.type > 0;
+        and sentence_card.type >= 0;
 ");
 
 $sth->execute;

@@ -41,7 +41,7 @@ my $sentence_sth = $db->prepare("
     where
         fieldModels.name = '日本語'
         and models.name = '文'
-        and cards.type>0
+        and cards.type >= 0
 ;");
 
 $kanji_sth->execute;

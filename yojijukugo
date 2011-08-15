@@ -55,7 +55,7 @@ sub my_yoji {
             join cards as yoji_card on (yoji.factId = yoji_card.factId)
         where
             fieldModels.name = '四字熟語'
-            and yoji_card.type > 0
+            and yoji_card.type >= 0
     ;");
 
     $sth->execute;

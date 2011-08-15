@@ -33,7 +33,7 @@ $sth = $smart_db->prepare("
         join cards on (sentence.factId = cards.factId)
     where
         fieldModels.name = 'Expression'
-        and cards.type > 0
+        and cards.type >= 0
 ;");
 $sth->execute;
 my @smart = sort map { $_->[0] } @{ $sth->fetchall_arrayref };

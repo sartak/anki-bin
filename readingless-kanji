@@ -45,7 +45,7 @@ $sth = $db->prepare("
         where
             fieldModels.name = '日本語'
             and models.name = '文'
-            and cards.type > 0
+            and cards.type >= 0
             order by cards.created
 ;");
 
@@ -115,7 +115,7 @@ sub kanji_count {
                     join cards on (cards.factId = fields.factId)
                 where
                     value like ?
-                    and cards.type <= 0
+                    and cards.type < 0
         ");
 
         $sth->execute("%$kanji%");
@@ -133,7 +133,7 @@ sub kanji_count {
                     fieldModels.name = '日本語'
                     and models.name = '文'
                     and fields.value like ?
-                    and cards.type <= 0
+                    and cards.type < 0
         ");
         $sth->execute("%$kanji%");
         ($sth->fetchrow_array)[0];
