@@ -115,6 +115,8 @@ while (my ($yomi) = $yomi_sth->fetchrow_array) {
 }
 
 for my $kanji (@kanji) {
+    next unless $kanji_status{$kanji} eq 'reading';
+
     my $joyo = keys %{ $seen_joyo{$kanji} };
     my $all_joyo = @{ $joyo_readings{$kanji} };
 
