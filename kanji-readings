@@ -4,6 +4,9 @@ use warnings;
 use utf8::all;
 use Anki::Database;
 use List::MoreUtils 'uniq';
+use Lingua::JA::Moji 'kana2katakana', 'kata2hira';
+
+sub kana2hiragana { kata2hira(kana2katakana(shift)) }
 
 my $db = Anki::Database->new(file => $ENV{ANKI_DECK});
 
@@ -34,7 +37,7 @@ my $re = do {
 
 my %joyo_readings;
 while (<DATA>) {
-    my ($kanji, @readings) = split ' ';
+    my ($kanji, @readings) = map { kana2hiragana($_) } split ' ';
     $joyo_readings{$kanji} = \@readings;
 }
 
