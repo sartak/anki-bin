@@ -8,7 +8,7 @@ use JSON;
 use autodie;
 use Getopt::Whatever;
 use File::Slurp 'slurp', 'write_file';
-use Lingua::JA::Heisig 'kanji';
+use Lingua::JA::Heisig 'kanji', 'heisig_number';
 
 my $status_file = "$ENV{HOME}/devel/anki-bin/.kanji-poster";
 my %old_kanji_status;
@@ -64,6 +64,8 @@ $sentence_sth->execute;
 
 while (my ($sentence) = $sentence_sth->fetchrow_array) {
     for my $kanji ($sentence =~ /(\p{Han})/g) {
+        my $heisig = heisig_number($kanji);
+        next if !defined($heisig) || $heisig > 2042;
         $kanji_status{$kanji} = 'sentence'
             if ($kanji_status{$kanji}||'heisig') eq 'heisig';
     }
