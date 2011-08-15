@@ -56,7 +56,7 @@ $sth = $db->prepare("
 $sth->execute;
 
 my %seen_line;
-my %kanji_word;
+my %seen_joyo;
 
 while (my ($yomi) = $sth->fetchrow_array) {
     for my $line (split /<br.*?>/, $yomi) {
@@ -66,20 +66,31 @@ while (my ($yomi) = $sth->fetchrow_array) {
             next;
         }
         my ($word, $reading) = ($1, $2);
-
         for my $kanji ($word =~ /\p{Han}/g) {
-            $kanji_word{$kanji}{$word}++;
-            $kanji_word{$kanji}{''}++;
+            for my $joyo (@{ $joyo_readings{$kanji} }) {
+                (my $joyo_re = $joyo) =~ s/-//;
+                if ($reading =~ $joyo_re) {
+                    $seen_joyo{$kanji}{$joyo}++;
+                }
+            }
         }
     }
 }
 
-for my $kanji (sort { $kanji_word{$b}{''} <=> $kanji_word{$a}{''} } keys %kanji_word) {
-    my $words = delete $kanji_word{$kanji}{''};
-    say "$kanji ($words):";
-    for my $word (sort keys %{ $kanji_word{$kanji} }) {
-        say "    $word";
+for my $kanji (@kanji) {
+    print "$kanji: ";
+    while (my $joyo = shift @{ $joyo_readings{$kanji} }) {
+        if ($seen_joyo{$kanji}{$joyo}) {
+            print "\e[1;32m";
+        }
+        else {
+            print "\e[1;31m";
+        }
+        print $joyo;
+        print "\e[m";
+        print "、" if @{ $joyo_readings{$kanji} };
     }
+    print "\n";
 }
 
 __END__
