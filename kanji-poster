@@ -135,7 +135,7 @@ for my $kanji (@kanji) {
     }
 }
 
-for my $kanji (@kanji) {
+for my $kanji (keys %kanji_status) {
     my $heisig = heisig_number($kanji);
     delete $kanji_status{$kanji} if !defined($heisig) || $heisig > 2042;
 }
