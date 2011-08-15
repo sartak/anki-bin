@@ -253,7 +253,7 @@ sub show_achievement {
         say " ($sum): ";
 
         my %seen2;
-        for (grep { !$seen2{$_}++ } @values) {
+        for (sort { $seen{$b} <=> $seen{$a} } grep { !$seen2{$_}++ } @values) {
             print "        $_";
             print " ($seen{$_})" unless $achievement eq 'Write';
             say "";
