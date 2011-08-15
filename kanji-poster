@@ -106,7 +106,13 @@ while (my ($yomi) = $yomi_sth->fetchrow_array) {
         for my $kanji ($word =~ /\p{Han}/g) {
             for my $joyo (@{ $joyo_readings{$kanji} }) {
                 (my $joyo_re = $joyo) =~ s/-//;
-                if ($reading =~ $joyo_re) {
+
+                my $matched = 0;
+                if ($word =~ /^$kanji/)  { $matched ||= $reading =~ /^$joyo_re/ }
+                if ($word =~ /$kanji$/)  { $matched ||= $reading =~ /$joyo_re$/ }
+                if ($word =~ /.$kanji./) { $matched ||= $reading =~ /.$joyo_re./ }
+
+                if ($matched) {
                     $seen_joyo{$kanji}{$joyo} = 1;
                 }
             }
