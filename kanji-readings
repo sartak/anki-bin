@@ -76,7 +76,9 @@ sub joyo_for {
     for my $joyo (@{ $joyo_readings{$kanji} }) {
         (my $joyo_re = $joyo) =~ s/-//;
 
-        my $matched = $reading =~ /$joyo_re/;
+        my $matched = 0;
+        if ($word =~ /^$kanji/) { $matched ||= $reading =~ /^$joyo_re/ }
+        if ($word =~ /.$kanji/) { $matched ||= $reading =~ /.$joyo_re/ }
 
         if ($matched) {
             push @joyo, $joyo;
