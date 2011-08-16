@@ -12,6 +12,16 @@ use Lingua::JA::Heisig 'kanji', 'heisig_number';
 use Lingua::JA::Moji 'kana2katakana', 'kata2hira';
 
 sub kana2hiragana { kata2hira(kana2katakana(shift)) }
+my %devoice_table = qw/
+    が か  ぎ き  ぐ く  げ け  ご こ
+    ざ さ  じ し  ず す  ぜ せ  ぞ そ
+    だ た  ぢ ち  づ つ  で て  ど と
+    ば は  び ひ  ぶ ふ  べ へ  ぼ ほ
+    ぱ は  ぴ ひ  ぷ ふ  ぺ へ  ぽ ほ
+/;
+my %promote_chiisai = qw/っ つ/;
+sub devoice         { join '', map { $devoice_table{$_}   || $_ } split '', shift }
+sub promote_chiisai { join '', map { $promote_chiisai{$_} || $_ } split '', shift }
 
 my $status_file = "$ENV{HOME}/devel/anki-bin/.kanji-poster";
 my %old_kanji_status;
@@ -95,6 +105,22 @@ $yomi_sth->execute;
 my %seen_line;
 my %seen_joyo;
 
+sub joyo_for {
+    my ($kanji, $word, $reading) = @_;
+
+    my @joyo;
+    for my $joyo (@{ $joyo_readings{$kanji} }) {
+        (my $joyo_re = $joyo) =~ s/-//;
+
+        my $matched = $reading =~ /$joyo_re/;
+
+        if ($matched) {
+            push @joyo, $joyo;
+        }
+    }
+    return @joyo == 0 ? undef : \@joyo;
+}
+
 while (my ($yomi) = $yomi_sth->fetchrow_array) {
     for my $line (split /<br.*?>/, $yomi) {
         next if $seen_line{$line}++;
@@ -104,17 +130,13 @@ while (my ($yomi) = $yomi_sth->fetchrow_array) {
         }
         my ($word, $reading) = ($1, $2);
         for my $kanji ($word =~ /\p{Han}/g) {
-            for my $joyo (@{ $joyo_readings{$kanji} }) {
-                (my $joyo_re = $joyo) =~ s/-//;
+            my $joyo = joyo_for($kanji, $word, $reading)
+                    || joyo_for($kanji, $word, devoice($reading))
+                    || joyo_for($kanji, $word, promote_chiisai($reading))
+                    || joyo_for($kanji, $word, devoice(promote_chiisai($reading)));
 
-                my $matched = 0;
-                if ($word =~ /^$kanji/)  { $matched ||= $reading =~ /^$joyo_re/ }
-                if ($word =~ /$kanji$/)  { $matched ||= $reading =~ /$joyo_re$/ }
-                if ($word =~ /.$kanji./) { $matched ||= $reading =~ /.$joyo_re./ }
-
-                if ($matched) {
-                    $seen_joyo{$kanji}{$joyo} = 1;
-                }
+            if ($joyo) {
+                for (@$joyo) { $seen_joyo{$kanji}{$_}++ }
             }
         }
     }
