@@ -11,6 +11,14 @@ use File::Slurp 'slurp', 'write_file';
 use Lingua::JA::Heisig 'kanji', 'heisig_number';
 use Lingua::JA::Moji 'kana2katakana', 'kata2hira';
 
+sub black   { $ARGV{html} ? '<span class="black">' : "\e[1;30m" }
+sub red     { $ARGV{html} ? '<span class="red">'   : "\e[1;31m" }
+sub green   { $ARGV{html} ? '<span class="green">' : "\e[0;32m" }
+sub blue    { $ARGV{html} ? '<span class="blue">'  : "\e[1;34m" }
+sub gray    { $ARGV{html} ? '<span class="gray">'  : "\e[1;37m" }
+sub clear   { $ARGV{html} ? '</span>' : "\e[m"     }
+sub newline { $ARGV{html} ? '<br>'                  : "\n"      }
+
 sub kana2hiragana { kata2hira(kana2katakana(shift)) }
 my %devoice_table = qw/
     が か  ぎ き  ぐ く  げ け  ご こ
@@ -172,27 +180,51 @@ for my $kanji (keys %kanji_status) {
     delete $kanji_status{$kanji} if !defined($heisig) || $heisig > 2042;
 }
 
+if ($ARGV{html}) {
+    print '<html><head><style>
+body { background: black; color: white; font-size: 2em }
+.black { color: yellow }
+.red { color: red }
+.green { color: green }
+.blue { color: blue }
+.gray { color: gray }
+.clear { color: white }
+</style><body>
+
+<ul>
+<li class="black">all joyo readings</li>
+<li class="blue">multiple joyo readings</li>
+<li class="red">one known reading</li>
+<li class="green">appears in known sentences</li>
+<li>not special</li>
+<li class="red">ーーーー <a href="http://en.wikipedia.org/wiki/Remembering_the_kanji">heisig</a> progress line</li>
+</ul>
+
+';
+}
+
 my $i = 0;
 for my $kanji (@kanji) {
     print_kanji($kanji);
 }
 
 if (@kanji < 2048) {
-    print "\e[1;31m";
+    print red;
     for ($i+1 .. $i+32) {
         print "ー";
-        print "\n" if $_ % 32 == 0;
+        print newline if $_ % 32 == 0;
     }
+    print clear;
 }
 
 for my $kanji ((kanji)[@kanji..2041]) {
     print_kanji($kanji);
 }
 
-print "\n";
+print newline;
 
 my $write_file = $ARGV{commit};
-if (!exists($ARGV{commit}) && $has_changes) {
+if (!exists($ARGV{commit}) && $has_changes && !$ARGV{html}) {
     local $| = 1;
     print "Do you want to commit? [yN] ";
     my $commit = <>;
@@ -212,32 +244,36 @@ sub print_kanji {
     my $old_status = $old_kanji_status{$kanji} || '';
 
     if (!$ARGV{full} && $status eq $old_status) {
-        print "\e[1;37m";
+        print gray;
         goto PRINT_KANJI;
     }
 
     $has_changes = 1;
 
     given ($status) {
-        when ('sentence')      { print "\e[1;32m" }
-        when ('reading')       { print "\e[1;31m" }
-        when ('multi-reading') { print "\e[1;34m" }
-        when ('all-joyo')      { print "\e[1;30m" }
+        when ('sentence')      { print green }
+        when ('reading')       { print red   }
+        when ('multi-reading') { print blue  }
+        when ('all-joyo')      { print black }
     }
 
     PRINT_KANJI:
 
     print $kanji;
 
-    print "\e[m";
+    print clear;
 
     if (++$i % 32 == 0) {
         if ($ARGV{gradual}) {
             scalar <>;
             print "\e[2J";
         }
-        print "\n";
+        print newline;
     }
+}
+
+if ($ARGV{html}) {
+    print newline . scalar localtime;
 }
 
 __END__
