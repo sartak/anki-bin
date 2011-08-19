@@ -44,11 +44,9 @@ my $kanji_sth = $db->prepare("
         join fieldModels as readingField on (reading.fieldModelId = readingField.id)
         join cards on (cards.factId = kanji.factId)
         join cardModels on (cards.cardModelId = cardModels.id)
-        join models on (kanjiField.modelId = models.id)
     where
         kanjiField.name = '漢字'
         and readingField.name = '読み'
-        and models.name = 'Heisig 漢字'
         and cardModels.name = '書け'
         order by cards.created asc
 ;");
