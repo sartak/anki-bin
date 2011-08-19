@@ -66,7 +66,6 @@ my $sentence_sth = $db->prepare("
 $kanji_sth->execute;
 
 my %kanji_status;
-my @kanji;
 my @nonrtk;
 my %nonrtk;
 my $has_changes = 0;
@@ -75,8 +74,6 @@ while (my ($kanji, $reading) = $kanji_sth->fetchrow_array) {
     my $status = 'heisig';
 
     $status = 'reading' if length $reading;
-
-    push @kanji, $kanji;
 
     if (!heisig_number($kanji)) {
         push @nonrtk, $kanji;
@@ -159,7 +156,7 @@ while (my ($yomi) = $yomi_sth->fetchrow_array) {
     }
 }
 
-for my $kanji (@kanji) {
+for my $kanji (keys %kanji_status) {
     next unless $kanji_status{$kanji} eq 'reading';
 
     my $joyo = keys %{ $seen_joyo{$kanji} };
@@ -209,20 +206,7 @@ body { background: black; color: white; font-size: 2em }
 }
 
 my $i = 0;
-for my $kanji (@kanji) {
-    print_kanji($kanji);
-}
-
-if (@kanji < 2048) {
-    print red;
-    for ($i+1 .. $i+32) {
-        print "ー";
-        print newline if $_ % 32 == 0;
-    }
-    print clear;
-}
-
-for my $kanji ((kanji)[@kanji..2041]) {
+for my $kanji ((kanji)[0..2041]) {
     print_kanji($kanji);
 }
 
