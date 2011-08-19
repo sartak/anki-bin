@@ -202,6 +202,9 @@ body { background: black; color: white; font-size: 2em }
 <li class="red">ーーーー <a href="http://en.wikipedia.org/wiki/Remembering_the_kanji">heisig</a> progress line</li>
 </ul>
 
+<hr />
+
+<h5>Remembering the Kanji 1</h5>
 ';
 }
 
@@ -224,6 +227,35 @@ for my $kanji ((kanji)[@kanji..2041]) {
 }
 
 print newline;
+
+if ($ARGV{html}) {
+    print newline;
+    print '<h5>Remembering the Kanji 3</h5>';
+    $i = 0;
+
+    for my $kanji ((kanji)[2042..3006]) {
+        print_kanji($kanji);
+    }
+
+    print newline;
+    print '<h5>RTK Supplement</h5>';
+    $i = 0;
+
+    for my $kanji ((kanji)[3007..3029]) {
+        print_kanji($kanji);
+    }
+
+    print newline;
+    print '<h5>Non-RTK</h5>';
+    $i = 0;
+
+    for my $kanji (@nonrtk) {
+        next if $kanji =~ /[々〇]/;
+        print_kanji($kanji);
+    }
+
+    print newline;
+}
 
 my $write_file = $ARGV{commit};
 if (!exists($ARGV{commit}) && $has_changes && !$ARGV{html}) {
