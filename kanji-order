@@ -1,0 +1,34 @@
+#!/usr/bin/env perl
+use 5.14.0;
+use warnings;
+use utf8::all;
+use Anki::Database;
+use Lingua::JA::Heisig 'heisig_number', 'kanji';
+
+my $db = Anki::Database->new(file => $ENV{ANKI_DECK});
+my $kanji_sth = $db->prepare("
+    select kanji.value
+    from fields as kanji
+        join fieldModels as kanjiField on (kanji.fieldModelId = kanjiField.id)
+        join cards on (cards.factId = kanji.factId)
+        join cardModels on (cards.cardModelId = cardModels.id)
+    where
+        kanjiField.name = '漢字'
+        and cardModels.name = '書け'
+        order by cards.created asc
+;");
+
+$kanji_sth->execute;
+my $expected = 1;
+while (my ($kanji) = $kanji_sth->fetchrow_array) {
+    my $heisig = heisig_number($kanji);
+    next if !$heisig;
+    if ($heisig != $expected) {
+        my $ex_kanji = (kanji)[$expected-1];
+        warn "H$expected: $kanji (H$heisig) came too soon! Expected $ex_kanji!\n";
+        $expected--;
+    }
+
+    $expected++;
+}
+

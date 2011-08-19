@@ -19,6 +19,7 @@ my @scripts = qw/
     needed-readings
     marked-cards
     dictionary-translations
+    kanji-order
 /;
 
 for my $script (@scripts) {
