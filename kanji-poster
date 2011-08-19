@@ -182,11 +182,6 @@ for my $kanji (@kanji) {
     }
 }
 
-for my $kanji (keys %kanji_status) {
-    my $heisig = heisig_number($kanji);
-    delete $kanji_status{$kanji} if !defined($heisig) || $heisig > 2042;
-}
-
 if ($ARGV{html}) {
     print '<html><head><style>
 body { background: black; color: white; font-size: 2em }
@@ -241,6 +236,11 @@ if (!exists($ARGV{commit}) && $has_changes && !$ARGV{html}) {
 }
 
 if ($write_file) {
+    for my $kanji (keys %kanji_status) {
+        my $heisig = heisig_number($kanji);
+        delete $kanji_status{$kanji} if !defined($heisig) || $heisig > 2042;
+    }
+
     write_file $status_file, encode_utf8 to_json(\%kanji_status, { pretty => 1, canonical => 1 });
     say "Committed.";
 }
