@@ -113,8 +113,10 @@ sub kanji_count {
             select count(*)
                 from fields
                     join cards on (cards.factId = fields.factId)
+                    join fieldModels on (fields.fieldModelId = fieldModels.id)
                 where
-                    value like ?
+                    fieldModels.name = 'Expression'
+                    and value like ?
                     and cards.type < 0
         ");
 
