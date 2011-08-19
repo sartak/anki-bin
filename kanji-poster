@@ -197,8 +197,8 @@ body { background: black; color: white; font-size: 2em }
 <li class="blue">multiple joyo readings</li>
 <li class="red">one known reading</li>
 <li class="green">appears in known sentences</li>
+<li class="cyan">stroke order and meaning</li>
 <li>not special</li>
-<li class="red">ーーーー <a href="http://en.wikipedia.org/wiki/Remembering_the_kanji">heisig</a> progress line</li>
 </ul>
 
 <hr />
