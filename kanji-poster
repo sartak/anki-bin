@@ -16,6 +16,7 @@ sub red     { $ARGV{html} ? '<span class="red">'   : "\e[1;31m" }
 sub green   { $ARGV{html} ? '<span class="green">' : "\e[0;32m" }
 sub blue    { $ARGV{html} ? '<span class="blue">'  : "\e[1;34m" }
 sub gray    { $ARGV{html} ? '<span class="gray">'  : "\e[1;37m" }
+sub cyan    { $ARGV{html} ? '<span class="cyan">'  : "\e[1;36m" }
 sub clear   { $ARGV{html} ? '</span>' : "\e[m"     }
 sub newline { $ARGV{html} ? '<br>'                  : "\n"      }
 
@@ -187,6 +188,7 @@ body { background: black; color: white; font-size: 2em }
 .green { color: green }
 .blue { color: blue }
 .gray { color: gray }
+.cyan { color: cyan }
 .clear { color: white }
 </style><body>
 
@@ -273,12 +275,11 @@ sub print_kanji {
 
     $has_changes = 1;
 
-    given ($status) {
-        when ('sentence')      { print green }
-        when ('reading')       { print red   }
-        when ('multi-reading') { print blue  }
-        when ('all-joyo')      { print black }
-    }
+       if ($status eq 'sentence')      { print green }
+    elsif ($status eq 'reading')       { print red   }
+    elsif ($status eq 'multi-reading') { print blue  }
+    elsif ($status eq 'all-joyo')      { print black }
+    elsif ($status eq 'heisig')        { print cyan }
 
     PRINT_KANJI:
 
