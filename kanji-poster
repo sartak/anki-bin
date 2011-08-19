@@ -67,6 +67,8 @@ $kanji_sth->execute;
 
 my %kanji_status;
 my @kanji;
+my @nonrtk;
+my %nonrtk;
 my $has_changes = 0;
 
 while (my ($kanji, $reading) = $kanji_sth->fetchrow_array) {
@@ -75,6 +77,11 @@ while (my ($kanji, $reading) = $kanji_sth->fetchrow_array) {
     $status = 'reading' if length $reading;
 
     push @kanji, $kanji;
+
+    if (!heisig_number($kanji)) {
+        push @nonrtk, $kanji;
+        $nonrtk{$kanji} = 1;
+    }
 
     $kanji_status{$kanji} = $status;
 }
@@ -85,6 +92,8 @@ while (my ($sentence) = $sentence_sth->fetchrow_array) {
     for my $kanji ($sentence =~ /(\p{Han})/g) {
         $kanji_status{$kanji} = 'sentence'
             if ($kanji_status{$kanji}||'heisig') eq 'heisig';
+        push @nonrtk, $kanji
+            if !heisig_number($kanji) && $nonrtk{$kanji}++ == 0;
     }
 }
 
