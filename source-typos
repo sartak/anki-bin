@@ -60,7 +60,7 @@ my %sources = (
         'ロス・タイム・ライフ',
     ],
     tools => [
-        'Dictionary.app',
+        'プログレッシブ英和・和英中辞典',
         'Tae Kim',
         'Smart.fm',
         'MFSP',
