@@ -6,6 +6,7 @@ use Encode 'encode_utf8';
 use Anki::Database;
 use LWP::Simple;
 use DateTime;
+use DateTime::Format::Strptime;
 use Net::Twitter;
 
 my $drift = -5; # hours
@@ -173,6 +174,26 @@ while (my ($date, $value) = $sth->fetchrow_array) {
     push @{ $day{$date}{Reviews} }, $value;
 }
 
+my $goodreads = $ENV{GOODREADS_FEED} ? LWP::Simple::get($ENV{GOODREADS_FEED}) : undef;
+if (defined $goodreads) {
+    while ($goodreads =~ m{<pubDate>([^<]+)</pubDate>.*?<!\[CDATA\[(.*?)\s*\]\]>}gs) {
+        my ($date, $description) = ($1, $2);
+        if ($description =~ m{^.*? is on page (\d+) of (\d+) of (.+)$}) {
+            my ($page, $pages, $title) = ($1, $2, $3);
+
+            # Sun, 21 Aug 2011 10:12:06 -0700
+            my $parser = DateTime::Format::Strptime->new(pattern => '%a, %d %b %Y %T %z');
+            my $dt = $parser->parse_datetime($date);
+            $dt->add(hours => $drift);
+            my $day = $dt->ymd;
+
+            unshift @{ $day{$day}{Read} }, $title;
+        }
+    }
+}
+else {
+    warn "Unable to fetch goodreads feed\n";
+}
 
 my $goi = LWP::Simple::get('http://sartak.org/%E8%AA%9E%E5%BD%99.html');
 if (defined $goi) {
