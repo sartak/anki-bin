@@ -17,6 +17,7 @@ my %is_allowed = map { $_ => 1 } qw(
     自愛
 
     Leech
+    context-only
 );
 
 my $db = Anki::Database->new(file => $ENV{ANKI_DECK});
