@@ -1,0 +1,42 @@
+#!/usr/bin/env perl
+use 5.14.0;
+use warnings;
+use utf8::all;
+use Anki::Database;
+
+my $db = Anki::Database->new(file => $ENV{ANKI_DECK});
+my $kanji_sth = $db->prepare("
+    select kanji.value, (100 * writeCards.yesCount) / writeCards.reps as difficulty
+    from fields as kanji
+        join fieldModels on (kanji.fieldModelId = fieldModels.id)
+        join cards as writeCards on (writeCards.factId = kanji.factId)
+        join cardModels as writeCardModels on (writeCards.cardModelId = writeCardModels.id)
+    where
+        fieldModels.name = '漢字'
+        and writeCardModels.name = '書け'
+        and kanji.value not in (
+            select kanji.value
+            from fields as kanji
+                join fieldModels on (kanji.fieldModelId = fieldModels.id)
+                join cards as writeCards on (writeCards.factId = kanji.factId)
+                join cardModels as writeCardModels on (writeCards.cardModelId = writeCardModels.id)
+            where
+                fieldModels.name = '漢字'
+                and writeCardModels.name = '真似れ'
+        )
+    order by difficulty asc
+;");
+
+$kanji_sth->execute;
+
+my $prev_difficulty;
+while (my ($kanji, $difficulty) = $kanji_sth->fetchrow_array) {
+    if ($difficulty != ($prev_difficulty||-1)) {
+        print "\n" if defined $prev_difficulty;
+        print "$difficulty: ";
+    }
+    $prev_difficulty = $difficulty;
+    print $kanji;
+}
+print "\n";
+
