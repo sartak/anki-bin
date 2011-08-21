@@ -179,6 +179,7 @@ while (my ($source, $factid, $tags) = $sth->fetchrow_array) {
 
 for my $source (sort { $count{$b} <=> $count{$a} } keys %count) {
     say "$count{$source}\t$source";
+    say "\t\tYou meant プログレッシブ英和・和英中辞典" if $source eq 'Dictionary.app';
 }
 
 $sth = $db->prepare("
