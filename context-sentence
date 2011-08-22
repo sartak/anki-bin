@@ -15,6 +15,7 @@ my $sth = $db->prepare(q{
         fieldModels.name = '前後関係'
         and context.value <> ''
         and facts.tags not like '%context-only%'
+        order by facts.created asc
 ;});
 
 $sth->execute;
