@@ -144,6 +144,17 @@ for my $type (keys %sources) {
     }
 }
 
+sub type_of {
+    my $source = shift;
+    my $source_template = $known_sources{$source} || first { $source =~ $_ } @regex_sources;
+    return if !$source_template;
+
+    my $type = $type_of{$source_template};
+    die "$source_template has no type ??\n" if !$type;
+
+    return $type;
+}
+
 my $db = Anki::Database->new(file => $ENV{ANKI_DECK});
 my $sth = $db->prepare("
     select fields.value, fields.factId, facts.tags
@@ -163,11 +174,7 @@ $sth->execute;
 my %count;
 
 while (my ($source, $factid, $tags) = $sth->fetchrow_array) {
-    my $source_template = $known_sources{$source} || first { $source =~ $_ } @regex_sources;
-    if ($source_template) {
-        my $type = $type_of{$source_template};
-        die "$source_template has no type ??\n" if !$type;
-
+    if (my $type = type_of($source)) {
         if ($expected_tags{$type} && $tags !~ $expected_tags{$type}) {
             warn "$factid|$source - didn't include tag $expected_tags{$type} expected of $type\n";
         }
