@@ -1,12 +1,6 @@
 #!/usr/bin/env perl
 use strict;
 use warnings;
-use File::Temp 'tempdir';
-
-my $dir = tempdir(CLEANUP => 1);
-my $new_deck = "$dir/Japanese.anki";
-system("cp $ENV{ANKI_DECK} $new_deck");
-$ENV{ANKI_DECK} = $new_deck;
 
 my @scripts = qw/
     anki-tidy
