@@ -9,19 +9,28 @@ my $db = Anki::Database->new(file => $ENV{ANKI_DECK});
 my $sth = $db->prepare(q{
     select context.factId, context.value
     from fields as context
-    join fieldModels on (context.fieldModelId = fieldModels.id)
-    join facts on (context.factId = facts.id)
+        join fieldModels on (context.fieldModelId = fieldModels.id)
+        join facts on (context.factId = facts.id)
     where
         fieldModels.name = '前後関係'
         and context.value <> ''
         and facts.tags not like '%context-only%'
+        and context.value not in (
+            select sentence.value
+            from fields as sentence
+                join fieldModels on (sentence.fieldModelId = fieldModels.id)
+                join models on (fieldModels.modelId = models.id)
+            where
+                models.name = '文'
+                and fieldModels.name = '日本語'
+        )
         order by facts.created asc
 ;});
 
 $sth->execute;
 
 my $sentence_sth = $db->prepare(q{
-    select count(sentence.value)
+    select 1
     from fields as sentence
         join fieldModels on (sentence.fieldModelId = fieldModels.id)
         join models on (fieldModels.modelId = models.id)
