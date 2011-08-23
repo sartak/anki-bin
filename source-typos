@@ -131,6 +131,12 @@ my %expected_tags = (
     movies     => '映画',
 );
 
+my %reverse_tags;
+for my $type (keys %expected_tags) {
+    my $tag = $expected_tags{$type};
+    push @{ $reverse_tags{$tag} }, $type;
+}
+
 for my $type (keys %sources) {
     for my $source (@{ $sources{$type} }) {
         $type_of{$source} = $type;
@@ -206,3 +212,29 @@ while (my ($source, $factid) = $sth->fetchrow_array) {
     say $source if $source =~ m{(twitter|facebook)\.com/\#\!};
 }
 
+for my $tag (keys %reverse_tags) {
+    my @types = @{ $reverse_tags{$tag} };
+
+    my $sth = $db->prepare("
+        select fields.value, fields.factId
+        from fields
+            join fieldModels on (fields.fieldModelId = fieldModels.id)
+            join models on (fieldModels.modelId = models.id)
+            join facts on (fields.factId = facts.id)
+        where
+            models.name is '文'
+            and facts.tags like ?
+            and fieldModels.name like '%起こり%'
+            and fields.value not like 'http%'
+            and fields.value not like '# %'
+    ;");
+
+    $sth->execute("%$tag%");
+
+    while (my ($source, $factid) = $sth->fetchrow_array) {
+        my $type = type_of($source);
+        if (!grep { $type eq $_ } @types) {
+            say "$factid|$source has spurious $tag tag";
+        }
+    }
+}
