@@ -98,14 +98,18 @@ $sth = $db->prepare("
     select kanji.value, yomi.value
     from fields as kanji
         join fields as yomi on (kanji.factId = yomi.factId)
+        join fields as meaning on (kanji.factId = meaning.factId)
         join fieldModels as kanjiFieldModel on (kanji.fieldModelId = kanjiFieldModel.id)
         join fieldModels as yomiFieldModel on (yomi.fieldModelId = yomiFieldModel.id)
+        join fieldModels as meaningFieldModel on (meaning.fieldModelId = meaningFieldModel.id)
         join models on (kanjiFieldModel.modelId = models.id)
     where
         models.name like '%漢字%'
         and kanjiFieldModel.name = '漢字'
         and yomiFieldModel.name = '読み'
+        and meaningFieldModel.name = '英語'
         and yomi.value <> ''
+        and meaning.value <> yomi.value
 ;");
 
 $sth->execute;
