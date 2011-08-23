@@ -3,6 +3,8 @@ use 5.14.0;
 use warnings;
 use utf8::all;
 use Anki::Database;
+use Lingua::JA::Moji 'kana2katakana', 'kata2hira';
+sub kana2hiragana { kata2hira(kana2katakana(shift)) }
 
 my %known_homographs = (
     '1日'    => [qw/いちにち  ついたち/],
@@ -46,7 +48,8 @@ my %known_homographs = (
     '一日'   => [qw/いちにち  ついたち/],
     '止める' => [qw/とめる    やめる/],
 );
-my %readings_of;
+my %readings_of_word;
+my %readings_of_kanji;
 
 my $db = Anki::Database->new(file => $ENV{ANKI_DECK});
 my $sth = $db->prepare("
@@ -66,26 +69,54 @@ while (my ($fid, $reading_field) = $sth->fetchrow_array) {
     my @readings = split /<br.*?>/, $reading_field;
     for (@readings) {
         if (my ($word, $reading) = /^([^【]+)【([^】]+)】$/) {
-            $readings_of{$word}{$reading} = 1;
+            $readings_of_word{$word}{$reading} = 1;
+            for my $kanji ($word =~ /\p{Han}/g) {
+                $readings_of_kanji{$kanji}{$reading} = 1;
+            }
             next;
         }
         warn "$fid|$_\n";
     }
 }
 
-for my $word (sort keys %readings_of) {
+for my $word (sort keys %readings_of_word) {
     if ($known_homographs{$word}) {
-        $readings_of{$word}{$_} = 0 for @{ $known_homographs{$word} };
+        $readings_of_word{$word}{$_} = 0 for @{ $known_homographs{$word} };
     }
 
     # only show words with more than one reading
     # or with kanji in the reading itself (probably over-eagerly converted)
     # or with only kana in the word (probably forgot to convert)
-    next if (grep { $_ } values %{ $readings_of{$word} }) <= 1
-         && (join '', keys %{ $readings_of{$word} }) !~ /\p{Han}/
+    next if (grep { $_ } values %{ $readings_of_word{$word} }) <= 1
+         && (join '', keys %{ $readings_of_word{$word} }) !~ /\p{Han}/
          && $word !~ /^(\p{Hiragana}|\p{Katakana})+$/;
 
-    say "$word: " . join (', ', sort keys %{ $readings_of{$word} });
+    say "$word: " . join (', ', sort keys %{ $readings_of_word{$word} });
+}
+
+$sth = $db->prepare("
+    select kanji.value, yomi.value
+    from fields as kanji
+        join fields as yomi on (kanji.factId = yomi.factId)
+        join fieldModels as kanjiFieldModel on (kanji.fieldModelId = kanjiFieldModel.id)
+        join fieldModels as yomiFieldModel on (yomi.fieldModelId = yomiFieldModel.id)
+        join models on (kanjiFieldModel.modelId = models.id)
+    where
+        models.name like '%漢字%'
+        and kanjiFieldModel.name = '漢字'
+        and yomiFieldModel.name = '読み'
+        and yomi.value <> ''
+;");
+
+$sth->execute;
+KANJI: while (my ($kanji, $yomi) = $sth->fetchrow_array) {
+    my @readings = keys %{ $readings_of_kanji{$kanji} || {} };
+    my $hirayomi = kana2hiragana($yomi);
+    for my $reading (@readings) {
+        my $hirareading = kana2hiragana($reading);
+        next KANJI if $hirareading =~ qr/\Q$hirayomi\E/;
+    }
+    say "$kanji: $yomi (@readings)";
 }
 
 __END__
