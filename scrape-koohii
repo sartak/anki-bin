@@ -1,0 +1,50 @@
+#!/usr/bin/env perl
+use 5.14.0;
+use warnings;
+use utf8::all;
+use Web::Scraper;
+use WWW::Mechanize;
+
+my $USER = '';
+my $PASS = '';
+
+die "set username and password" unless $USER && $PASS;
+
+my @kanji = split '', join '', @ARGV
+    or die "usage: $0 [kanji]";
+
+my $mech = WWW::Mechanize->new;
+$mech->get("http://kanji.koohii.com/study");
+$mech->submit_form(
+    with_fields => {
+        username => $USER,
+        password => $PASS,
+    },
+);
+
+my $scraper = scraper {
+    process '.framenum',     number  => 'TEXT';
+    process '.kanji',        kanji   => 'TEXT';
+    process '.strokecount',  strokes => 'TEXT';
+    process '.keyword span', keyword => 'TEXT';
+
+    process '#sharedstories-fav .sharedstory .bookstyle', 'stories[]' => 'TEXT';
+};
+
+while (my $kanji = shift @kanji) {
+    $mech->get("/study/kanji/$kanji");
+    my $res = $scraper->scrape($mech->content);
+
+    splice @{ $res->{stories} }, 5; # only the first 5
+
+    say "$res->{number}: $res->{kanji} $res->{strokes} $res->{keyword}";
+    for my $story (@{ $res->{stories} }) {
+        say "    $story";
+    }
+
+    if (@kanji) {
+        say "";
+        sleep 5;
+    }
+}
+
