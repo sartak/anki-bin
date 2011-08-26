@@ -86,6 +86,7 @@ my %sources = (
         'Malice Mizer - Syunikiss',
         'Perfume - 引力',
         "L'Arc~en~Ciel - 接吻",
+        '浜崎あゆみ - momentum',
     ],
     apps => [
         'RT',
