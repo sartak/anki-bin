@@ -195,7 +195,7 @@ else {
     warn "Unable to fetch goodreads feed\n";
 }
 
-my $goi = LWP::Simple::get('http://sartak.org/%E8%AA%9E%E5%BD%99.html');
+my $goi = `perl -I$ENV{HOME}/devel/vocabulary/lib $ENV{HOME}/devel/vocabulary/japanese.pl 2>/dev/null`;
 if (defined $goi) {
     for my $day (keys %day) {
         while ($goi =~ /\b(\w+): #\d+ for $day/g) {
