@@ -3,13 +3,11 @@ use 5.14.0;
 use warnings;
 use utf8::all;
 use Anki::Database;
+use Anki::Corpus;
 use List::MoreUtils 'uniq';
 
 my $db = Anki::Database->new(file => $ENV{ANKI_DECK});
-
-my $ankidir = "$ENV{HOME}/Documents/Anki";
-my $core_deck = "$ankidir/core2kcore6k.anki";
-my $core_db = Anki::Database->new(file => $core_deck);
+my $corpus = Anki::Corpus->new(file => $ENV{ANKI_CORPUS});
 
 my $sth = $db->prepare("
     select kanji.value
@@ -78,9 +76,9 @@ for my $kanji (@no_readings) {
 
     @sentences = grep { !$skip{$_} } @sentences;
 
-    my ($smart_count, $regular_count) = kanji_count($kanji);
+    my ($corpus_count, $regular_count) = kanji_count($kanji);
 
-    say ++$i . ". \e[35m$kanji\e[m ($smart_count+$regular_count=".($smart_count+$regular_count)."):";
+    say ++$i . ". \e[35m$kanji\e[m ($corpus_count+$regular_count=".($corpus_count+$regular_count)."):";
     for my $sentence (@sentences) {
         $sentence =~ s/(\p{Han}*)($kanji)(\p{Han}*)/\e[m$1\e[35m$2\e[m$3\e[37m/g;
         say "  \e[37m$sentence\e[m";
@@ -108,17 +106,13 @@ printf "Coverage: %d/%d (%.2f%%)\n", $with_reading, $kanji_count, 100*$with_read
 sub kanji_count {
     my $kanji = shift;
 
-    my $core_count = do {
-        my $sth = $core_db->prepare("
-            select count(*)
-                from fields
-                    join cards on (cards.factId = fields.factId)
-                    join fieldModels on (fields.fieldModelId = fieldModels.id)
-                where
-                    fieldModels.name = 'Expression'
-                    and value like ?
-                    and cards.type < 0
-        ");
+    my $corpus_count = do {
+        my $sth = $corpus->prepare("
+            SELECT count(*)
+            FROM sentences
+            WHERE japanese LIKE ?
+            AND suspended = 1
+        ;");
 
         $sth->execute("%$kanji%");
         ($sth->fetchrow_array)[0];
@@ -141,5 +135,5 @@ sub kanji_count {
         ($sth->fetchrow_array)[0];
     };
 
-    return ($core_count, $regular_count);
+    return ($corpus_count, $regular_count);
 }
