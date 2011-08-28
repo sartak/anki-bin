@@ -31,11 +31,7 @@ $printed_header = 0;
 
 $corpus->print_each("WHERE suspended = 1", sub {
     my ($id, $sentence) = @_;
-
-    my $alternate = $sentence;
-    $alternate .= '。' unless $alternate =~ s/。$//;
-
-    return 0 if !$anki_has{$sentence} && !$anki_has{$alternate};
+    return 0 if !$anki_has{$sentence};
     say "=== UNEXPECTEDLY IN ANKI (unsuspend in corpus or delete from anki) ===" unless $printed_header++;
     return 1;
 });
