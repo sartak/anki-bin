@@ -20,10 +20,6 @@ sub promote_chiisai { join '', map { $promote_chiisai{$_} || $_ } split '', shif
 
 my $db = Anki::Database->new(file => $ENV{ANKI_DECK});
 
-my $ankidir = "$ENV{HOME}/Documents/Anki";
-my $core_deck = "$ankidir/core2kcore6k.anki";
-my $core_db = Anki::Database->new(file => $core_deck);
-
 my $sth = $db->prepare("
     select kanji.value
         from fields as kanji
