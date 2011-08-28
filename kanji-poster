@@ -36,7 +36,7 @@ my $status_file = "$ENV{HOME}/devel/anki-bin/.kanji-poster";
 my %old_kanji_status;
 %old_kanji_status = %{ from_json(slurp($status_file, err_mode => 'quiet') || '{}', { utf8 => 1 } ) };
 
-my $db = Anki::Database->new(file => $ENV{ANKI_DECK});
+my $db = Anki::Database->new;
 my $kanji_sth = $db->prepare("
     select kanji.value, reading.value
     from fields as kanji

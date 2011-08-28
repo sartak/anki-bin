@@ -8,7 +8,7 @@ use List::MoreUtils 'all';
 my $ankidir = "$ENV{HOME}/Documents/Anki";
 my $yoji_deck = "$ankidir/yojijukugo.anki";
 
-my $japanese_db = Anki::Database->new(file => $ENV{ANKI_DECK});
+my $japanese_db = Anki::Database->new;
 my $yoji_db = Anki::Database->new(file => $yoji_deck);
 
 my %seen_kanji = map { $_ => 1 } my_kanji();

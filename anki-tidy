@@ -4,7 +4,7 @@ use warnings;
 use Anki::Database;
 use utf8::all;
 
-my $db = Anki::Database->new(file => $ENV{ANKI_DECK});
+my $db = Anki::Database->new;
 my $sth = $db->prepare('
     select fields.factId, fields.value from fields
     where

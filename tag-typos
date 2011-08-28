@@ -20,7 +20,7 @@ my %is_allowed = map { $_ => 1 } qw(
     context-only
 );
 
-my $db = Anki::Database->new(file => $ENV{ANKI_DECK});
+my $db = Anki::Database->new;
 my $sth = $db->prepare("
     select facts.id, cards.tags, facts.tags
     from cards

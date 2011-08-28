@@ -7,7 +7,7 @@ use Anki::Corpus;
 use List::MoreUtils 'all';
 use Array::Diff;
 
-my $japanese_db = Anki::Database->new(file => $ENV{ANKI_DECK});
+my $japanese_db = Anki::Database->new;
 
 my $sth = $japanese_db->prepare("
     select sentence.value
@@ -23,7 +23,7 @@ my $sth = $japanese_db->prepare("
 $sth->execute;
 my @japanese = sort map { $_->[0] } @{ $sth->fetchall_arrayref };
 
-my $corpus = Anki::Corpus->new(file => $ENV{ANKI_CORPUS});
+my $corpus = Anki::Corpus->new;
 $sth = $corpus->prepare("
     SELECT japanese
     FROM sentences

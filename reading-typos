@@ -52,7 +52,7 @@ my %known_homographs = (
 my %readings_of_word;
 my %readings_of_kanji;
 
-my $db = Anki::Database->new(file => $ENV{ANKI_DECK});
+my $db = Anki::Database->new;
 my $sth = $db->prepare("
     select fields.factId, fields.value
     from fields

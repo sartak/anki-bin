@@ -4,7 +4,7 @@ use warnings;
 use utf8::all;
 use Anki::Database;
 
-my $db = Anki::Database->new(file => $ENV{ANKI_DECK});
+my $db = Anki::Database->new;
 my $sth = $db->prepare("
     select kanji.value, cards.type, cards.noCount, cards.reps, (100 * cards.yesCount) / cards.reps as difficulty
     from fields as kanji

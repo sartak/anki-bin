@@ -5,7 +5,7 @@ use utf8::all;
 use Anki::Database;
 use Lingua::JA::Heisig 'heisig_number', 'kanji';
 
-my $db = Anki::Database->new(file => $ENV{ANKI_DECK});
+my $db = Anki::Database->new;
 my $kanji_sth = $db->prepare("
     select kanji.value
     from fields as kanji

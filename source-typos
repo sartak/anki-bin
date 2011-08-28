@@ -162,7 +162,7 @@ sub type_of {
     return $type;
 }
 
-my $db = Anki::Database->new(file => $ENV{ANKI_DECK});
+my $db = Anki::Database->new;
 my $sth = $db->prepare("
     select fields.value, fields.factId, facts.tags
     from fields

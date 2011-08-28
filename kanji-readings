@@ -18,7 +18,7 @@ my %promote_chiisai = qw/っ つ/;
 sub devoice         { join '', map { $devoice_table{$_}   || $_ } split '', shift }
 sub promote_chiisai { join '', map { $promote_chiisai{$_} || $_ } split '', shift }
 
-my $db = Anki::Database->new(file => $ENV{ANKI_DECK});
+my $db = Anki::Database->new;
 
 my $sth = $db->prepare("
     select kanji.value

@@ -5,7 +5,7 @@ use utf8::all;
 use Anki::Database;
 use List::Util 'first';
 
-my $db = Anki::Database->new(file => $ENV{ANKI_DECK});
+my $db = Anki::Database->new;
 my $sth = $db->prepare(q{
     select context.factId, context.value
     from fields as context

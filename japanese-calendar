@@ -14,7 +14,7 @@ my $drift = -5; # hours
 my $start = DateTime->now(time_zone => "America/New_York")->set(day => 1, hour => 0, minute => 0, second => 0)->epoch;
 my %day;
 
-my $db = Anki::Database->new(file => $ENV{ANKI_DECK});
+my $db = Anki::Database->new;
 
 my %query_for = (
     'Cards' => "

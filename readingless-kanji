@@ -6,8 +6,8 @@ use Anki::Database;
 use Anki::Corpus;
 use List::MoreUtils 'uniq';
 
-my $db = Anki::Database->new(file => $ENV{ANKI_DECK});
-my $corpus = Anki::Corpus->new(file => $ENV{ANKI_CORPUS});
+my $db = Anki::Database->new;
+my $corpus = Anki::Corpus->new;
 
 my $sth = $db->prepare("
     select kanji.value
