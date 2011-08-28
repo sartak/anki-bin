@@ -1,0 +1,36 @@
+#!/usr/bin/env perl
+use 5.14.0;
+use warnings;
+use utf8::all;
+use Anki::Database;
+use Anki::Corpus;
+
+my $japanese_db = Anki::Database->new;
+my $sth = $japanese_db->prepare("
+    select sentence.value
+    from fields as sentence
+        join fieldModels on (sentence.fieldModelId = fieldModels.id)
+    where
+        fieldModels.name = '日本語'
+;");
+$sth->execute;
+my %anki_has = map { $_->[0] => 1 } @{ $sth->fetchall_arrayref };
+
+my $corpus = Anki::Corpus->new;
+
+my $printed_header = 0;
+$corpus->print_each("WHERE suspended = 0", sub {
+    my ($id, $sentence) = @_;
+    return 0 if $anki_has{$sentence};
+    say "=== MISSING FROM ANKI (add to anki) ===" unless $printed_header++;
+    return 1;
+});
+
+$printed_header = 0;
+
+$corpus->print_each("WHERE suspended = 1", sub {
+    my ($id, $sentence) = @_;
+    return 0 if !$anki_has{$sentence};
+    say "=== UNEXPECTEDLY IN ANKI (unsuspend in corpus) ===" unless $printed_header++;
+    return 1;
+});

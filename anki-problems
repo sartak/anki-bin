@@ -5,6 +5,7 @@ use warnings;
 my @scripts = qw/
     anki-tidy
     smartfm-divergence
+    corpus-divergence
     source-typos
     context-typos
     tag-typos
