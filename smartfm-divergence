@@ -3,14 +3,11 @@ use 5.14.0;
 use warnings;
 use utf8::all;
 use Anki::Database;
+use Anki::Corpus;
 use List::MoreUtils 'all';
 use Array::Diff;
 
-my $ankidir = "$ENV{HOME}/Documents/Anki";
-my $smart_deck = "$ankidir/core2kcore6k.anki";
-
 my $japanese_db = Anki::Database->new(file => $ENV{ANKI_DECK});
-my $smart_db = Anki::Database->new(file => $smart_deck);
 
 my $sth = $japanese_db->prepare("
     select sentence.value
@@ -26,14 +23,12 @@ my $sth = $japanese_db->prepare("
 $sth->execute;
 my @japanese = sort map { $_->[0] } @{ $sth->fetchall_arrayref };
 
-$sth = $smart_db->prepare("
-    select sentence.value
-    from fields as sentence
-        join fieldModels on (sentence.fieldModelId = fieldModels.id)
-        join cards on (sentence.factId = cards.factId)
-    where
-        fieldModels.name = 'Expression'
-        and cards.type >= 0
+my $corpus = Anki::Corpus->new(file => $ENV{ANKI_CORPUS});
+$sth = $corpus->prepare("
+    SELECT japanese
+    FROM sentences
+    WHERE suspended = 0
+    AND source = 'Smart.fm'
 ;");
 $sth->execute;
 my @smart = sort map { $_->[0] } @{ $sth->fetchall_arrayref };
