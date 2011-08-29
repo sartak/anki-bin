@@ -95,6 +95,7 @@ for my $word (sort keys %readings_of_word) {
     say "$word: " . join (', ', sort keys %{ $readings_of_word{$word} });
 }
 
+if (0) {
 $sth = $db->prepare("
     select kanji.value, yomi.value
     from fields as kanji
@@ -122,6 +123,7 @@ KANJI: while (my ($kanji, $yomi) = $sth->fetchrow_array) {
         next KANJI if $hirareading =~ qr/\Q$hirayomi\E/;
     }
     say "$kanji: $yomi (@readings)";
+}
 }
 
 __END__
