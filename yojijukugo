@@ -3,13 +3,13 @@ use 5.14.0;
 use warnings;
 use utf8::all;
 use Anki::Database;
+use Anki::Corpus;
 use List::MoreUtils 'all';
 
 my $ankidir = "$ENV{HOME}/Documents/Anki";
-my $yoji_deck = "$ankidir/yojijukugo.anki";
 
 my $japanese_db = Anki::Database->new;
-my $yoji_db = Anki::Database->new(file => $yoji_deck);
+my $corpus = Anki::Corpus->new;
 
 my %seen_kanji = map { $_ => 1 } my_kanji();
 my %seen_yoji  = map { $_ => 1 } my_yoji();
@@ -70,22 +70,11 @@ sub my_yoji {
 sub learnable_yoji {
     my $kanji = shift;
 
-    my $sth = $yoji_db->prepare("
-        select yoji.value, reading.value, meaning.value, frequency.value
-        from fields as yoji
-            join fields as frequency on (yoji.factId = frequency.factId)
-            join fields as reading on (yoji.factId = reading.factid)
-            join fields as meaning on (yoji.factId = meaning.factid)
-            join fieldModels as yojiModel on (yoji.fieldModelId = yojiModel.id)
-            join fieldModels as frequencyModel on (frequency.fieldModelId = frequencyModel.id)
-            join fieldModels as readingModel on (reading.fieldModelId = readingModel.id)
-            join fieldModels as meaningModel on (meaning.fieldModelId = meaningModel.id)
-        where
-            yojiModel.name = '四字熟語'
-            and frequencyModel.name = 'Frequency'
-            and readingModel.name = '読み'
-            and meaningModel.name = 'Meaning'
-        order by frequency.value
+    my $sth = $corpus->prepare("
+        select japanese, readings, translation, notes
+        from sentences
+        where source='四字熟語'
+        order by notes
     ;");
 
     $sth->execute;
