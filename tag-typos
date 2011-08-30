@@ -18,6 +18,7 @@ my %is_allowed = map { $_ => 1 } qw(
 
     Leech
     context-only
+    from-corpus
 );
 
 my $db = Anki::Database->new;
@@ -28,7 +29,6 @@ my $sth = $db->prepare("
     where
         cards.tags <> ''
         or facts.tags <> ''
-
 ;");
 
 $sth->execute;

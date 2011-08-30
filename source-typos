@@ -188,7 +188,7 @@ my %count;
 while (my ($source, $factid, $tags) = $sth->fetchrow_array) {
     if (my $type = type_of($source)) {
         if ($expected_tags{$type} && $tags !~ $expected_tags{$type}) {
-            warn "$factid|$source - didn't include tag $expected_tags{$type} expected of $type\n";
+            warn "$factid|$source - didn't include tag $expected_tags{$type} expected of $type\n" unless $tags =~ /from-corpus/;
         }
         next;
     }
