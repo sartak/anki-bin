@@ -134,7 +134,7 @@ my %query_for = (
             and cards.firstAnswered >= $start
     ;",
     'Shinbun' => "
-        select cards.firstAnswered, count(*)
+        select cards.firstAnswered, source.value
             from cards
             join facts on (cards.factId = facts.id)
             join fields as source on (source.factId = facts.id)
