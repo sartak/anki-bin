@@ -11,7 +11,16 @@ use Net::Twitter;
 
 my $drift = -5; # hours
 
-my $start = DateTime->now(time_zone => "America/New_York")->set(day => 1, hour => 0, minute => 0, second => 0)->epoch;
+my $start_dt = DateTime->now(time_zone => "America/New_York")->set(hour => 0, minute => 0, second => 0);
+if ($start_dt->day < 7) {
+    $start_dt->add(months => -1);
+    $start_dt->set(day => 23);
+}
+else {
+    $start_dt->set(day => 1);
+}
+
+my $start = $start_dt->epoch;
 my %day;
 
 my $db = Anki::Database->new;
