@@ -13,6 +13,12 @@ my %is_disabled (
     Shinbun => 1,
 );
 
+my @sort = (
+    'Reviews', 'Cards', 'Vocabulary', 'Kanji', 'Read', 'Write', 'Game', 'Yomi', 'Shinbun',
+    'Grammar', 'Movie', 'Karaoke', 'Geography', 'Yojijukugo', 'Kanken', 'Content', 'Lesson',
+);
+
+
 my $drift = -5; # hours
 
 my $start_dt = DateTime->now(time_zone => "America/New_York")->set(hour => 0, minute => 0, second => 0);
@@ -245,11 +251,6 @@ eval {
 if ($@) {
     warn "Twitter error: $@\n";
 }
-
-my @sort = (
-    'Reviews', 'Cards', 'Vocabulary', 'Kanji', 'Read', 'Write', 'Game', 'Yomi', 'Shinbun',
-    'Grammar', 'Movie', 'Karaoke', 'Geography', 'Yojijukugo', 'Kanken', 'Content', 'Lesson',
-);
 
 for my $day (sort keys %day) {
     my $cards = $day{$day};
