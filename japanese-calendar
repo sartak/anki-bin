@@ -9,6 +9,10 @@ use DateTime;
 use DateTime::Format::Strptime;
 use Net::Twitter;
 
+my %is_disabled (
+    Shinbun => 1,
+);
+
 my $drift = -5; # hours
 
 my $start_dt = DateTime->now(time_zone => "America/New_York")->set(hour => 0, minute => 0, second => 0);
@@ -252,7 +256,8 @@ for my $day (sort keys %day) {
     say $day;
 
     for my $achievement (@sort) {
-        show_achievement($achievement, delete $cards->{$achievement});
+        show_achievement($achievement, delete $cards->{$achievement})
+            unless $is_disabled{$achievement};
     }
 
     die join ', ', keys %$cards if keys %$cards;
