@@ -9,7 +9,7 @@ use DateTime;
 use DateTime::Format::Strptime;
 use Net::Twitter;
 
-my %is_disabled (
+my %is_disabled = (
     Shinbun => 1,
 );
 
