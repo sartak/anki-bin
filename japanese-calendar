@@ -120,7 +120,7 @@ my %query_for = (
             and facts.tags like '%映画%'
             and cards.created >= $start
     ;",
-    'Map' => "
+    'Geography' => "
         select cards.firstAnswered, fields.value
             from cards
             join fields on (cards.factId = fields.factId)
@@ -248,7 +248,7 @@ if ($@) {
 
 my @sort = (
     'Reviews', 'Cards', 'Vocabulary', 'Kanji', 'Read', 'Write', 'Game', 'Yomi', 'Shinbun',
-    'Grammar', 'Movie', 'Karaoke', 'Map', 'Yojijukugo', 'Kanken', 'Content', 'Lesson',
+    'Grammar', 'Movie', 'Karaoke', 'Geography', 'Yojijukugo', 'Kanken', 'Content', 'Lesson',
 );
 
 for my $day (sort keys %day) {
