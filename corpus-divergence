@@ -33,13 +33,32 @@ $anki_has{$_->[0]} = '四字熟語' for @{ $sth->fetchall_arrayref };
 
 my $corpus = Anki::Corpus->new;
 
+my @bad_source;
+
 my $printed_header = 0;
 $corpus->print_each("WHERE suspended = 0", sub {
-    my ($id, $sentence) = @_;
-    return 0 if $anki_has{$sentence};
+    my ($id, $sentence, $translation, $readings, $source, $note) = @_;
+    if (my $anki_source = $anki_has{$sentence}) {
+        if ($anki_source ne $source) {
+            push @bad_source, [$sentence, $anki_source, $source, $id]
+                unless ($anki_source =~ /twitter.com|^@/ && $source eq 'Twitter');
+        }
+        return 0;
+    }
     say "=== MISSING FROM ANKI (add to anki) ===" unless $printed_header++;
     return 1;
 });
+
+if (@bad_source) {
+    say "=== INCORRECT SOURCE (fix anki or delete from corpus) ===";
+    for (@bad_source) {
+        my ($sentence, $anki, $corpus, $id) = @$_;
+        say "$id: $sentence";
+        say "    expected: $corpus";
+        say "         got: $anki";
+        say "";
+    }
+}
 
 $printed_header = 0;
 
