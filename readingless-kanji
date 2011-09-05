@@ -5,6 +5,7 @@ use utf8::all;
 use Anki::Database;
 use Anki::Corpus;
 use List::MoreUtils 'uniq';
+use Getopt::Whatever;
 
 my $db = Anki::Database->new;
 my $corpus = Anki::Corpus->new;
@@ -75,10 +76,13 @@ for my $kanji (@no_readings) {
     }
 
     @sentences = grep { !$skip{$_} } @sentences;
+    ++$i;
+
+    next if @sentences <= 1 && !$ARGV{full};
 
     my ($corpus_count, $regular_count) = kanji_count($kanji);
 
-    say ++$i . ". \e[35m$kanji\e[m ($corpus_count+$regular_count=".($corpus_count+$regular_count)."):";
+    say "$i. \e[35m$kanji\e[m ($corpus_count+$regular_count=".($corpus_count+$regular_count)."):";
     for my $sentence (@sentences) {
         $sentence =~ s/(\p{Han}*)($kanji)(\p{Han}*)/\e[m$1\e[35m$2\e[m$3\e[37m/g;
         say "  \e[37m$sentence\e[m";
