@@ -45,7 +45,7 @@ my %query_for = (
             join fieldModels on (source.fieldModelId = fieldModels.id)
         where
             models.name not like '%漢字%'
-            and fieldModels.name = '起こり'
+            and fieldModels.name = '出所'
             and cards.type >= 0
             and cards.firstAnswered >= $start
     ;",
@@ -74,7 +74,7 @@ my %query_for = (
         where
             models.name = '文'
             and source.value = 'Tae Kim'
-            and fieldModels.name = '起こり'
+            and fieldModels.name = '出所'
             and cards.type >= 0
             and cards.firstAnswered >= $start
     ;",
@@ -86,7 +86,7 @@ my %query_for = (
             join fieldModels on (fields.fieldModelId = fieldModels.id)
         where
             cards.type >= 0
-            and fieldModels.name is '起こり'
+            and fieldModels.name is '出所'
             and facts.tags like '%カラオケ%'
             and cards.firstAnswered >= $start
     ;",
@@ -98,7 +98,7 @@ my %query_for = (
             join fieldModels on (fields.fieldModelId = fieldModels.id)
         where
             cards.type >= 0
-            and fieldModels.name is '起こり'
+            and fieldModels.name is '出所'
             and facts.tags like '%ゲーム%'
             and cards.created >= $start
     ;",
@@ -110,7 +110,7 @@ my %query_for = (
             join fieldModels on (fields.fieldModelId = fieldModels.id)
         where
             cards.type >= 0
-            and fieldModels.name is '起こり'
+            and fieldModels.name is '出所'
             and facts.tags like '%読み物%'
             and cards.created >= $start
     ;",
@@ -122,7 +122,7 @@ my %query_for = (
             join fieldModels on (fields.fieldModelId = fieldModels.id)
         where
             cards.type >= 0
-            and fieldModels.name is '起こり'
+            and fieldModels.name is '出所'
             and facts.tags like '%映画%'
             and cards.created >= $start
     ;",
@@ -162,7 +162,7 @@ my %query_for = (
         where
             models.name = '文'
             and source.value like 'http://mainichi.jp%'
-            and fieldModels.name = '起こり'
+            and fieldModels.name = '出所'
             and cards.type >= 0
             and cards.firstAnswered >= $start
     ;",

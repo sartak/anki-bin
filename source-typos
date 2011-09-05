@@ -178,7 +178,7 @@ my $sth = $db->prepare("
         join facts on (fields.factId = facts.id)
     where
         models.name is '文'
-        and fieldModels.name like '%起こり%'
+        and fieldModels.name like '%出所%'
         and fields.value not like 'http%'
         and fields.value not like '# %'
 ;");
@@ -210,7 +210,7 @@ $sth = $db->prepare("
         join models on (fieldModels.modelId = models.id)
     where
         models.name is '文'
-        and fieldModels.name like '%起こり%'
+        and fieldModels.name like '%出所%'
 ;");
 
 $sth->execute;
@@ -232,7 +232,7 @@ for my $tag (keys %reverse_tags) {
         where
             models.name is '文'
             and facts.tags like ?
-            and fieldModels.name like '%起こり%'
+            and fieldModels.name like '%出所%'
             and fields.value not like 'http%'
             and fields.value not like '# %'
     ;");

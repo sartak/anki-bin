@@ -14,7 +14,7 @@ my $sth = $db->prepare("
             select factId from fields
             join fieldModels on (fields.fieldModelId = fieldModels.id)
             where
-                fieldModels.name = '起こり'
+                fieldModels.name = '出所'
                 and fields.value in ('プログレッシブ英和・和英中辞典', 'Smart.fm')
                 and factId in (
                     select factId from fields

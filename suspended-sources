@@ -11,7 +11,7 @@ my $sth = $db->prepare("
         join fieldModels on (source.fieldModelId = fieldModels.id)
         join cards on (cards.factId = source.factId)
     where
-        fieldModels.name = '起こり'
+        fieldModels.name = '出所'
         and cards.type < 0
     group by source.value
     order by count(*) desc
