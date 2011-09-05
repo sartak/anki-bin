@@ -7,15 +7,29 @@ use Anki::Corpus;
 
 my $japanese_db = Anki::Database->new;
 my $sth = $japanese_db->prepare("
-    select sentence.value
+    select sentence.value, source.value
     from fields as sentence
-        join fieldModels on (sentence.fieldModelId = fieldModels.id)
+        join fieldModels as sentenceFM on (sentence.fieldModelId = sentenceFM.id)
+        join fields as source on (sentence.factId = source.factId)
+        join fieldModels as sourceFM on (source.fieldModelId = sourceFM.id)
+        join models on (sentenceFM.modelId = models.id)
     where
-        fieldModels.name = '日本語'
-        or fieldModels.name = '四字熟語'
+        models.name = '文'
+        and sentenceFM.name = '日本語'
+        and sourceFM.name = '出所'
 ;");
 $sth->execute;
-my %anki_has = map { $_->[0] => 1 } @{ $sth->fetchall_arrayref };
+my %anki_has = map { $_->[0] => $_->[1] } @{ $sth->fetchall_arrayref };
+
+$sth = $japanese_db->prepare("
+    select yoji.value
+    from fields as yoji
+        join fieldModels on (yoji.fieldModelId = fieldModels.id)
+    where
+        fieldModels.name = '四字熟語'
+;");
+$sth->execute;
+$anki_has{$_->[0]} = '四字熟語' for @{ $sth->fetchall_arrayref };
 
 my $corpus = Anki::Corpus->new;
 
