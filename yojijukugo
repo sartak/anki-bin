@@ -71,10 +71,12 @@ sub learnable_yoji {
     my $kanji = shift;
 
     my $sth = $corpus->prepare("
-        select japanese, readings, translation, notes
+        select sentences.japanese, sentences.readings, sentences.translation, frequency.value
         from sentences
+        join notes as frequency on (frequency.sentence = sentences.rowid)
         where source='四字熟語'
-        order by notes
+        and frequency.type = '使用頻度'
+        order by frequency.value
     ;");
 
     $sth->execute;
