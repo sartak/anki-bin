@@ -17,7 +17,29 @@ my $sth = $db->prepare(q{
 
 $sth->execute;
 
+my $printed_header = 0;
 while (my ($fid, $context) = $sth->fetchrow_array) {
+    say "=== INVALID CONTEXT ===" if $printed_header++ == 0;
     say "$fid|$context";
 }
+
+$sth = $db->prepare(q{
+    select context.factId, context.value
+    from fields as context
+    join fieldModels as contextFM on (context.fieldModelId = contextFM.id)
+    join facts as contextFact on (context.factId = contextFact.id)
+    where
+        contextFM.name = '前後関係'
+        and contextFact.tags like '%context-only%'
+        and context.value = ''
+;});
+
+$sth->execute;
+
+$printed_header = 0;
+while (my ($fid, $context) = $sth->fetchrow_array) {
+    say "=== HAS TAG context-only WITHOUT CONTEXT ===" if $printed_header++ == 0;
+    say "$fid|$context";
+}
+
 
