@@ -37,7 +37,7 @@ my @bad_source;
 
 my $printed_header = 0;
 $corpus->print_each("WHERE suspended = 0", sub {
-    my ($id, $sentence, $translation, $readings, $source, $note) = @_;
+    my ($id, $sentence, $translation, $readings, $source) = @_;
     if (my $anki_source = $anki_has{$sentence}) {
         if ($anki_source ne $source) {
             push @bad_source, [$sentence, $anki_source, $source, $id]
