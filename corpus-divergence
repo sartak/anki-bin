@@ -37,11 +37,11 @@ my @bad_source;
 
 my $printed_header = 0;
 $corpus->print_each("WHERE suspended = 0", sub {
-    my ($id, $sentence, $translation, $readings, $source, $unsuspended) = @_;
-    if (my $anki_source = $anki_has{$sentence}) {
+    my $sentence = shift;
+    if (my $anki_source = $anki_has{$sentence->japanese}) {
         if ($anki_source ne $source) {
-            push @bad_source, [$sentence, $anki_source, $source, $id]
-                unless ($anki_source =~ /twitter.com|^@/ && $source eq 'Twitter');
+            push @bad_source, [$sentence->japanese, $anki_source, $sentence->source, $sentence->id]
+                unless ($anki_source =~ /twitter.com|^@/ && $sentence->source eq 'Twitter');
         }
         return 0;
     }
