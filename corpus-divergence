@@ -39,7 +39,7 @@ my $printed_header = 0;
 $corpus->print_each("WHERE suspended = 0", sub {
     my $sentence = shift;
     if (my $anki_source = $anki_has{$sentence->japanese}) {
-        if ($anki_source ne $source) {
+        if ($anki_source ne $sentence->source) {
             push @bad_source, [$sentence->japanese, $anki_source, $sentence->source, $sentence->id]
                 unless ($anki_source =~ /twitter.com|^@/ && $sentence->source eq 'Twitter');
         }
@@ -63,8 +63,8 @@ if (@bad_source) {
 $printed_header = 0;
 
 $corpus->print_each("WHERE suspended = 1", sub {
-    my ($id, $sentence) = @_;
-    return 0 if !$anki_has{$sentence};
+    my $sentence = shift;
+    return 0 if !$anki_has{$sentence->japanese};
     say "=== UNEXPECTEDLY IN ANKI (unsuspend in corpus or delete from anki) ===" unless $printed_header++;
     return 1;
 });
