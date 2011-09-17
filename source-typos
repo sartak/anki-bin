@@ -244,7 +244,7 @@ for my $tag (keys %reverse_tags) {
 
     while (my ($source, $factid) = $sth->fetchrow_array) {
         my $type = type_of($source);
-        if (!grep { $type eq $_ } @types) {
+        unless ($type && grep { $type eq $_ } @types) {
             say "$factid|$source has spurious $tag tag";
         }
     }
