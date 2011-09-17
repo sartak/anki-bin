@@ -22,7 +22,7 @@ my $sth = $db->prepare('
 $sth->execute;
 
 while (my ($fid, $sentence) = $sth->fetchrow_array) {
-    $sentence =~ s/^(\s+)|(\s+)$/\e[1;41m$+\e[m/g;
+    $sentence =~ s/^(\s+)|(\s+)$|(。)$/\e[1;41m$+\e[m/g;
     say "$fid|$sentence";
 }
 
