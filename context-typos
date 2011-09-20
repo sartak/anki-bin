@@ -12,7 +12,10 @@ my $sth = $db->prepare(q{
     join fieldModels on (context.fieldModelId = fieldModels.id)
     where
         fieldModels.name = '前後関係'
-        and context.value like '%ibid%'
+        and (
+            context.value like '%ibid%'
+            or context.value like '%連続%'
+        )
 ;});
 
 $sth->execute;
