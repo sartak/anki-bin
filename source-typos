@@ -84,6 +84,7 @@ my %sources = (
         '大辞林',
         'ドラえもんのまんがで英語辞典覚える',
         'goo',
+        'ARES-3',
     ],
     references => [
         'モダンPerl入門',
