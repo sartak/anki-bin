@@ -1,0 +1,23 @@
+#!/usr/bin/env perl
+use 5.14.0;
+use warnings;
+use Anki::Database;
+use utf8::all;
+
+my $db = Anki::Database->new;
+my $sth = $db->prepare("
+    SELECT value, count(value) FROM fields
+        JOIN fieldModels ON (fieldModels.id = fields.fieldModelId)
+        JOIN cards ON (cards.factId = fields.factId)
+    WHERE
+        fieldModels.name = '日本語'
+    GROUP BY value
+    HAVING count(value) > 1
+;");
+
+$sth->execute;
+
+while (my ($sentence, $count) = $sth->fetchrow_array) {
+    say "$count: $sentence";
+}
+

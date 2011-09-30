@@ -6,6 +6,7 @@ my @scripts = qw/
     dictionary-translations
     kanji-order
     marked-cards
+    duplicate-sentences
     anki-tidy
     context-typos
     smartfm-divergence
