@@ -85,8 +85,9 @@ do {
             }
             else {
                 push @unknown, $dict;
-                $anti_i{$dict}++;
+                $anti_i{$dict}++ if !$ARGV{'verbose'};
             }
+            $anti_i{$dict}++ if $ARGV{'verbose'};
         }
 
         if ($source ne $prev_source) {
@@ -105,12 +106,10 @@ do {
     }
 };
 
-$i = 0;
-
 open my $freq, '>', 'freq.txt';
 for my $word (sort { $anti_i{$b} <=> $anti_i{$a} } keys %anti_i) {
+    print $freq "# " if $ARGV{'verbose'} && $i{$word};
     print $freq "$word: $anti_i{$word}\n";
-    say "$i. $word: $anti_i{$word}" if ++$i < 10;
 }
 
 for my $source (sort keys %source_count) {
