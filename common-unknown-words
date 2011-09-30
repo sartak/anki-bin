@@ -5,6 +5,7 @@ use utf8::all;
 use Text::MeCab;
 use Anki::Database;
 use Anki::Corpus;
+use Getopt::Whatever;
 use Encode 'decode_utf8';
 
 my $anki = Anki::Database->new;
@@ -50,9 +51,18 @@ do {
     open my $known_sentences, '>', 'known.txt';
 
     my $order = $corpus->order;
+
+    my @extra;
+    push @extra, "AND source NOT IN ('吾輩は猫である', 'こゝろ', '坊っちゃん')" if $ARGV{'skip-classics'};
+    push @extra, "AND source NOT IN ('Twitter')" if $ARGV{'skip-twitter'};
+    push @extra, "AND source NOT IN ('MFSP', 'Smart.fm', 'ARES-3', 'プログレッシブ英和・和英中辞典', '四字熟語', '四字熟語 Example', 'Twitter')" if $ARGV{'skip-nonbooks'};
+    push @extra, "AND source NOT LIKE 'ハリー・ポッターと%' AND source NOT IN ('吾輩は猫である', 'こゝろ', '坊っちゃん')" if $ARGV{'skip-books'};
+    my $extra = join "\n", @extra;
+
     my $sth = $corpus->prepare("
         SELECT japanese, source FROM sentences
         WHERE suspended = 1
+        $extra
         ORDER BY $order
     ;");
     $sth->execute;
