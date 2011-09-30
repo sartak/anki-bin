@@ -49,7 +49,7 @@ if ($ARGV{add}) {
 ($i, $e) = (0, 0);
 
 my %anti_i;
-
+my %source_count;
 
 do {
     open my $known_sentences, '>', 'known.txt';
@@ -95,7 +95,13 @@ do {
             $prev_source = $source;
         }
 
-        print $known_sentences "  $sentence\n" if @unknown == 0;
+        if (@unknown == 0) {
+            print $known_sentences "  $sentence\n";
+            $source_count{$source}{known}++;
+        }
+        else {
+            $source_count{$source}{unknown}++;
+        }
     }
 };
 
@@ -107,4 +113,9 @@ for my $word (sort { $anti_i{$b} <=> $anti_i{$a} } keys %anti_i) {
     say "$i. $word: $anti_i{$word}" if ++$i < 10;
 }
 
-
+for my $source (sort keys %source_count) {
+    my $known = $source_count{$source}{known};
+    my $unknown = $source_count{$source}{unknown};
+    my $ratio = 100 * $known / ($known+$unknown);
+    say sprintf '%3d%% (K:%d U:%d) %s', $ratio, $known, $unknown, $source;
+}
