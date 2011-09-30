@@ -49,13 +49,16 @@ my %anti_i;
 do {
     open my $known_sentences, '>', 'known.txt';
 
+    my $order = $corpus->order;
     my $sth = $corpus->prepare("
-        SELECT japanese FROM sentences
+        SELECT japanese, source FROM sentences
         WHERE suspended = 1
+        ORDER BY $order
     ;");
     $sth->execute;
 
-    while (my ($sentence) = $sth->fetchrow_array) {
+    my $prev_source = '';
+    while (my ($sentence, $source) = $sth->fetchrow_array) {
         say 2**$e++ if ++$i == 2**$e;
 
         my (@known, @unknown);
@@ -72,7 +75,12 @@ do {
             }
         }
 
-        print $known_sentences "$sentence\n" if @unknown == 0;
+        if ($source ne $prev_source) {
+            print $known_sentences "$source\n";
+            $prev_source = $source;
+        }
+
+        print $known_sentences "  $sentence\n" if @unknown == 0;
     }
 };
 
