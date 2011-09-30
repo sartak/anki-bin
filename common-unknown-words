@@ -42,6 +42,10 @@ do {
     say "Got " . scalar(keys %i) . " words";
 };
 
+if ($ARGV{add}) {
+    $i{$_}++ for ref($ARGV{add}) ? @{ $ARGV{add} } : $ARGV{add};
+}
+
 ($i, $e) = (0, 0);
 
 my %anti_i;
