@@ -1,0 +1,87 @@
+#!/usr/bin/env perl
+use 5.14.0;
+use warnings;
+use utf8::all;
+use Text::MeCab;
+use Anki::Database;
+use Anki::Corpus;
+use Encode 'decode_utf8';
+
+my $anki = Anki::Database->new;
+my $corpus = Anki::Corpus->new;
+my $mecab = Text::MeCab->new;
+
+my %i;
+
+my ($i, $e) = (0, 0);
+
+# prime %i with known sentences from Anki
+do {
+    my $sth = $anki->prepare("
+        SELECT value FROM fields
+            JOIN fieldModels ON (fieldModels.id = fields.fieldModelId)
+            JOIN cards ON (cards.factId = fields.factId)
+        WHERE
+            fieldModels.name = '日本語'
+            AND cards.type > 0
+    ;");
+    $sth->execute;
+
+    while (my ($sentence) = $sth->fetchrow_array) {
+        say 2**$e++ if ++$i == 2**$e;
+
+        for (my $node = $mecab->parse($sentence); $node; $node = $node->next) {
+            my @fields = split ',', decode_utf8 $node->feature;
+            my $dict = $fields[6];
+
+            $i{$dict}++;
+        }
+    }
+
+    say "Got " . scalar(keys %i) . " words";
+};
+
+($i, $e) = (0, 0);
+
+my %anti_i;
+
+
+do {
+    open my $known_sentences, '>', 'known.txt';
+
+    my $sth = $corpus->prepare("
+        SELECT japanese FROM sentences
+        WHERE suspended = 1
+    ;");
+    $sth->execute;
+
+    while (my ($sentence) = $sth->fetchrow_array) {
+        say 2**$e++ if ++$i == 2**$e;
+
+        my (@known, @unknown);
+        for (my $node = $mecab->parse($sentence); $node; $node = $node->next) {
+            my @fields = split ',', decode_utf8 $node->feature;
+            my $dict = $fields[6];
+
+            if ($i{$dict}) {
+                push @known, $dict;
+            }
+            else {
+                push @unknown, $dict;
+                $anti_i{$dict}++;
+            }
+        }
+
+        print $known_sentences "$sentence\n" if @unknown == 0;
+    }
+};
+
+$i = 0;
+
+open my $freq, '>', 'freq.txt';
+for my $word (sort { $anti_i{$b} <=> $anti_i{$a} } keys %anti_i) {
+    print $freq "$word: $anti_i{$word}\n";
+    say "$i. $word: $anti_i{$word}" if ++$i < 10;
+}
+
+
