@@ -76,6 +76,7 @@ do {
         }
 
         if ($source ne $prev_source) {
+            print $known_sentences "\n" if $prev_source ne '';
             print $known_sentences "$source\n";
             $prev_source = $source;
         }
