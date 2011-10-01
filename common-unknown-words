@@ -11,118 +11,86 @@ my $anki   = $morph->anki;
 my $corpus = $morph->corpus;
 my $mecab  = $morph->mecab;
 
-my %i;
-
-my ($i, $e) = (0, 0);
-
-# prime %i with known sentences from Anki
-do {
-    my $sth = $anki->prepare("
-        SELECT value FROM fields
-            JOIN fieldModels ON (fieldModels.id = fields.fieldModelId)
-            JOIN cards ON (cards.factId = fields.factId)
-        WHERE
-            fieldModels.name = '日本語'
-            AND cards.type > 0
-    ;");
-    $sth->execute;
-
-    while (my ($sentence) = $sth->fetchrow_array) {
-        say 2**$e++ if ++$i == 2**$e;
-
-        for (my $node = $mecab->parse($sentence); $node; $node = $node->next) {
-            my @fields = split ',', decode_utf8 $node->feature;
-            my $dict = $fields[6];
-
-            $i{$dict}++;
-        }
-    }
-
-    say "Got " . scalar(keys %i) . " words";
-};
+my %i = %{ $morph->known_morphemes };
+say "You know " . keys(%i) . " words!";
 
 if ($ARGV{add}) {
     $i{$_}++ for ref($ARGV{add}) ? @{ $ARGV{add} } : $ARGV{add};
 }
 
-($i, $e) = (0, 0);
-
 my %anti_i;
 my %source_count;
 
-do {
-    open my $known_sentences, '>', 'known.txt';
+my $order = $corpus->order;
 
-    my $order = $corpus->order;
+my @extra;
+push @extra, "AND source NOT IN ('吾輩は猫である', 'こゝろ', '坊っちゃん')" if $ARGV{'skip-classics'};
+push @extra, "AND source NOT IN ('Twitter')" if $ARGV{'skip-twitter'};
+push @extra, "AND source NOT IN ('MFSP', 'Smart.fm', 'ARES-3', 'プログレッシブ英和・和英中辞典', '四字熟語', '四字熟語 Example', 'Twitter')" if $ARGV{'skip-nonbooks'};
+push @extra, "AND source NOT LIKE 'ハリー・ポッターと%' AND source NOT IN ('吾輩は猫である', 'こゝろ', '坊っちゃん')" if $ARGV{'skip-books'};
+my $extra = join "\n", @extra;
+my $sth = $corpus->prepare("
+    SELECT japanese, source FROM sentences
+    WHERE suspended = 1
+    $extra
+    ORDER BY $order
+;");
+$sth->execute;
 
-    my $sth;
+open my $known_sentences, '>', 'known.txt';
 
-    my @extra;
-    push @extra, "AND source NOT IN ('吾輩は猫である', 'こゝろ', '坊っちゃん')" if $ARGV{'skip-classics'};
-    push @extra, "AND source NOT IN ('Twitter')" if $ARGV{'skip-twitter'};
-    push @extra, "AND source NOT IN ('MFSP', 'Smart.fm', 'ARES-3', 'プログレッシブ英和・和英中辞典', '四字熟語', '四字熟語 Example', 'Twitter')" if $ARGV{'skip-nonbooks'};
-    push @extra, "AND source NOT LIKE 'ハリー・ポッターと%' AND source NOT IN ('吾輩は猫である', 'こゝろ', '坊っちゃん')" if $ARGV{'skip-books'};
-    my $extra = join "\n", @extra;
-    $sth = $corpus->prepare("
-        SELECT japanese, source FROM sentences
-        WHERE suspended = 1
-        $extra
-        ORDER BY $order
-    ;");
-    $sth->execute;
+my $ankied = 0;
+my $prev_source = '';
+my ($i, $e) = (0, 0);
+while (1) {
+    my ($sentence, $source) = $sth->fetchrow_array;
+    if (!$sentence) {
+        last if $ankied;
 
-    my $ankied = 0;
-    my $prev_source = '';
-    while (1) {
-        my ($sentence, $source) = $sth->fetchrow_array;
-        if (!$sentence) {
-            last if $ankied;
+        $sth = $anki->prepare("
+            SELECT value, 'Anki' FROM fields
+                JOIN fieldModels ON (fieldModels.id = fields.fieldModelId)
+                JOIN cards ON (cards.factId = fields.factId)
+            WHERE
+                fieldModels.name = '日本語'
+                AND cards.type <= 0
+        ;");
+        $sth->execute;
+        ($sentence, $source) = $sth->fetchrow_array;
+        $ankied = 1;
+    }
 
-            $sth = $anki->prepare("
-                SELECT value, 'Anki' FROM fields
-                    JOIN fieldModels ON (fieldModels.id = fields.fieldModelId)
-                    JOIN cards ON (cards.factId = fields.factId)
-                WHERE
-                    fieldModels.name = '日本語'
-                    AND cards.type <= 0
-            ;");
-            $sth->execute;
-            ($sentence, $source) = $sth->fetchrow_array;
-            $ankied = 1;
-        }
+    say 2**$e++ if ++$i == 2**$e;
 
-        say 2**$e++ if ++$i == 2**$e;
+    my (@known, @unknown);
+    for (my $node = $mecab->parse($sentence); $node; $node = $node->next) {
+        my @fields = split ',', decode_utf8 $node->feature;
+        my $dict = $fields[6];
 
-        my (@known, @unknown);
-        for (my $node = $mecab->parse($sentence); $node; $node = $node->next) {
-            my @fields = split ',', decode_utf8 $node->feature;
-            my $dict = $fields[6];
-
-            if ($i{$dict}) {
-                push @known, $dict;
-            }
-            else {
-                push @unknown, $dict;
-                $anti_i{$dict}++ if !$ARGV{'verbose'};
-            }
-            $anti_i{$dict}++ if $ARGV{'verbose'};
-        }
-
-        if ($source ne $prev_source) {
-            print $known_sentences "\n" if $prev_source ne '';
-            print $known_sentences "$source\n";
-            $prev_source = $source;
-        }
-
-        if (@unknown == 0) {
-            print $known_sentences "  $sentence\n";
-            $source_count{$source}{known}++;
+        if ($i{$dict}) {
+            push @known, $dict;
         }
         else {
-            $source_count{$source}{unknown}++;
+            push @unknown, $dict;
+            $anti_i{$dict}++ if !$ARGV{'verbose'};
         }
+        $anti_i{$dict}++ if $ARGV{'verbose'};
     }
-};
+
+    if ($source ne $prev_source) {
+        print $known_sentences "\n" if $prev_source ne '';
+        print $known_sentences "$source\n";
+        $prev_source = $source;
+    }
+
+    if (@unknown == 0) {
+        print $known_sentences "  $sentence\n";
+        $source_count{$source}{known}++;
+    }
+    else {
+        $source_count{$source}{unknown}++;
+    }
+}
 
 open my $freq, '>', 'freq.txt';
 for my $word (sort { $anti_i{$b} <=> $anti_i{$a} } keys %anti_i) {
