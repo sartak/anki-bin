@@ -41,12 +41,12 @@ my $ankied = 0;
 my $prev_source = '';
 my ($i, $e) = (0, 0);
 while (1) {
-    my ($sentence, $source) = $sth->fetchrow_array;
+    my ($sentence, $source, $fid) = $sth->fetchrow_array;
     if (!$sentence) {
         last if $ankied;
 
         $sth = $anki->prepare("
-            SELECT value, 'Anki' FROM fields
+            SELECT value, 'Anki', fields.factId FROM fields
                 JOIN fieldModels ON (fieldModels.id = fields.fieldModelId)
                 JOIN cards ON (cards.factId = fields.factId)
             WHERE
@@ -54,7 +54,7 @@ while (1) {
                 AND cards.type <= 0
         ;");
         $sth->execute;
-        ($sentence, $source) = $sth->fetchrow_array;
+        ($sentence, $source, $fid) = $sth->fetchrow_array;
         $ankied = 1;
     }
 
@@ -81,7 +81,9 @@ while (1) {
     }
 
     if (@unknown == 0) {
-        print $known_sentences "  $sentence\n";
+        print $known_sentences "  ";
+        print $known_sentences "$fid|" if $fid;
+        print $known_sentences "$sentence\n";
         $source_count{$source}{known}++;
     }
     else {
