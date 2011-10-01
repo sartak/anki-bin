@@ -4,12 +4,10 @@ use warnings;
 use utf8::all;
 use Anki::Morphology;
 use Getopt::Whatever;
-use Encode 'decode_utf8';
 
 my $morph  = Anki::Morphology->new;
 my $anki   = $morph->anki;
 my $corpus = $morph->corpus;
-my $mecab  = $morph->mecab;
 
 my %i = %{ $morph->known_morphemes };
 say "You know " . keys(%i) . " words!";
@@ -63,9 +61,8 @@ while (1) {
     say 2**$e++ if ++$i == 2**$e;
 
     my (@known, @unknown);
-    for (my $node = $mecab->parse($sentence); $node; $node = $node->next) {
-        my @fields = split ',', decode_utf8 $node->feature;
-        my $dict = $fields[6];
+    for my $morpheme ($morph->morphemes_of($sentence)) {
+        my $dict = $morpheme->{dictionary};
 
         if ($i{$dict}) {
             push @known, $dict;
