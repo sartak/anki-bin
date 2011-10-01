@@ -19,10 +19,12 @@ die "$word is not in dictionary form ($expected?)"
 
 my %i = %{ $morph->known_morphemes };
 
+my $extra = (join ' AND ', map { "japanese like '%$_%'" } $expected =~ /\p{Han}/g) || '1=1';
 my $order = $corpus->order;
 my $sth = $corpus->prepare("
     SELECT japanese FROM sentences
     WHERE suspended = 1
+    AND $extra
     ORDER BY $order
 ;");
 $sth->execute;
