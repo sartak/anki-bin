@@ -102,7 +102,7 @@ for my $word (sort { $anti_i{$b} <=> $anti_i{$a} } keys %anti_i) {
 
 open my $ip, '>', 'i-plus.txt';
 for (my $i = 0; $i < @i_plus; ++$i) {
-    print $ip "i+$i:\n";
+    print $ip "i+$i (".@{$i_plus[$i]}."):\n";
     print $ip "  $_\n" for @{ $i_plus[$i] };
     print $ip "\n";
 }
