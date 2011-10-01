@@ -1,0 +1,48 @@
+#!/usr/bin/env perl
+use 5.14.0;
+use warnings;
+use utf8::all;
+use Anki::Morphology;
+
+my $word = shift
+    or die "usage: $0 word\n";
+my $morph = Anki::Morphology->new;
+my $corpus = $morph->corpus;
+
+my @word_morphemes = $morph->morphemes_of($word);
+die "$word does not produce exactly one morpheme: " . join(', ', map { $_->{dictionary} } @word_morphemes)
+    if @word_morphemes != 1;
+
+my $expected = $word_morphemes[0]{dictionary};
+die "$word is not in dictionary form ($expected?)"
+    if $word ne $expected;
+
+my %i = %{ $morph->known_morphemes };
+
+my $order = $corpus->order;
+my $sth = $corpus->prepare("
+    SELECT japanese FROM sentences
+    WHERE suspended = 1
+    ORDER BY $order
+;");
+$sth->execute;
+
+SENTENCE: while (my ($sentence) = $sth->fetchrow_array) {
+    my $keep = 0;
+
+    MORPHEME: for my $morpheme ($morph->morphemes_of($sentence)) {
+        my $dict = $morpheme->{dictionary};
+
+        if ($dict eq $expected) {
+            $keep = 1;
+            next MORPHEME;
+        }
+
+        next SENTENCE if !$i{$dict};
+    }
+
+    if ($keep) {
+        say $sentence;
+    }
+}
+
