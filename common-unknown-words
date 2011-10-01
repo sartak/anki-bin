@@ -18,6 +18,7 @@ if ($ARGV{add}) {
 
 my %anti_i;
 my %source_count;
+my @i_plus;
 
 my $order = $corpus->order;
 
@@ -80,6 +81,8 @@ while (1) {
         $prev_source = $source;
     }
 
+    push @{ $i_plus[ @unknown ] }, $sentence;
+
     if (@unknown == 0) {
         print $known_sentences "  ";
         print $known_sentences "$fid|" if $fid;
@@ -95,6 +98,13 @@ open my $freq, '>', 'freq.txt';
 for my $word (sort { $anti_i{$b} <=> $anti_i{$a} } keys %anti_i) {
     print $freq "# " if $ARGV{'verbose'} && $i{$word};
     print $freq "$word: $anti_i{$word}\n";
+}
+
+open my $ip, '>', 'i-plus.txt';
+for (my $i = 0; $i < @i_plus; ++$i) {
+    print $ip "i+$i:\n";
+    print $ip "  $_\n" for @{ $i_plus[$i] };
+    print $ip "\n";
 }
 
 for my $source (sort keys %source_count) {
