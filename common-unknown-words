@@ -2,15 +2,14 @@
 use 5.14.0;
 use warnings;
 use utf8::all;
-use Text::MeCab;
-use Anki::Database;
-use Anki::Corpus;
+use Anki::Morphology;
 use Getopt::Whatever;
 use Encode 'decode_utf8';
 
-my $anki = Anki::Database->new;
-my $corpus = Anki::Corpus->new;
-my $mecab = Text::MeCab->new;
+my $morph  = Anki::Morphology->new;
+my $anki   = $morph->anki;
+my $corpus = $morph->corpus;
+my $mecab  = $morph->mecab;
 
 my %i;
 
