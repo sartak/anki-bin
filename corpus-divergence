@@ -41,7 +41,8 @@ $corpus->print_each("WHERE suspended = 0", sub {
     if (my $anki_source = $anki_has{$sentence->japanese}) {
         if ($anki_source ne $sentence->source) {
             push @bad_source, [$sentence->japanese, $anki_source, $sentence->source, $sentence->id]
-                unless ($anki_source =~ /twitter.com|^@/ && $sentence->source eq 'Twitter');
+                unless ($anki_source =~ /twitter.com|^@/ && $sentence->source eq 'Twitter')
+                    || ($anki_source =~ /.+ - .+/ && $sentence->source eq '歌詞');
         }
         return 0;
     }
