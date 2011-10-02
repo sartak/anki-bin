@@ -1,0 +1,34 @@
+#!/usr/bin/env perl
+use 5.14.0;
+use warnings;
+use utf8::all;
+use Anki::Morphology;
+
+my $morph = Anki::Morphology->new;
+
+my %i = %{ $morph->known_morphemes };
+
+my $sth = $morph->anki->prepare('
+    select value from fields
+        join cards on (cards.factId = fields.factId)
+        join fieldModels on (fieldModels.id = fields.fieldModelId)
+        join facts on (facts.id = fields.factId)
+    where fieldModels.name="日本語"
+        and (cards.tags like "%自愛%" or facts.tags like "%自愛%")
+        and cards.type <= 0
+');
+
+$sth->execute;
+
+while (my ($sentence) = $sth->fetchrow_array) {
+    my $said = 0;
+    my %seen;
+    for my $m ($morph->morphemes_of($sentence)) {
+        next if $i{ $m->{dictionary} } || $seen{ $m->{dictionary} }++;
+        say $sentence unless $said++;
+        say "    $m->{dictionary}";
+    }
+    say "XXX: $sentence" if !$said;
+    say "";
+}
+
