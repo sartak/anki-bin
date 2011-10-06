@@ -133,6 +133,7 @@ my %sources = (
         '高橋先生',
         '公共交通機関',
         qr/^Conversation at .+/,
+        qr/^Sign (at|in) .+/,
     ],
 );
 
