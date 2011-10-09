@@ -101,6 +101,7 @@ my %sources = (
         "L'Arc~en~Ciel - 接吻",
         '浜崎あゆみ - momentum',
         '分島花音 - 真紅のフェータリズム',
+        "L'Arc~en~Ciel - Be Destined",
     ],
     apps => [
         'RT',
