@@ -1,13 +1,19 @@
 #!/usr/bin/env perl
 use strict;
 use warnings;
+use File::Slurp qw/slurp write_file/;
+use JSON;
+use Time::HiRes qw/gettimeofday tv_interval/;
+
+my $time_file = "$ENV{HOME}/.anki-problems";
+my %script_time = %{ from_json(slurp($time_file, err_mode => 'quiet') || '{}' ) };
 
 my @scripts = qw/
     dictionary-translations
     kanji-order
     marked-cards
-    duplicate-sentences
     anki-tidy
+    duplicate-sentences
     context-typos
     smartfm-divergence
     tag-typos
@@ -19,9 +25,35 @@ my @scripts = qw/
     corpus-divergence
 /;
 
+$| = 1;
+
 for my $script (@scripts) {
-    print "$script:\n";
-    system($script);
-    print "\n";
+    print "$script";
+
+    my $start = [gettimeofday];
+    my $expected = ($script_time{$script}||0);
+
+    my $has_output;
+    open my $handle, "$script |";
+
+    if (defined(my $line = <$handle>)) {
+        $has_output = 1;
+        print $line, <$handle>, "\n";
+    }
+
+    my $elapsed = tv_interval($start);
+    my $diff = $elapsed - $expected;
+    print " " if !$has_output;
+
+    my $diff_output = '';
+    if (sprintf('%.02f', abs($diff)) ne '0.00') {
+        $diff_output = sprintf ' (%s%.02fs)', ($diff >= 0 ? '+' : ''), $diff;
+    }
+
+    printf "[%.02fs%s]\n", $elapsed, $diff_output;
+    print "\n" if $has_output;
+
+    $script_time{$script} = $elapsed;
 }
 
+write_file $time_file, to_json(\%script_time, { pretty => 1, canonical => 1 });
