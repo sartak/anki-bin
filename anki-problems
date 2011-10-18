@@ -8,7 +8,7 @@ use Time::HiRes qw/gettimeofday tv_interval/;
 my $time_file = "$ENV{HOME}/.anki-problems";
 my %script_time = %{ from_json(slurp($time_file, err_mode => 'quiet') || '{}' ) };
 
-my @scripts = qw/
+my @scripts = sort { ($script_time{$a}||0) <=> ($script_time{$b}||0) } qw/
     dictionary-translations
     kanji-order
     marked-cards
