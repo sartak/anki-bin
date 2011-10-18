@@ -44,7 +44,7 @@ my ($i, $e) = (0, 0);
 while (1) {
     my ($sentence, $source, $fid) = $sth->fetchrow_array;
     if (!$sentence) {
-        last if $ankied;
+        last if $ankied || $ARGV{'skip-anki'};
 
         $sth = $anki->prepare("
             SELECT value, 'Anki', fields.factId FROM fields
