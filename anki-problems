@@ -38,7 +38,7 @@ for my $script (@scripts) {
 
     if (defined(my $line = <$handle>)) {
         $has_output = 1;
-        print $line, <$handle>, "\n";
+        print ":\n", $line, <$handle>, "\n";
     }
 
     my $elapsed = tv_interval($start);
