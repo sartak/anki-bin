@@ -50,7 +50,11 @@ for my $script (@scripts) {
 
     while (1) {
         if (defined(my $line = <$handle>)) {
-            print "\e[1;31mERR\e[m\n", $line, <$handle>;
+            print "\e[1;31mERR\e[m\n", $line;
+            while (defined(my $line = <$handle>) || $! == EAGAIN) {
+                print $line
+                    unless $! == EAGAIN;
+            }
             last;
         }
         elsif ($! == EAGAIN) {
