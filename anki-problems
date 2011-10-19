@@ -42,7 +42,6 @@ for my $script (@scripts) {
         show_percent => 0,
     );
 
-    my $has_output;
     open my $handle, "$script |";
     my $flags = 0;
     fcntl($handle, F_GETFL, $flags);
@@ -51,8 +50,7 @@ for my $script (@scripts) {
 
     while (1) {
         if (defined(my $line = <$handle>)) {
-            $has_output = 1;
-            print "\n", $line, <$handle>, "\n";
+            print "\e[1;31mERR\e[m\n", $line, <$handle>;
             last;
         }
         elsif ($! == EAGAIN) {
@@ -80,7 +78,6 @@ for my $script (@scripts) {
     }
 
     print "\n";
-    print "\n" if $has_output;
 
     $script_time{$script} = $elapsed;
 }
