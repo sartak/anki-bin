@@ -3,7 +3,11 @@ use strict;
 use warnings;
 use File::Slurp qw/slurp write_file/;
 use JSON;
-use Time::HiRes qw/gettimeofday tv_interval/;
+use Time::HiRes qw/sleep gettimeofday tv_interval/;
+use Fcntl;
+use POSIX ':errno_h';
+use String::ProgressBar;
+use List::Util 'max';
 
 my $time_file = "$ENV{HOME}/.anki-problems";
 my %script_time = %{ from_json(slurp($time_file, err_mode => 'quiet') || '{}' ) };
@@ -28,29 +32,54 @@ my @scripts = sort { ($script_time{$a}||0) <=> ($script_time{$b}||0) } qw/
 $| = 1;
 
 for my $script (@scripts) {
-    print "$script";
-
     my $start = [gettimeofday];
     my $expected = ($script_time{$script}||0);
 
+    my $bar = String::ProgressBar->new(
+        text         => $script,
+        max          => (sprintf '%0.2f', $expected),
+        text_length  => (max map { length $_ } @scripts),
+        show_percent => 0,
+    );
+
     my $has_output;
     open my $handle, "$script |";
+    my $flags = 0;
+    fcntl($handle, F_GETFL, $flags);
+    $flags |= O_NONBLOCK;
+    fcntl($handle, F_SETFL, $flags);
 
-    if (defined(my $line = <$handle>)) {
-        $has_output = 1;
-        print ":\n", $line, <$handle>, "\n";
+    while (1) {
+        if (defined(my $line = <$handle>)) {
+            $has_output = 1;
+            print "\n", $line, <$handle>, "\n";
+            last;
+        }
+        elsif ($! == EAGAIN) {
+            my $elapsed = tv_interval($start);
+            $bar->update(sprintf '%0.2f', $elapsed);
+            print "\r", $bar->string, " ";
+            sleep(0.01);
+        }
+        elsif ($!) {
+            exit;
+        }
+        else {
+            $bar->info("\e[1;32mOK!\e[m");
+            print "\r", $bar->string;
+            last;
+        }
     }
 
     my $elapsed = tv_interval($start);
     my $diff = $elapsed - $expected;
-    print " " if !$has_output;
 
     my $diff_output = '';
     if (sprintf('%.02f', abs($diff)) ne '0.00') {
         $diff_output = sprintf ' (%s%.02fs)', ($diff >= 0 ? '+' : ''), $diff;
     }
 
-    printf "[%.02fs%s]\n", $elapsed, $diff_output;
+    print "\n";
     print "\n" if $has_output;
 
     $script_time{$script} = $elapsed;
