@@ -6,7 +6,7 @@ use Anki::Morphology;
 
 my $morph = Anki::Morphology->new;
 
-my %i = %{ $morph->known_morphemes };
+my %i = map { $_ => 1 } $morph->known_morphemes;
 
 my $sth = $morph->anki->prepare('
     select value from fields
