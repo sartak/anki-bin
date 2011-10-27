@@ -123,6 +123,7 @@ my %sources = (
         'iOS',
         'Japanese.app',
         'Amazon',
+        'Anki',
     ],
     podcasts => [
         '読売ニュースポッドキャスト',
