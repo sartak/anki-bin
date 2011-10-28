@@ -4,22 +4,18 @@ use warnings;
 use utf8::all;
 use Anki::Morphology;
 
-my $word = shift
+my $sentence = join ' ', @ARGV
     or die "usage: $0 word\n";
 my $morph = Anki::Morphology->new;
 my $corpus = $morph->corpus;
 
-my @word_morphemes = $morph->morphemes_of($word);
-die "$word does not produce exactly one morpheme: " . join(', ', map { $_->{dictionary} } @word_morphemes)
+my @word_morphemes = map { $_->{dictionary} } $morph->morphemes_of($sentence);
+warn "$sentence does not produce exactly one morpheme: " . join(', ', @word_morphemes)
     if @word_morphemes != 1;
-
-my $expected = $word_morphemes[0]{dictionary};
-die "$word is not in dictionary form ($expected?)"
-    if $word ne $expected;
 
 my %i = map { $_ => 1 } $morph->known_morphemes;
 
-my $extra = (join ' AND ', map { "japanese like '%$_%'" } $expected =~ /\p{Han}/g) || '1=1';
+my $extra = (join ' AND ', map { "japanese like '%$_%'" } (join '', @word_morphemes) =~ /\p{Han}/g) || '1=1';
 my $order = $corpus->order;
 my $sth = $corpus->prepare("
     SELECT rowid, japanese FROM sentences
@@ -30,21 +26,28 @@ my $sth = $corpus->prepare("
 $sth->execute;
 
 SENTENCE: while (my ($rowid, $sentence) = $sth->fetchrow_array) {
-    my $keep = 0;
+    my @morphemes = map { $_->{dictionary} } $morph->morphemes_of($sentence);
 
-    MORPHEME: for my $morpheme ($morph->morphemes_of($sentence)) {
-        my $dict = $morpheme->{dictionary};
+    my $actually_match = 0;
 
-        if ($dict eq $expected) {
-            $keep = 1;
-            next MORPHEME;
+    MORPHEME: for (my $m = 0; $m < @morphemes; ++$m) {
+        my $t_match = 1;
+
+        TRY: for (my $w = 0; $w < @word_morphemes; ++$w) {
+            if (($morphemes[$m+$w]||'') ne $word_morphemes[$w]) {
+                $t_match = 0;
+                last TRY;
+            }
         }
 
-        next SENTENCE if !$i{$dict};
+        $actually_match = 1 if $t_match;
+
+        if (!$t_match && !$i{ $morphemes[$m] }) {
+            next SENTENCE;
+        }
     }
 
-    if ($keep) {
-        say "$rowid: $sentence";
-    }
+    say "$rowid: $sentence"
+        if $actually_match;
 }
 
