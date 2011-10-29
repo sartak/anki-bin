@@ -29,7 +29,7 @@ push @extra, "AND source NOT IN ('MFSP', 'Smart.fm', 'ARES-3', 'プログレッ�
 push @extra, "AND source NOT LIKE 'ハリー・ポッターと%' AND source NOT IN ('吾輩は猫である', 'こゝろ', '坊っちゃん')" if $ARGV{'skip-books'};
 my $extra = join "\n", @extra;
 my $sth = $corpus->prepare("
-    SELECT japanese, source FROM sentences
+    SELECT japanese, source, morphemes FROM sentences
     WHERE suspended = 1
     $extra
     ORDER BY $order
@@ -42,12 +42,12 @@ my $ankied = 0;
 my $prev_source = '';
 my ($i, $e) = (0, 0);
 while (1) {
-    my ($sentence, $source, $fid) = $sth->fetchrow_array;
+    my ($sentence, $source, $fid, $morphemes) = $sth->fetchrow_array;
     if (!$sentence) {
         last if $ankied || $ARGV{'skip-anki'};
 
         $sth = $anki->prepare("
-            SELECT value, 'Anki', fields.factId FROM fields
+            SELECT value, 'Anki', fields.factId, NULL FROM fields
                 JOIN fieldModels ON (fieldModels.id = fields.fieldModelId)
                 JOIN cards ON (cards.factId = fields.factId)
             WHERE
@@ -55,14 +55,14 @@ while (1) {
                 AND cards.type <= 0
         ;");
         $sth->execute;
-        ($sentence, $source, $fid) = $sth->fetchrow_array;
+        ($sentence, $source, $fid, $morphemes) = $sth->fetchrow_array;
         $ankied = 1;
     }
 
     say 2**$e++ if ++$i == 2**$e;
 
     my (@known, @unknown);
-    for my $morpheme ($morph->morphemes_of($sentence)) {
+    for my $morpheme (defined($morphemes) ? split ' ', $morphemes : $morph->morphemes_of($sentence)) {
         my $dict = $morpheme->{dictionary};
 
         if ($i{$dict}) {
