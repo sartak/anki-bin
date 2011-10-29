@@ -3,6 +3,7 @@ use 5.14.0;
 use warnings;
 use utf8::all;
 use Anki::Morphology;
+use List::MoreUtils 'any';
 
 my $sentence = join ' ', @ARGV
     or die "usage: $0 word\n";
@@ -13,41 +14,20 @@ my @word_morphemes = map { $_->{dictionary} } $morph->morphemes_of($sentence);
 warn "$sentence does not produce exactly one morpheme: " . join(', ', @word_morphemes)
     if @word_morphemes != 1;
 
-my %i = map { $_ => 1 } $morph->known_morphemes;
+my %i = map { $_ => 1 } $morph->known_morphemes, @word_morphemes;
 
-my $extra = (join ' AND ', map { "japanese like '%$_%'" } (join '', @word_morphemes) =~ /\p{Han}/g) || '1=1';
+my $morph_pattern = '"% ' . join(' ', @word_morphemes) . ' %"';
 my $order = $corpus->order;
 my $sth = $corpus->prepare("
-    SELECT rowid, japanese FROM sentences
+    SELECT rowid, japanese, morphemes
+    FROM sentences
     WHERE suspended = 1
-    AND $extra
+    AND morphemes LIKE $morph_pattern
     ORDER BY $order
 ;");
 $sth->execute;
 
-SENTENCE: while (my ($rowid, $sentence) = $sth->fetchrow_array) {
-    my @morphemes = map { $_->{dictionary} } $morph->morphemes_of($sentence);
-
-    my $actually_match = 0;
-
-    MORPHEME: for (my $m = 0; $m < @morphemes; ++$m) {
-        my $t_match = 1;
-
-        TRY: for (my $w = 0; $w < @word_morphemes; ++$w) {
-            if (($morphemes[$m+$w]||'') ne $word_morphemes[$w]) {
-                $t_match = 0;
-                last TRY;
-            }
-        }
-
-        $actually_match = 1 if $t_match;
-
-        if (!$t_match && !$i{ $morphemes[$m] }) {
-            next SENTENCE;
-        }
-    }
-
-    say "$rowid: $sentence"
-        if $actually_match;
+while (my ($rowid, $sentence, $morphemes) = $sth->fetchrow_array) {
+    next if any { !$i{ $_ } } split ' ', $morphemes;
+    say "$rowid: $sentence";
 }
-
