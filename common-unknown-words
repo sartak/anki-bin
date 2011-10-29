@@ -29,7 +29,7 @@ push @extra, "AND source NOT IN ('MFSP', 'Smart.fm', 'ARES-3', 'プログレッ�
 push @extra, "AND source NOT LIKE 'ハリー・ポッターと%' AND source NOT IN ('吾輩は猫である', 'こゝろ', '坊っちゃん')" if $ARGV{'skip-books'};
 my $extra = join "\n", @extra;
 my $sth = $corpus->prepare("
-    SELECT japanese, source, morphemes FROM sentences
+    SELECT japanese, source, NULL, morphemes FROM sentences
     WHERE suspended = 1
     $extra
     ORDER BY $order
@@ -62,9 +62,7 @@ while (1) {
     say 2**$e++ if ++$i == 2**$e;
 
     my (@known, @unknown);
-    for my $morpheme (defined($morphemes) ? split ' ', $morphemes : $morph->morphemes_of($sentence)) {
-        my $dict = $morpheme->{dictionary};
-
+    for my $dict (defined($morphemes) ? split ' ', $morphemes : map { $_->{dictionary} } $morph->morphemes_of($sentence)) {
         if ($i{$dict}) {
             push @known, $dict;
         }
