@@ -36,10 +36,12 @@ for my $script (@scripts) {
     my $expected = ($script_time{$script}||0);
 
     my $bar = String::ProgressBar->new(
-        text         => $script,
-        max          => (sprintf '%0.2f', $expected),
-        text_length  => (max map { length $_ } @scripts),
-        show_percent => 0,
+        text           => $script,
+        max            => (sprintf '%0.2f', $expected),
+        text_length    => (max map { length $_ } @scripts),
+        show_percent   => 0,
+        allow_overflow => 1,
+        bar_overflow   => 1,
     );
 
     open my $handle, "$script |";
