@@ -41,7 +41,7 @@ for my $script (@scripts) {
         text_length    => (max map { length $_ } @scripts),
         show_percent   => 0,
         allow_overflow => 1,
-        bar_overflow   => 1,
+        bar_overflow   => 0,
     );
 
     open my $handle, "$script |";
