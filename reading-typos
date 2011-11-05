@@ -8,6 +8,7 @@ sub kana2hiragana { kata2hira(kana2katakana(shift)) }
 
 my %known_homographs = (
     '1日'    => [qw/いちにち  ついたち/],
+    '目'     => [qw/め        もく/],
     '娘'     => [qw/こ        むすめ/],
     '名'     => [qw/めい      な/],
     '後'     => [qw/あと      ご/],
