@@ -107,14 +107,20 @@ while (my ($yomi) = $sth->fetchrow_array) {
     }
 }
 
+my $k = 0;
+my $u = 0;
+my $e = 0;
+
 for my $kanji (@kanji) {
     print "$kanji: ";
     while (my $joyo = shift @{ $joyo_readings{$kanji} }) {
         if ($seen_joyo{$kanji}{$joyo}) {
             print "\e[1;32m";
+            ++$k;
         }
         else {
             print "\e[1;31m";
+            ++$u;
         }
         print $joyo;
         print "\e[m";
@@ -122,9 +128,12 @@ for my $kanji (@kanji) {
     }
     for (@{ $extra_words{$kanji} }) {
         print "、$_";
+        ++$e;
     }
     print "\n";
 }
+
+printf "Joyo readings: %d/%d (%d%%) (+%d)\n", $k, $u+$k, $k*100/($u+$k), $e;
 
 __END__
 一 イチ イツ ひと ひと-つ
