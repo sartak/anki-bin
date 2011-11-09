@@ -90,6 +90,7 @@ my %sources = (
     references => [
         'モダンPerl入門',
         'CPANモジュールガイド',
+        qr/^WEB\+DB Press: .+/,
     ],
     songs => [
         qr/^Mr\. Children - .*$/,
