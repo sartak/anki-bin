@@ -72,8 +72,13 @@ $sth->execute;
 
 while (my ($fid, $reading_field) = $sth->fetchrow_array) {
     my @readings = split /<br.*?>/, $reading_field;
+    my %seen_this_field;
     for (@readings) {
         if (my ($word, $reading) = /^([^【]+)【([^】]+)】$/) {
+            if ($seen_this_field{$_}++) {
+                warn "$fid duplicate reading: $_\n";
+            }
+
             $readings_of_word{$word}{$reading} = 1;
             for my $kanji ($word =~ /\p{Han}/g) {
                 $readings_of_kanji{$kanji}{$reading} = 1;
