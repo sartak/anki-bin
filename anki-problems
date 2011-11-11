@@ -44,7 +44,7 @@ for my $script (@scripts) {
         bar_overflow   => 0,
     );
 
-    open my $handle, "$script |";
+    open my $handle, "$script 2>&1 |";
     my $flags = 0;
     fcntl($handle, F_GETFL, $flags);
     $flags |= O_NONBLOCK;
