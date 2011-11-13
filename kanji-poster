@@ -32,7 +32,7 @@ my %promote_chiisai = qw/っ つ/;
 sub devoice         { join '', map { $devoice_table{$_}   || $_ } split '', shift }
 sub promote_chiisai { join '', map { $promote_chiisai{$_} || $_ } split '', shift }
 
-my $status_file = "$ENV{HOME}/devel/anki-bin/.kanji-poster";
+my $status_file = "$ENV{HOME}/devel/vocabulary/.kanji-poster";
 my %old_kanji_status;
 %old_kanji_status = %{ from_json(slurp($status_file, err_mode => 'quiet') || '{}', { utf8 => 1 } ) };
 
