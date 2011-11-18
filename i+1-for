@@ -11,21 +11,21 @@ my $morph = Anki::Morphology->new;
 my $corpus = $morph->corpus;
 
 my @word_morphemes = map { $_->{dictionary} } $morph->morphemes_of($sentence);
-warn "$sentence does not produce exactly one morpheme: " . join(', ', @word_morphemes)
+die "$sentence does not produce exactly one morpheme: " . join(', ', @word_morphemes)
     if @word_morphemes != 1;
 
 my %i = map { $_ => 1 } $morph->known_morphemes, @word_morphemes;
 
-my $morph_pattern = '"% ' . join(' ', @word_morphemes) . ' %"';
 my $order = $corpus->order;
 my $sth = $corpus->prepare("
-    SELECT rowid, japanese, morphemes
+    SELECT sentences.rowid, sentences.japanese, sentences.morphemes
     FROM sentences
-    WHERE suspended = 1
-    AND morphemes LIKE $morph_pattern
+    JOIN morphemes ON (morphemes.sentence = sentences.rowid)
+    WHERE sentences.suspended = 1
+    AND morphemes.dictionary = ?
     ORDER BY $order
 ;");
-$sth->execute;
+$sth->execute($word_morphemes[0]);
 
 while (my ($rowid, $sentence, $morphemes) = $sth->fetchrow_array) {
     next if any { !$i{ $_ } } split ' ', $morphemes;
