@@ -64,6 +64,7 @@ my %sources = (
         'GoldenEye',
         '乱',
         'グラディエーター',
+        '用心棒',
     ],
     television => [
         qr/^ドラゴンボール改\d+$/,
