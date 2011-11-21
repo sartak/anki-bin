@@ -21,6 +21,7 @@ my @scripts = sort { ($script_time{$a}||0) <=> ($script_time{$b}||0) } qw/
     duplicate-sentences
     kanji-order
     marked-cards
+    missing-kanji
     needed-readings
     reading-typos
     smartfm-divergence
