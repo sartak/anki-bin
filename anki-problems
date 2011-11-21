@@ -13,20 +13,20 @@ my $time_file = "$ENV{HOME}/.anki-problems";
 my %script_time = %{ from_json(slurp($time_file, err_mode => 'quiet') || '{}' ) };
 
 my @scripts = sort { ($script_time{$a}||0) <=> ($script_time{$b}||0) } qw/
+    anki-tidy
+    context-sentence
+    context-typos
+    corpus-divergence
     dictionary-translations
+    duplicate-sentences
     kanji-order
     marked-cards
-    anki-tidy
-    duplicate-sentences
-    context-typos
-    smartfm-divergence
-    tag-typos
+    needed-readings
     reading-typos
+    smartfm-divergence
     source-typos
     spurious-readings
-    needed-readings
-    context-sentence
-    corpus-divergence
+    tag-typos
 /;
 
 $| = 1;
