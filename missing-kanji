@@ -25,6 +25,8 @@ my %gaiji = (
     '〇' => 1,
 );
 
+my %missing;
+
 $kanji_sth->execute;
 while (my ($kanji) = $kanji_sth->fetchrow_array) {
     $gaiji{$kanji}++;
@@ -48,7 +50,11 @@ while (my ($sentence) = $sentence_sth->fetchrow_array) {
         next if heisig_number($kanji)
              || $gaiji{$kanji};
 
-        warn "$kanji: $sentence\n";
-        $gaiji{$kanji}++;
+        push @{ $missing{$kanji} }, $sentence;
     }
+}
+
+for my $kanji (sort { @{ $missing{$b} } <=> @{ $missing{$a} } } keys %missing) {
+    say $kanji;
+    say "    $_" for @{ $missing{$kanji} };
 }
