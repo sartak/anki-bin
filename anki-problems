@@ -38,7 +38,7 @@ for my $script (@scripts) {
 
     my $bar = String::ProgressBar->new(
         text           => $script,
-        max            => (sprintf '%0.2f', $expected),
+        max            => (sprintf '%0.2f', $expected || 0.01),
         text_length    => (max map { length $_ } @scripts),
         show_percent   => 0,
         allow_overflow => 1,
