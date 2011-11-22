@@ -212,29 +212,37 @@ for my $kanji ((kanji)[0..2041]) {
     print_kanji($kanji);
 }
 
-print newline . newline;
+print newline;
 
-if ($ARGV{html}) {
-    print '<h5>Remembering the Kanji 3</h5>';
-}
+my $print_second_poster = 0;
+$print_second_poster = 1 if grep { ($kanji_status{$_} || '') ne ($old_kanji_status{$_} || '') } (kanji)[2042..3029];
+$print_second_poster = 1 if $ARGV{html} || $ARGV{full};
 
-$i = 0;
-for my $kanji ((kanji)[2042..3006]) {
-    print_kanji($kanji);
-}
+if ($print_second_poster) {
+    print newline;
 
-if ($ARGV{html}) {
-    print newline . newline;
-    print '<h5>RTK Supplement</h5>';
+    if ($ARGV{html}) {
+        print '<h5>Remembering the Kanji 3</h5>';
+    }
+
     $i = 0;
-}
-else {
-    print '　' x 4;
-    $i += 4;
-}
+    for my $kanji ((kanji)[2042..3006]) {
+        print_kanji($kanji);
+    }
 
-for my $kanji ((kanji)[3007..3029]) {
-    print_kanji($kanji);
+    if ($ARGV{html}) {
+        print newline . newline;
+        print '<h5>RTK Supplement</h5>';
+        $i = 0;
+    }
+    else {
+        print '　' x 4;
+        $i += 4;
+    }
+
+    for my $kanji ((kanji)[3007..3029]) {
+        print_kanji($kanji);
+    }
 }
 
 if ($ARGV{html}) {
