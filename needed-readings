@@ -6,7 +6,7 @@ use utf8::all;
 
 my $db = Anki::Database->new;
 my $sth = $db->prepare("
-    select sentence.value, reading.value
+    select sentence.factId, sentence.value, reading.value
     from fields as sentence
         join fields as reading on (sentence.factId = reading.factId)
         join cards as sentence_card on (sentence.factId = sentence_card.factId)
@@ -22,8 +22,7 @@ my $sth = $db->prepare("
 
 $sth->execute;
 
-my $i = 0;
-while (my ($sentence, $reading_field) = $sth->fetchrow_array) {
+while (my ($fid, $sentence, $reading_field) = $sth->fetchrow_array) {
     my @needed;
     for my $kanji ($sentence =~ /(\p{Han}|[０１２３４５６７８９])/g) {
         next if $reading_field =~ $kanji;
@@ -31,7 +30,7 @@ while (my ($sentence, $reading_field) = $sth->fetchrow_array) {
     }
     next if !@needed;
 
-    say ++$i . ". " . $sentence;
+    say "$fid|$sentence";
     say "  " . join ', ', @needed;
 }
 
