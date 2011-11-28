@@ -1,0 +1,19 @@
+#!/usr/bin/env perl
+use 5.14.0;
+use warnings;
+use utf8::all;
+use Anki::Database;
+use Unicode::Normalize;
+
+my $db = Anki::Database->new;
+my $sth = $db->prepare("
+    select fields.factId, fields.value
+    from fields
+;");
+$sth->execute;
+
+while (my ($fid, $field) = $sth->fetchrow_array) {
+    my $normalized = NFC($field);
+    say "$fid|$field"
+        if $field ne $normalized;
+}
