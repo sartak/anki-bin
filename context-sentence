@@ -38,6 +38,7 @@ my $sentence_sth = $db->prepare(q{
         models.name = '文'
         and fieldModels.name = '日本語'
         and sentence.value like ?
+    limit 1
 ;});
 
 my %seen;
