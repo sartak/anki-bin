@@ -1,0 +1,9 @@
+#!/usr/bin/env perl
+use 5.14.0;
+use warnings;
+
+my $word = shift;
+my @ids = map { /^(\d+)/ } `i+1-for $word`;
+if (@ids) {
+    exec('scan-corpus-for', @ids);
+}
