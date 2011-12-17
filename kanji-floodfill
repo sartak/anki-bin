@@ -13,7 +13,12 @@ my @status;
 my @row;
 for my $i (0..2041) {
     my $kanji = (kanji)[$i];
-    push @row, ($kanji_status{$kanji}||'card') eq 'card' ? 0 : 1;
+
+    my $status = 0;
+    $status = 1 if $kanji_status{$kanji}
+                && $kanji_status{$kanji} ne 'card';
+    push @row, $status;
+
     if ($i % 32 == 31 || $i == 2041) {
         push @status, [splice @row];
     }
