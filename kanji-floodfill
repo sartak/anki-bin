@@ -1,0 +1,81 @@
+#!/usr/bin/env perl
+use 5.14.0;
+use warnings;
+use utf8::all;
+use JSON;
+use File::Slurp 'slurp', 'write_file';
+use Lingua::JA::Heisig 'kanji', 'heisig_number';
+
+my $status_file = "$ENV{HOME}/devel/vocabulary/.kanji-poster";
+my %kanji_status = %{ from_json(slurp($status_file, err_mode => 'quiet') || die "need to use kanji-poster", { utf8 => 1 } ) };
+
+my @status;
+my @row;
+for my $i (0..2041) {
+    my $kanji = (kanji)[$i];
+    push @row, ($kanji_status{$kanji}||'card') eq 'card' ? 0 : 1;
+    if ($i % 32 == 31 || $i == 2041) {
+        push @status, [splice @row];
+    }
+}
+
+my @colored;
+my $color = 0;
+my %count_of;
+
+for (my $y = 0; $y < @status; ++$y) {
+    for (my $x = 0; $x < 32; ++$x) {
+        next if !$status[$y][$x] || defined($colored[$y][$x]);
+        ++$color;
+        my @queue = [$x, $y];
+        while (my $try = shift @queue) {
+            my ($x, $y) = @$try;
+            next if defined $colored[$y][$x];
+
+            if (!$status[$y][$x]) {
+                $colored[$y][$x] = 0;
+                next;
+            }
+
+            $colored[$y][$x] = $color;
+            ++$count_of{$color};
+
+            for my $next ([$x-1, $y+0], [$x+1, $y+0], [$x+0, $y-1], [$x+0, $y+1]) {
+                my ($x, $y) = @$next;
+
+                next if defined $colored[$y][$x];
+                next if $y < 0 || $y >= @status
+                    || $x < 0 || $x >= 32;
+
+                push @queue, $next;
+            }
+        }
+    }
+}
+
+my %real_color_of;
+$color = 30;
+for my $index (sort { $count_of{$b} <=> $count_of{$a} } keys %count_of) {
+    $real_color_of{$index} = ++$color;
+    last if $color == 37;
+}
+
+my ($x, $y) = (0, 0);
+for my $i (0..2041) {
+    my $kanji = (kanji)[$i];
+
+    if ($colored[$y][$x]) {
+        my $color = $real_color_of{$colored[$y][$x]} || 37;
+        print "\e[1;${color}m";
+    }
+    else {
+        print "\e[0;30m";
+    }
+
+    print $kanji;
+
+    $x = 0, $y++, print "\n" if ++$x == 32 || $i == 2041;
+
+    print "\e[m";
+}
+
