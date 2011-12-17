@@ -7,7 +7,7 @@ use File::Slurp 'slurp', 'write_file';
 use Lingua::JA::Heisig 'kanji', 'heisig_number';
 
 my $status_file = "$ENV{HOME}/devel/vocabulary/.kanji-poster";
-my %kanji_status = %{ from_json(slurp($status_file, err_mode => 'quiet') || die "need to use kanji-poster", { utf8 => 1 } ) };
+my %kanji_status = %{ from_json(slurp($status_file), { utf8 => 1 } ) };
 
 my @status;
 my @row;
