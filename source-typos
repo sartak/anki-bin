@@ -105,6 +105,7 @@ my %sources = (
         qr/^Malice Mizer - .*$/,
         qr/^Perfume - .*$/,
         qr/^浜崎あゆみ - .*$/,
+        qr/^Pizzicato Five - .*$/,
     ],
     apps => [
         'RT',
