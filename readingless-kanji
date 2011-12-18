@@ -21,6 +21,7 @@ my $sth = $db->prepare("
             kanjiFieldModel.name = '漢字'
             and readingFieldModel.name = '読み'
             and reading.value = ''
+            and facts.tags not like '%kanji-ignore%'
             order by facts.created
 ;");
 $sth->execute;

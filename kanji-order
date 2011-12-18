@@ -12,20 +12,17 @@ my $kanji_sth = $db->prepare("
         join fieldModels as kanjiField on (kanji.fieldModelId = kanjiField.id)
         join cards on (cards.factId = kanji.factId)
         join cardModels on (cards.cardModelId = cardModels.id)
+        join facts on (cards.factId = facts.id)
     where
         kanjiField.name = '漢字'
         and cardModels.name = '書け'
+        and facts.tags not like '%kanji-ignore%'
         order by cards.created asc
 ;");
-
-my %seen;
-my %zodiac = map { $_ => 1 } qw/子 牛 未 申/;
 
 $kanji_sth->execute;
 my $expected = 1;
 while (my ($kanji) = $kanji_sth->fetchrow_array) {
-    next if $seen{$kanji}++ && $zodiac{$kanji};
-
     my $heisig = heisig_number($kanji);
     next if !$heisig;
     if ($heisig != $expected) {
