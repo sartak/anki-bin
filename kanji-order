@@ -18,9 +18,14 @@ my $kanji_sth = $db->prepare("
         order by cards.created asc
 ;");
 
+my %seen;
+my %zodiac = map { $_ => 1 } qw/子 牛 未 申/;
+
 $kanji_sth->execute;
 my $expected = 1;
 while (my ($kanji) = $kanji_sth->fetchrow_array) {
+    next if $seen{$kanji}++ && $zodiac{$kanji};
+
     my $heisig = heisig_number($kanji);
     next if !$heisig;
     if ($heisig != $expected) {
