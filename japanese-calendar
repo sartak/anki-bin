@@ -73,7 +73,10 @@ my %query_for = (
             join models on (facts.modelId = models.id)
         where
             models.name = '文'
-            and source.value = 'Tae Kim'
+            and (
+                source.value = 'Tae Kim'
+                or source.value like 'http://%guidetojapanese.org/%'
+            )
             and fieldModels.name = '出所'
             and cards.type >= 0
             and cards.firstAnswered >= $start
