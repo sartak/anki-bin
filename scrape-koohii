@@ -28,18 +28,31 @@ my $scraper = scraper {
     process '.strokecount',  strokes => 'TEXT';
     process '.keyword span', keyword => 'TEXT';
 
-    process '#sharedstories-fav .sharedstory .bookstyle', 'stories[]' => 'TEXT';
+    process '#sharedstories-fav .sharedstory' => 'stories[]' => scraper {
+        process '.bookstyle', text   => 'TEXT';
+        process 'a.star',     stars  => 'TEXT';
+        process 'a.report',   report => 'TEXT';
+    };
 };
 
 while (my $kanji = shift @kanji) {
     $mech->get("/study/kanji/$kanji");
     my $res = $scraper->scrape($mech->content);
 
-    splice @{ $res->{stories} }, 5; # only the first 5
+    splice @{ $res->{stories} }, 5
+        if @{ $res->{stories} } > 5; # only the first 5
 
     say "$res->{number}: $res->{kanji} $res->{strokes} $res->{keyword}";
     for my $story (@{ $res->{stories} }) {
-        say "    $story";
+        for ('stars', 'report') {
+            $story->{$_} =~ s/[^0-9]//g;
+        }
+        my $info = "($story->{stars}★ $story->{report}⚠)";
+        $info =~ s/\(0?★/(/;
+        $info =~ s/ 0?⚠//;
+        $info = "" if $info eq '()';
+
+        say "   $info $story->{text}";
     }
 
     if (@kanji) {
