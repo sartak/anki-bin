@@ -47,10 +47,10 @@ while (my $kanji = shift @kanji) {
         for ('stars', 'report') {
             $story->{$_} =~ s/[^0-9]//g;
         }
-        my $info = "($story->{stars}★ $story->{report}⚠)";
-        $info =~ s/\(0?★/(/;
+        my $info = "[$story->{stars}★ $story->{report}⚠]";
+        $info =~ s/\[0?★/[/;
         $info =~ s/ 0?⚠//;
-        $info = "" if $info eq '()';
+        $info = "" if $info eq '[]';
 
         say "   $info $story->{text}";
     }
