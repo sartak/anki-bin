@@ -35,6 +35,8 @@ my $scraper = scraper {
     };
 };
 
+$| = 1;
+
 while (my $kanji = shift @kanji) {
     $mech->get("/study/kanji/$kanji");
     my $res = $scraper->scrape($mech->content);
