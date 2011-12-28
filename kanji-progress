@@ -10,6 +10,7 @@ use Getopt::Whatever;
 use DateTime;
 use Time::HiRes 'sleep';
 use Lingua::JA::Moji 'kana2katakana', 'kata2hira';
+use Lingua::JA::Heisig 'kanji';
 
 sub black   { $ARGV{html} ? '<span class="black">' : "\e[1;30m" }
 sub red     { $ARGV{html} ? '<span class="red">'   : "\e[1;31m" }
@@ -129,6 +130,11 @@ while (my ($sentence, $readings, $reviewed) = $sentence_sth->fetchrow_array) {
     }
 }
 
+use Imager;
+
+my %status_of;
+my $font = Imager::Font->new(file => "$ENV{HOME}/Documents/hiragino-thick.otf");
+
 my $dt = $first->clone;
 while ($dt < $last) {
     my $day = $dt->ymd;
@@ -137,14 +143,59 @@ while ($dt < $last) {
 
     for my $item (@{ $event{$day} }) {
         if ($item->{heisig}) {
-            say " - learned $item->{heisig}";
+            $status_of{ $item->{heisig} }{heisig} = $day;
         }
         elsif ($item->{reading}) {
-            say " - learned $item->{reading} for $item->{kanji}";
+            $status_of{ $item->{kanji} }{readings} = $day;
         }
     }
 }
 continue {
+    my $day = $dt->ymd;
+
+    my $img = Imager->new(
+        xsize => 1280,
+        ysize => 720,
+    );
+    $img->box(
+        filled => 1,
+        color  => Imager::Color->new("#FFFFFF"),
+    );
+    my ($x, $y) = (0, 0);
+    for my $i (0..2041) {
+        my $kanji = (kanji)[$i];
+        if ($status_of{$kanji}) {
+            my $color = '#FFFF00';;
+            if (($status_of{$kanji}{readings}||'') eq $day) {
+                $color = '#FF0000';
+            }
+            elsif (($status_of{$kanji}{heisig}||'') eq $day) {
+                $color = '#00FF00';
+            }
+            elsif ($status_of{$kanji}{readings}) {
+                $color = '#990000';
+            }
+            elsif ($status_of{$kanji}{heisig}) {
+                $color = '#009900';
+            }
+
+            $img->string(
+                font  => $font,
+                text  => $kanji,
+                x     => $x * 21,
+                y     => ($y+1) * 21,
+                size  => 20,
+                color => $color,
+                aa    => 1,
+            );
+        }
+
+        $y++, $x = 0 if ++$x == 61;
+    }
+
+    $img->write(file => "progress/$day.png")
+        or die $img->errstr;
+
     $dt = $dt->add(days => 1);
 }
 
