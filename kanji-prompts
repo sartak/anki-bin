@@ -28,3 +28,20 @@ while (my ($kanji, $reading) = $sth->fetchrow_array) {
 for my $reading (sort { @{ $kanji_for{$b} } <=> @{ $kanji_for{$a} } } grep { @{ $kanji_for{$_} } > 1 } keys %kanji_for) {
     say "$reading: " . join('、', sort @{ $kanji_for{$reading} });
 }
+
+$sth = $db->prepare("
+    select kanji.factId, kanji.value, reading.value
+        from fields as kanji
+            join fieldModels as kanjiFieldModel on (kanji.fieldModelId = kanjiFieldModel.id)
+            join fields as reading on (kanji.factId = reading.factId)
+            join fieldModels as readingFieldModel on (reading.fieldModelId = readingFieldModel.id)
+        where
+            kanjiFieldModel.name = '漢字'
+            and readingFieldModel.name = '読み'
+            and reading.value like ('%' || kanji.value || '%')
+;");
+$sth->execute;
+
+while (my ($fid, $kanji, $reading) = $sth->fetchrow_array) {
+    say "$fid|$kanji included in reading $reading";
+}
