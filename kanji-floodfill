@@ -11,7 +11,7 @@ my %kanji_status = %{ from_json(slurp($status_file), { utf8 => 1 } ) };
 
 my @status;
 my @row;
-for my $i (0..2041) {
+for my $i (0..3029) {
     my $kanji = (kanji)[$i];
 
     my $status = 0;
@@ -19,7 +19,15 @@ for my $i (0..2041) {
                 && $kanji_status{$kanji} ne 'card';
     push @row, $status;
 
-    if ($i % 32 == 31 || $i == 2041) {
+    if ($i == 3006) {
+        push @row, 0, 0, 0, 0;
+    }
+
+    if (
+           ($i < 2041 && $i % 32 == 31)
+        || ($i > 2041 && $i % 32 == 25)
+        || ($i == 2041 || $i == 3029)
+    ) {
         push @status, [splice @row];
     }
 }
@@ -66,7 +74,7 @@ for my $index (sort { $count_of{$b} <=> $count_of{$a} } keys %count_of) {
 }
 
 my ($x, $y) = (0, 0);
-for my $i (0..2041) {
+for my $i (0..3029) {
     my $kanji = (kanji)[$i];
 
     if ($colored[$y][$x]) {
@@ -74,12 +82,13 @@ for my $i (0..2041) {
         print "\e[1;${color}m";
     }
     else {
-        print "\e[0;30m";
+        print "\e[1;30m";
     }
 
     print $kanji;
 
-    $x = 0, $y++, print "\n" if ++$x == 32 || $i == 2041;
+    $x = 0, $y++, print "\n" if ++$x == 32 || $i == 2041 || $i == 3029;
+    $x += 4, print "　　　　" if $i == 3006;
 
     print "\e[m";
 }
