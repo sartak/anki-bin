@@ -32,6 +32,30 @@ my %promote_chiisai = qw/っ つ/;
 sub devoice         { join '', map { $devoice_table{$_}   || $_ } split '', shift }
 sub promote_chiisai { join '', map { $promote_chiisai{$_} || $_ } split '', shift }
 
+my %joyo_readings;
+while (<DATA>) {
+    my ($kanji, @readings) = map { kana2hiragana($_) } split ' ';
+    $joyo_readings{$kanji} = \@readings;
+}
+
+sub joyo_for {
+    my ($kanji, $word, $reading) = @_;
+
+    my @joyo;
+    for my $joyo (@{ $joyo_readings{$kanji} }) {
+        (my $joyo_re = $joyo) =~ s/-//;
+
+        my $matched = 0;
+        if ($word =~ /^$kanji/) { $matched ||= $reading =~ /^$joyo_re/ }
+        if ($word =~ /.$kanji/) { $matched ||= $reading =~ /.$joyo_re/ }
+
+        if ($matched) {
+            push @joyo, $joyo;
+        }
+    }
+    return @joyo == 0 ? undef : \@joyo;
+}
+
 my $status_file = "$ENV{HOME}/devel/vocabulary/.kanji-poster";
 my %old_kanji_status;
 %old_kanji_status = %{ from_json(slurp($status_file, err_mode => 'quiet') || '{}', { utf8 => 1 } ) };
@@ -97,12 +121,6 @@ while (my ($sentence) = $sentence_sth->fetchrow_array) {
     }
 }
 
-my %joyo_readings;
-while (<DATA>) {
-    my ($kanji, @readings) = map { kana2hiragana($_) } split ' ';
-    $joyo_readings{$kanji} = \@readings;
-}
-
 my $yomi_sth = $db->prepare("
     select yomi.value
         from fields as yomi
@@ -121,24 +139,6 @@ $yomi_sth->execute;
 
 my %seen_line;
 my %seen_joyo;
-
-sub joyo_for {
-    my ($kanji, $word, $reading) = @_;
-
-    my @joyo;
-    for my $joyo (@{ $joyo_readings{$kanji} }) {
-        (my $joyo_re = $joyo) =~ s/-//;
-
-        my $matched = 0;
-        if ($word =~ /^$kanji/) { $matched ||= $reading =~ /^$joyo_re/ }
-        if ($word =~ /.$kanji/) { $matched ||= $reading =~ /.$joyo_re/ }
-
-        if ($matched) {
-            push @joyo, $joyo;
-        }
-    }
-    return @joyo == 0 ? undef : \@joyo;
-}
 
 while (my ($yomi) = $yomi_sth->fetchrow_array) {
     for my $line (split /<br.*?>/, $yomi) {
