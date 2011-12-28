@@ -1,0 +1,30 @@
+#!/usr/bin/env perl
+use 5.14.0;
+use warnings;
+use utf8::all;
+use Anki::Database;
+
+my $db = Anki::Database->new;
+
+my $sth = $db->prepare("
+    select kanji.value, reading.value
+        from fields as kanji
+            join fieldModels as kanjiFieldModel on (kanji.fieldModelId = kanjiFieldModel.id)
+            join fields as reading on (kanji.factId = reading.factId)
+            join fieldModels as readingFieldModel on (reading.fieldModelId = readingFieldModel.id)
+        where
+            kanjiFieldModel.name = '漢字'
+            and readingFieldModel.name = '読み'
+            and reading.value <> ''
+;");
+$sth->execute;
+
+my %kanji_for;
+
+while (my ($kanji, $reading) = $sth->fetchrow_array) {
+    push @{ $kanji_for{$reading} }, $kanji;
+}
+
+for my $reading (sort { @{ $kanji_for{$b} } <=> @{ $kanji_for{$a} } } grep { @{ $kanji_for{$_} } > 1 } keys %kanji_for) {
+    say "$reading: " . join('、', sort @{ $kanji_for{$reading} });
+}
