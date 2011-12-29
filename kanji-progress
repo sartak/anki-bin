@@ -146,7 +146,8 @@ while ($dt < $last) {
             $status_of{ $item->{heisig} }{heisig} = $day;
         }
         elsif ($item->{reading}) {
-            $status_of{ $item->{kanji} }{readings} = $day;
+            $status_of{ $item->{kanji} }{last_reading} = $day;
+            $status_of{ $item->{kanji} }{readings}++;
         }
     }
 }
@@ -166,13 +167,13 @@ continue {
         my $kanji = (kanji)[$i];
         if ($status_of{$kanji}) {
             my $color = '#FFFF00';;
-            if (($status_of{$kanji}{readings}||'') eq $day) {
+            if (($status_of{$kanji}{last_reading}||'') eq $day) {
                 $color = '#FF0000';
             }
             elsif (($status_of{$kanji}{heisig}||'') eq $day) {
                 $color = '#00FF00';
             }
-            elsif ($status_of{$kanji}{readings}) {
+            elsif ($status_of{$kanji}{last_reading}) {
                 $color = '#990000';
             }
             elsif ($status_of{$kanji}{heisig}) {
