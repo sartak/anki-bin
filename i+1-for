@@ -14,6 +14,10 @@ my @word_morphemes = map { $_->{dictionary} } $morph->morphemes_of($sentence);
 die "$sentence does not produce exactly one morpheme: " . join(', ', @word_morphemes)
     if @word_morphemes != 1;
 
+if ((join '', @word_morphemes) ne $sentence) {
+    warn "$sentence -> @word_morphemes\n";
+}
+
 my %i = map { $_ => 1 } $morph->known_morphemes, @word_morphemes;
 
 my $order = $corpus->order;
