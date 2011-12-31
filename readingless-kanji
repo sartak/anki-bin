@@ -91,22 +91,24 @@ for my $kanji (@no_readings) {
     say "\n";
 }
 
-print "[$i] ";
+if (!$ENV{ANKI_PROBLEMS}) {
+    print "[$i] ";
 
-$sth = $db->prepare("
-    select count(*)
-        from fields
-        join fieldModels on (fields.fieldModelId = fieldModels.id)
-        join models on (fieldModels.modelId = models.id)
-        where
-            fieldModels.name = '読み'
-            and models.name like '%漢字%'
-;");
-$sth->execute;
-my ($kanji_count) = $sth->fetchrow_array;
+    $sth = $db->prepare("
+        select count(*)
+            from fields
+            join fieldModels on (fields.fieldModelId = fieldModels.id)
+            join models on (fieldModels.modelId = models.id)
+            where
+                fieldModels.name = '読み'
+                and models.name like '%漢字%'
+    ;");
+    $sth->execute;
+    my ($kanji_count) = $sth->fetchrow_array;
 
-my $with_reading = $kanji_count - @no_readings;
-printf "Coverage: %d/%d (%.2f%%)\n", $with_reading, $kanji_count, 100*$with_reading/$kanji_count;
+    my $with_reading = $kanji_count - @no_readings;
+    printf "Coverage: %d/%d (%.2f%%)\n", $with_reading, $kanji_count, 100*$with_reading/$kanji_count;
+}
 
 sub kanji_count {
     my $kanji = shift;

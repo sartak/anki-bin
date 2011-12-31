@@ -9,6 +9,8 @@ use POSIX ':errno_h';
 use String::ProgressBar;
 use List::Util 'max';
 
+$ENV{ANKI_PROBLEMS} = 1;
+
 my $time_file = "$ENV{HOME}/.anki-problems";
 my %script_time = %{ from_json(slurp($time_file, err_mode => 'quiet') || '{}' ) };
 
@@ -26,6 +28,7 @@ my @scripts = sort { ($script_time{$a}||0) <=> ($script_time{$b}||0) } qw/
     needed-readings
     nfcify-fields
     reading-typos
+    readingless-kanji
     smartfm-divergence
     source-typos
     spurious-readings
