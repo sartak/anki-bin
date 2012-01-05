@@ -65,7 +65,7 @@ my %query_for = (
             and cards.created >= $start
     ;",
     'Grammar' => "
-        select cards.firstAnswered, 1
+        select cards.firstAnswered, source.value
             from cards
             join facts on (cards.factId = facts.id)
             join fields as source on (source.factId = facts.id)
@@ -283,9 +283,6 @@ sub show_achievement {
     }
     elsif ($achievement eq 'Vocabulary') {
         say " (" . @values . "): " . join(', ', @values);
-    }
-    elsif ($achievement eq 'Grammar') {
-        say ": " . @values;
     }
     elsif (keys(%seen) > 1) {
         my $sum = @values;
