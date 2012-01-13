@@ -7,12 +7,13 @@ use Lingua::JA::Heisig 'heisig_number', 'kanji';
 
 my $db = Anki::Database->new;
 my $kanji_sth = $db->prepare("
-    select kanji.value
+    select kanji.value, models.name
     from fields as kanji
         join fieldModels as kanjiField on (kanji.fieldModelId = kanjiField.id)
         join cards on (cards.factId = kanji.factId)
         join cardModels on (cards.cardModelId = cardModels.id)
         join facts on (cards.factId = facts.id)
+        join models on (facts.modelId = models.id)
     where
         kanjiField.name = '漢字'
         and cardModels.name = '書け'
@@ -22,8 +23,18 @@ my $kanji_sth = $db->prepare("
 
 $kanji_sth->execute;
 my $expected = 1;
-while (my ($kanji) = $kanji_sth->fetchrow_array) {
+while (my ($kanji, $model) = $kanji_sth->fetchrow_array) {
     my $heisig = heisig_number($kanji);
+
+    # right model?
+    if ($heisig && $model eq '漢字') {
+        warn "Heisig kanji H$heisig $kanji does not use the Heisig 漢字 model.\n";
+    }
+    if (!$heisig && $model eq 'Heisig 漢字') {
+        warn "Nonheisig kanji $kanji uses the Heisig 漢字 model.\n";
+    }
+
+    # heisig kanji in the right order?
     next if !$heisig;
     if ($heisig != $expected) {
         my $ex_kanji = (kanji)[$expected-1];
