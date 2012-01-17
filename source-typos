@@ -142,7 +142,7 @@ my %sources = (
         '中村先生',
         '高橋先生',
         '公共交通機関',
-        qr/^(Sign|Announcement|Conversation) (at|in|on|with) .+/,
+        qr/^(Sign|Announcement|Conversation|Pamphlet) (at|in|on|with|from) .+/,
         'YAPC::Asia',
         '広告',
     ],
