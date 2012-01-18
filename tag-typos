@@ -16,8 +16,6 @@ my %is_allowed = map { $_ => 1 } qw(
 
     自愛
 
-    web-db
-
     Leech
     context-only
     from-corpus
