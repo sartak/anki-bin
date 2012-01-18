@@ -21,6 +21,7 @@ my %is_allowed = map { $_ => 1 } qw(
     from-corpus
     kanji-ignore
 );
+my %seen;
 
 my $db = Anki::Database->new;
 my $sth = $db->prepare("
@@ -37,8 +38,15 @@ $sth->execute;
 while (my ($fid, $c_tags, $f_tags) = $sth->fetchrow_array) {
     my @tags = ((split ' ', $c_tags), (split ' ', $f_tags));
     for my $tag (@tags) {
+        $seen{$tag}++;
         if (!$is_allowed{$tag}) {
             say "$fid|$tag";
         }
+    }
+}
+
+for my $tag (keys %is_allowed) {
+    if (!$seen{$tag}) {
+        warn "allowed tag has no cards: $tag\n";
     }
 }
