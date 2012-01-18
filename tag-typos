@@ -16,6 +16,8 @@ my %is_allowed = map { $_ => 1 } qw(
 
     自愛
 
+    rtk1
+
     Leech
     context-only
     from-corpus
