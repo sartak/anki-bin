@@ -28,7 +28,6 @@ my @scripts = sort { ($script_time{$a}||0) <=> ($script_time{$b}||0) } qw/
     nfcify-fields
     reading-typos
     readingless-kanji
-    smartfm-divergence
     source-typos
     spurious-readings
     suspended-grammar
