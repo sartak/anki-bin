@@ -23,6 +23,8 @@ my %kanji_for;
 
 while (my ($kanji, $reading) = $sth->fetchrow_array) {
     push @{ $kanji_for{$reading} }, $kanji;
+    say "$kanji: $reading"
+        unless $reading =~ /\p{Han}|・/;
 }
 
 for my $reading (sort { @{ $kanji_for{$b} } <=> @{ $kanji_for{$a} } } grep { @{ $kanji_for{$_} } > 1 } keys %kanji_for) {
