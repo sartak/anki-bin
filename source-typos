@@ -59,7 +59,7 @@ my %sources = (
         'ブレイド2',
         'アキラ',
         'Die Hard 2',
-        'Return of the King',
+        qr{^ロード・オブ・ザ・リング/(旅の仲間|二つの塔|王の帰還)$},
         "Ocean's 11",
         'Constantine',
         'Babel',
