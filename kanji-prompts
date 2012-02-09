@@ -19,12 +19,32 @@ my $sth = $db->prepare("
 ;");
 $sth->execute;
 
+my $reading_sth = $db->prepare("
+    select readings.value
+        from fields as readings
+        join fieldModels on (fieldModels.id = readings.fieldModelId)
+        join models on (models.id = fieldModels.modelId)
+    where
+        models.name = '文'
+        and fieldModels.name = '読み'
+        and readings.value like ?
+;");
+
 my %kanji_for;
 
 while (my ($kanji, $reading) = $sth->fetchrow_array) {
     push @{ $kanji_for{$reading} }, $kanji;
-    say "$kanji: $reading"
-        unless $reading =~ /\p{Han}|・/;
+    next if $reading =~ /\p{Han}|・/;
+
+    my %words;
+    $reading_sth->execute("%${kanji}%");
+    while (my ($readings) = $reading_sth->fetchrow_array) {
+        $readings =~ s/<br.*?>/\n/g;
+        my ($reading) = $readings =~ /^(.*$kanji.*【.*】)$/m;
+        $words{$reading}++;
+    }
+
+    say "$kanji: $reading - " . join('、', keys %words);
 }
 
 for my $reading (sort { @{ $kanji_for{$b} } <=> @{ $kanji_for{$a} } } grep { @{ $kanji_for{$_} } > 1 } keys %kanji_for) {
