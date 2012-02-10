@@ -37,11 +37,13 @@ while (my ($kanji, $reading) = $sth->fetchrow_array) {
     next if $reading =~ /\p{Han}|・/;
 
     my %words;
-    $reading_sth->execute("%${kanji}%");
-    while (my ($readings) = $reading_sth->fetchrow_array) {
-        $readings =~ s/<br.*?>/\n/g;
-        my ($reading) = $readings =~ /^(.*$kanji.*【.*】)$/m;
-        $words{$reading}++;
+    unless ($ENV{ANKI_PROBLEMS}) {
+        $reading_sth->execute("%${kanji}%");
+        while (my ($readings) = $reading_sth->fetchrow_array) {
+            $readings =~ s/<br.*?>/\n/g;
+            my ($reading) = $readings =~ /^(.*$kanji.*【.*】)$/m;
+            $words{$reading}++;
+        }
     }
 
     say "$kanji: $reading - " . join('、', keys %words);
