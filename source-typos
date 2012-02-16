@@ -51,6 +51,7 @@ my %sources = (
         qr/^北斗の拳\d+$/,
         qr/^天才バカボン\d+$/,
         qr/^ヒカルの碁\d+$/,
+        qr/^バガボンド\d+$/,
     ],
     movies => [
         'The Matrix',
