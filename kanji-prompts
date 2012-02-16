@@ -12,10 +12,12 @@ my $sth = $db->prepare("
             join fieldModels as kanjiFieldModel on (kanji.fieldModelId = kanjiFieldModel.id)
             join fields as reading on (kanji.factId = reading.factId)
             join fieldModels as readingFieldModel on (reading.fieldModelId = readingFieldModel.id)
+            join facts on (facts.id = kanji.factId)
         where
             kanjiFieldModel.name = '漢字'
             and readingFieldModel.name = '読み'
             and reading.value <> ''
+            and facts.tags not like '%atomic-prompt%'
 ;");
 $sth->execute;
 

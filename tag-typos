@@ -22,6 +22,7 @@ my %is_allowed = map { $_ => 1 } qw(
     context-only
     from-corpus
     duplicate-kanji
+    atomic-prompt
 );
 my %seen;
 
