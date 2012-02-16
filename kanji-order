@@ -17,7 +17,7 @@ my $kanji_sth = $db->prepare("
     where
         kanjiField.name = '漢字'
         and cardModels.name = '書け'
-        and facts.tags not like '%kanji-ignore%'
+        and facts.tags not like '%duplicate-kanji%'
         order by cards.created asc
 ;");
 

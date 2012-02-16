@@ -74,7 +74,7 @@ my $kanji_sth = $db->prepare("
         kanjiField.name = '漢字'
         and readingField.name = '読み'
         and cardModels.name = '書け'
-        and facts.tags not like '%kanji-ignore%'
+        and facts.tags not like '%duplicate-kanji%'
         order by cards.created asc
 ;");
 
@@ -132,7 +132,7 @@ my $yomi_sth = $db->prepare("
             models.name = '文'
             and fieldModels.name = '読み'
             and yomi.value <> ''
-            and facts.tags not like '%kanji-ignore%'
+            and facts.tags not like '%duplicate-kanji%'
             and cards.type >= 0
 ;");
 $yomi_sth->execute;

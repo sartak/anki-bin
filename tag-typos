@@ -21,7 +21,7 @@ my %is_allowed = map { $_ => 1 } qw(
     Leech
     context-only
     from-corpus
-    kanji-ignore
+    duplicate-kanji
 );
 my %seen;
 
