@@ -35,15 +35,15 @@ while (my ($kanji, $model, $tags) = $kanji_sth->fetchrow_array) {
     }
 
     if ((!$heisig || $heisig > 2042) && $tags =~ /rtk1/) {
-        warn "$kanji (H$heisig): spurious rtk1 tag";
+        warn "$kanji (H$heisig) has spurious rtk1 tag\n";
     }
 
     if ((!$heisig || $heisig <= 2042 || $heisig >= 3007) && $tags =~ /rtk3/) {
-        warn "$kanji (H$heisig): spurious rtk3 tag";
+        warn "$kanji (H$heisig) has spurious rtk3 tag\n";
     }
 
     if ((!$heisig || $heisig < 3008) && $tags =~ /rtks/) {
-        warn "$kanji (H$heisig): spurious rtks tag";
+        warn "$kanji (H$heisig) has spurious rtks tag\n";
     }
 
     # heisig kanji in the right order?
@@ -55,13 +55,13 @@ while (my ($kanji, $model, $tags) = $kanji_sth->fetchrow_array) {
     }
 
     if ($heisig < 2042 && $tags !~ /rtk1/) {
-        warn "$kanji (H$heisig): missing rtk1 tag";
+        warn "$kanji (H$heisig) is missing rtk1 tag\n";
     }
     if (($heisig > 2042 && $heisig <= 3007) && $tags !~ /rtk3/) {
-        warn "$kanji (H$heisig): missing rtk3 tag";
+        warn "$kanji (H$heisig) is missing rtk3 tag\n";
     }
     if (($heisig > 3007 && $heisig < 3030) && $tags !~ /rtks/) {
-        warn "$kanji (H$heisig): missing rtks tag";
+        warn "$kanji (H$heisig) is missing rtks tag\n";
     }
 
     $expected++;
