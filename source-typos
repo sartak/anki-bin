@@ -110,6 +110,7 @@ my %sources = (
         qr/^Perfume - .*$/,
         qr/^浜崎あゆみ - .*$/,
         qr/^Pizzicato Five - .*$/,
+        qr/^Rumi - .*$/,
     ],
     apps => [
         'RT',
