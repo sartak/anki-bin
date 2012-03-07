@@ -134,6 +134,7 @@ my %sources = (
         'Amazon',
         'Anki',
         'ニコニコ動画',
+        'Siri',
     ],
     podcasts => [
         '読売ニュースポッドキャスト',
