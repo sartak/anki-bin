@@ -104,9 +104,9 @@ while (my ($fid, $reading_field, $sentence, $card_type) = $sth->fetchrow_array) 
                 warn "$fid duplicate reading: $_\n";
             }
 
-            $readings_of_word{$word}{$reading} = 1;
+            $readings_of_word{$word}{$reading}++;
             for my $kanji ($word =~ /\p{Han}/g) {
-                $readings_of_kanji{$kanji}{$reading} = 1;
+                $readings_of_kanji{$kanji}{$reading}++;
             }
             next;
         }
