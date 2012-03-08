@@ -128,6 +128,7 @@ for my $word (sort keys %readings_of_word) {
          && $word !~ /^(\p{Hiragana}|\p{Katakana})+$/;
 
     say "$word: " . join ', ',
+        map { "$_ ($readings_of_word{$word}{$_}x)" }
         sort { $readings_of_word{$word}{$b} <=> $readings_of_word{$word}{$a} }
         keys %{ $readings_of_word{$word} };
 }
