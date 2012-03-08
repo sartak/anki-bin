@@ -70,6 +70,7 @@ my %known_homographs = (
 );
 my %readings_of_word;
 my %readings_of_kanji;
+my %fids_for_word;
 
 my $db = Anki::Database->new;
 my $sth = $db->prepare("
@@ -105,6 +106,8 @@ while (my ($fid, $reading_field, $sentence, $card_type) = $sth->fetchrow_array) 
             }
 
             $readings_of_word{$word}{$reading}++;
+            push @{ $fids_for_word{$word}{$reading} }, $fid;
+
             for my $kanji ($word =~ /\p{Han}/g) {
                 $readings_of_kanji{$kanji}{$reading}++;
             }
@@ -131,6 +134,17 @@ for my $word (sort keys %readings_of_word) {
         map { "$_ ($readings_of_word{$word}{$_}x)" }
         sort { $readings_of_word{$word}{$b} <=> $readings_of_word{$word}{$a} }
         keys %{ $readings_of_word{$word} };
+
+    my $said_fids = 0;
+    for my $reading (keys %{ $readings_of_word{$word} }) {
+        my @fids = @{ $fids_for_word{$word}{$reading} };
+        if (@fids < 4) {
+            say "    $reading: " . join(', ', @fids);
+            $said_fids++;
+        }
+    }
+
+    print "\n" if $said_fids;
 }
 
 if (0) {
