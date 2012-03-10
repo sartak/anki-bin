@@ -139,6 +139,7 @@ my %sources = (
     podcasts => [
         '読売ニュースポッドキャスト',
         'モヤモヤとーく',
+        'ヒデラジ',
     ],
     conversations => [
         qr/^Personal correspondence with .+/,
