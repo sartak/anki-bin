@@ -15,6 +15,7 @@ my %is_allowed = map { $_ => 1 } qw(
     東京地図
 
     自愛
+    早口言葉
 
     rtk1
     rtk3
