@@ -19,7 +19,12 @@ my $sth = $japanese_db->prepare("
         and sourceFM.name = '出所'
 ;");
 $sth->execute;
-my %anki_has = map { $_->[0] => $_->[1] } @{ $sth->fetchall_arrayref };
+
+my %anki_has;
+while (my ($sentence, $source) = $sth->fetchrow_array) {
+    $sentence =~ s/&quot;/"/g;
+    $anki_has{$sentence} = $source;
+}
 
 $sth = $japanese_db->prepare("
     select yoji.value
