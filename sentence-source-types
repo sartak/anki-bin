@@ -1,0 +1,38 @@
+#!/usr/bin/env perl
+use 5.14.0;
+use warnings;
+use utf8::all;
+use Anki::Database;
+
+my %wanted = map { $_ => 1 } qw(
+    映画
+    読み物
+    ゲーム
+);
+my %seen;
+
+my $db = Anki::Database->new;
+my $sth = $db->prepare("
+    select sentence.value, facts.tags
+    from fields as sentence
+        join fieldModels on (sentence.fieldModelId = fieldModels.id)
+        join cards on (cards.factId = sentence.factId)
+        join facts on (facts.id = sentence.factId)
+    where
+        fieldModels.name = '日本語'
+        and cards.type > 0
+        and facts.tags <> ''
+        and facts.tags <> 'from-corpus'
+    order by cards.firstAnswered asc
+;");
+$sth->execute;
+
+while (my ($sentence, $tags) = $sth->fetchrow_array) {
+    for my $tag (split ' ', $tags) {
+        $seen{$tag}++ if $wanted{$tag};
+    }
+}
+
+for my $tag (sort { $seen{$b} <=> $seen{$a} } keys %seen) {
+    say "$tag: $seen{$tag}";
+}
