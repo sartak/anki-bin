@@ -63,6 +63,7 @@ my %query_for = (
             and cardModels.name = '書け'
             and cards.type >= 0
             and cards.created >= $start
+        order by cards.created ASC
     ;",
     'Grammar' => "
         select cards.firstAnswered, source.value
