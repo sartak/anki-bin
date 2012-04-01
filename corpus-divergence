@@ -23,6 +23,9 @@ $sth->execute;
 my %anki_has;
 while (my ($sentence, $source) = $sth->fetchrow_array) {
     $sentence =~ s/&quot;/"/g;
+    $sentence =~ s/&lt;/</g;
+    $sentence =~ s/&gt;/>/g;
+    $sentence =~ s/&amp;/&/g;
     $anki_has{$sentence} = $source;
 }
 
