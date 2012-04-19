@@ -17,8 +17,8 @@ sub green   { $ARGV{html} ? '<span class="green">' : "\e[0;32m" }
 sub blue    { $ARGV{html} ? '<span class="blue">'  : "\e[1;34m" }
 sub gray    { $ARGV{html} ? '<span class="gray">'  : "\e[1;37m" }
 sub cyan    { $ARGV{html} ? '<span class="cyan">'  : "\e[1;36m" }
-sub clear   { $ARGV{html} ? '</span>' : "\e[m"     }
-sub newline { $ARGV{html} ? '<br>'                  : "\n"      }
+sub clear   { $ARGV{html} ? '</span>'              : "\e[m"     }
+sub newline { $ARGV{html} ? '<br>'                 : "\n"       }
 
 sub kana2hiragana { kata2hira(kana2katakana(shift)) }
 my %devoice_table = qw/
