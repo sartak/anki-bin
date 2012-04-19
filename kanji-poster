@@ -303,7 +303,7 @@ sub print_kanji {
 
     print clear;
 
-    if (++$i % 32 == 0) {
+    if (++$i % 32 == 0 || $i == 2042) {
         if ($ARGV{gradual}) {
             print " $checksum";
             $checksum = 0;
