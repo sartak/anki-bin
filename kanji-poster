@@ -277,6 +277,8 @@ if ($write_file) {
 }
 
 my $checksum = 0;
+my $prev = time;
+
 sub print_kanji {
     my $kanji = shift;
     my $status = $kanji_status{$kanji} || '';
@@ -293,7 +295,7 @@ sub print_kanji {
     elsif ($status eq 'reading')       { print red   }
     elsif ($status eq 'multi-reading') { print blue  }
     elsif ($status eq 'all-joyo')      { print black }
-    elsif ($status eq 'card')          { print cyan  }
+    elsif ($status eq 'card')          { print $ARGV{gradual} ? gray : cyan  }
 
     ++$checksum if $status eq 'card';
 
@@ -309,6 +311,10 @@ sub print_kanji {
             $checksum = 0;
             scalar <>;
             print "\e[2J";
+
+            my $now = time;
+            print(($now - $prev) . "s\n");
+            $prev = $now;
         }
         print newline;
     }
