@@ -276,6 +276,7 @@ if ($write_file) {
     say "Committed.";
 }
 
+my $checksum = 0;
 sub print_kanji {
     my $kanji = shift;
     my $status = $kanji_status{$kanji} || '';
@@ -294,6 +295,8 @@ sub print_kanji {
     elsif ($status eq 'all-joyo')      { print black }
     elsif ($status eq 'card')          { print cyan  }
 
+    ++$checksum if $status eq 'card';
+
     PRINT_KANJI:
 
     print $kanji;
@@ -302,6 +305,8 @@ sub print_kanji {
 
     if (++$i % 32 == 0) {
         if ($ARGV{gradual}) {
+            print " $checksum";
+            $checksum = 0;
             scalar <>;
             print "\e[2J";
         }
