@@ -14,7 +14,7 @@ my %is_disabled = (
 );
 
 my @sort = (
-    'Reviews', 'Cards', 'Vocabulary', 'Kanji', 'Read', 'Write', 'Game', 'Yomi', 'Shinbun',
+    'Reviews', 'Cards', 'Vocabulary', 'Kanji', 'Read', 'Write', 'Game', 'Yomi', 'Shinbun', 'Wikipedia',
     'Grammar', 'Movie', 'Karaoke', 'Geography', 'Yojijukugo', 'Kanken', 'Content', 'Lesson',
 );
 
@@ -104,6 +104,20 @@ my %query_for = (
             cards.type >= 0
             and fieldModels.name is '出所'
             and facts.tags like '%ゲーム%'
+            and cards.created >= $start
+    ;",
+    'Wikipedia' => "
+        select cards.created, source.value
+            from cards
+            join facts on (cards.factId = facts.id)
+            join fields as source on (source.factId = facts.id)
+            join fieldModels on (source.fieldModelId = fieldModels.id)
+            join models on (facts.modelId = models.id)
+        where
+            models.name = '文'
+            and source.value like 'http://ja.wikipedia.org/%'
+            and fieldModels.name = '出所'
+            and cards.type >= 0
             and cards.created >= $start
     ;",
     'Read' => "
