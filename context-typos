@@ -27,7 +27,7 @@ while (my ($fid, $context) = $sth->fetchrow_array) {
 }
 
 $sth = $db->prepare(q{
-    select context.factId, context.value
+    select context.factId
     from fields as context
     join fieldModels as contextFM on (context.fieldModelId = contextFM.id)
     join facts as contextFact on (context.factId = contextFact.id)
@@ -40,9 +40,9 @@ $sth = $db->prepare(q{
 $sth->execute;
 
 $printed_header = 0;
-while (my ($fid, $context) = $sth->fetchrow_array) {
+while (my ($fid) = $sth->fetchrow_array) {
     say "=== HAS TAG context-only WITHOUT CONTEXT ===" if $printed_header++ == 0;
-    say "$fid|$context";
+    say "$fid";
 }
 
 $sth = $db->prepare(q{
