@@ -121,6 +121,7 @@ my %sources = (
         qr/^浜崎あゆみ - .*$/,
         qr/^Pizzicato Five - .*$/,
         qr/^Rumi - .*$/,
+        qr/^宇多田ヒカル - .*$/,
     ],
     apps => [
         'RT',
