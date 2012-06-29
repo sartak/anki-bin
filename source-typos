@@ -109,6 +109,7 @@ my %sources = (
         'モダンPerl入門',
         'CPANモジュールガイド',
         qr/^WEB\+DB Press: .+/,
+        qr/^第\d+回国語分科会漢字小委員会$/,
     ],
     songs => [
         qr/^Mr\. Children - .*$/,
