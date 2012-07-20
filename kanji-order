@@ -38,11 +38,11 @@ while (my ($kanji, $model, $tags) = $kanji_sth->fetchrow_array) {
         warn "$kanji (H$heisig) has spurious rtk1 tag\n";
     }
 
-    if ((!$heisig || $heisig <= 2042 || $heisig >= 3007) && $tags =~ /rtk3/) {
+    if ((!$heisig || $heisig <= 2042 || $heisig > 3007) && $tags =~ /rtk3/) {
         warn "$kanji (H$heisig) has spurious rtk3 tag\n";
     }
 
-    if ((!$heisig || $heisig < 3008) && $tags =~ /rtks/) {
+    if ((!$heisig || $heisig <= 3007) && $tags =~ /rtks/) {
         warn "$kanji (H$heisig) has spurious rtks tag\n";
     }
 

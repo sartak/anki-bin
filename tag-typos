@@ -19,6 +19,7 @@ my %is_allowed = map { $_ => 1 } qw(
 
     rtk1
     rtk3
+    rtks
 
     Leech
     context-only
