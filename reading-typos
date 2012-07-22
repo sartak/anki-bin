@@ -160,7 +160,7 @@ $sth = $db->prepare("
         join fieldModels as meaningFieldModel on (meaning.fieldModelId = meaningFieldModel.id)
         join models on (kanjiFieldModel.modelId = models.id)
     where
-        models.name like '%漢字%'
+        models.name = '漢字'
         and kanjiFieldModel.name = '漢字'
         and yomiFieldModel.name = '読み'
         and meaningFieldModel.name = '英語'

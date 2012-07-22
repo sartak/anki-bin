@@ -101,7 +101,7 @@ if (!$ENV{ANKI_PROBLEMS}) {
             join models on (fieldModels.modelId = models.id)
             where
                 fieldModels.name = '読み'
-                and models.name like '%漢字%'
+                and models.name = '漢字'
     ;");
     $sth->execute;
     my ($kanji_count) = $sth->fetchrow_array;

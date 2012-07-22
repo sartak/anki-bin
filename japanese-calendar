@@ -44,7 +44,7 @@ my %query_for = (
             join fields as source on (source.factId = facts.id)
             join fieldModels on (source.fieldModelId = fieldModels.id)
         where
-            models.name not like '%漢字%'
+            models.name <> '漢字'
             and fieldModels.name = '出所'
             and cards.type >= 0
             and cards.firstAnswered >= $start
@@ -58,7 +58,7 @@ my %query_for = (
             join facts on (cards.factId = facts.id)
             join models on (facts.modelId = models.id)
         where
-            models.name like '%漢字%'
+            models.name = '漢字'
             and fieldModels.name = '漢字'
             and cardModels.name = '書け'
             and cards.type >= 0
