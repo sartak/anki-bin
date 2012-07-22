@@ -20,7 +20,6 @@ my @scripts = sort { ($script_time{$a}||0) <=> ($script_time{$b}||0) } qw/
     context-typos
     corpus-divergence
     duplicate-sentences
-    kanji-order
     kanji-prompts
     marked-cards
     missing-kanji
