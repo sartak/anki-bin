@@ -26,9 +26,14 @@ my $sth = $db->prepare("
 ;");
 $sth->execute;
 
+my %is_blacklisted = (
+    '淋' => 1, # dupe of 寂しい
+);
+
 my @no_readings;
 while (my ($kanji) = $sth->fetchrow_array) {
-    push @no_readings, $kanji;
+    push @no_readings, $kanji
+        unless $is_blacklisted{$kanji};
 }
 
 my $re = do {
