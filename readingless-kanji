@@ -4,7 +4,7 @@ use warnings;
 use utf8::all;
 use Anki::Database;
 use Anki::Corpus;
-use List::MoreUtils 'uniq';
+use List::MoreUtils 'uniq', 'any';
 use Getopt::Whatever;
 
 my $db = Anki::Database->new;
@@ -26,14 +26,9 @@ my $sth = $db->prepare("
 ;");
 $sth->execute;
 
-my %is_blacklisted = (
-    '淋' => 1, # dupe of 寂しい
-);
-
 my @no_readings;
 while (my ($kanji) = $sth->fetchrow_array) {
-    push @no_readings, $kanji
-        unless $is_blacklisted{$kanji};
+    push @no_readings, $kanji;
 }
 
 my $re = do {
@@ -64,13 +59,22 @@ while (my ($sentence) = $sth->fetchrow_array) {
     }
 }
 
+my @full_blacklist = (
+    qr/淋しい/, # dupe of 寂しい
+);
+
 my $i = 0;
 for my $kanji (@no_readings) {
     my @sentences = uniq @{ $sentences_for{$kanji} || next };
+    my @blacklist = grep { $_ =~ /$kanji/ } @full_blacklist;
     my %skip;
 
     for my $source_sentence (@sentences) {
+        $skip{$source_sentence}++
+            if any { $source_sentence =~ $_ } @blacklist;
+
         next if $skip{$source_sentence};
+
         for my $word ($source_sentence =~ /\p{Han}$kanji/g, $source_sentence =~ /$kanji\p{Han}/g) {
             for my $skip_sentence (@sentences) {
                 next if $source_sentence eq $skip_sentence;
