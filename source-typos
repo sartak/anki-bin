@@ -257,6 +257,7 @@ $sth->execute;
 while (my ($source, $factid) = $sth->fetchrow_array) {
     say "$factid|$source" if $source =~ /\n|<br/;
     say $source if $source =~ m{(twitter|facebook)\.com/\#\!};
+    say $source if $source =~ m{\.m\.wikipedia};
 }
 
 for my $tag (keys %reverse_tags) {
