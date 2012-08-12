@@ -97,7 +97,7 @@ while (my ($fid, $reading_field, $sentence, $card_type) = $sth->fetchrow_array) 
     if ($card_type > 0) {
         my @sentence_kanji = uniq($sentence =~ /\p{Han}/g);
         my @reading_kanji = uniq($reading_field =~ /\p{Han}/g);
-        warn "$fid kanji order: got [@reading_kanji] expected [@sentence_kanji]\n" if "@sentence_kanji" ne "@reading_kanji";
+        warn "$fid kanji order:\ngot      @reading_kanji\nexpected @sentence_kanji\n" if "@sentence_kanji" ne "@reading_kanji";
     }
 
     my @readings = split /<br.*?>/, $reading_field;
