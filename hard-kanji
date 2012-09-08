@@ -1,0 +1,2 @@
+#!/bin/sh
+echo "select fields.value from fields join facts on fields.factId = facts.id join cards on cards.factId = facts.id join fieldModels on fieldModels.id = fields.fieldModelId join cardModels on cardModels.id = cards.cardModelId where fieldModels.name='漢字' and cardModels.name='書け' and cards.type > 0 order by cards.noCount desc limit 156;" | sqlite3 $ANKI_DECK | perl -nE 'chomp; $x .= $_; END { say $x }'
