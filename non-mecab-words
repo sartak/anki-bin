@@ -1,0 +1,20 @@
+#!/usr/bin/env perl
+use 5.14.0;
+use warnings;
+use utf8::all;
+use Anki::Morphology;
+
+my $morph = Anki::Morphology->new;
+
+open my $learned, "perl -I$ENV{HOME}/devel/vocabulary/lib $ENV{HOME}/devel/vocabulary/japanese.pl 0 1 |";
+while (my $word = <$learned>) {
+    chomp $word;
+
+    next if $word =~ /〜/;
+
+    my @morphemes = $morph->morphemes_of($word);
+    next if @morphemes == 1 && $morphemes[0]->{dictionary} eq $word;
+
+    say $word;
+}
+
