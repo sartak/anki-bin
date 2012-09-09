@@ -19,6 +19,6 @@ while (my $line = <$learned>) {
     next if @morphemes == 1 && $morphemes[0]->{dictionary} eq $word;
 
     my $katakana = kana2katakana($furigana);
-    say "$word,-1,-1,1,名詞,一般,*,*,*,*,$furigana,$katakana,$katakana,$furigana";
+    say "$word,-1,-1,1,名詞,一般,*,*,*,*,$word,$katakana,$katakana,$furigana";
 }
 
