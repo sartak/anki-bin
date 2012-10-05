@@ -9,15 +9,23 @@ use DateTime;
 use DateTime::Format::Strptime;
 use Net::Twitter;
 
-my %is_disabled = (
-    Shinbun => 1,
-);
+my @disabled = qw/
+    ウィキペディア
+/;
 
 my @sort = (
-    'Reviews', 'Cards', 'Vocabulary', 'Kanji', 'Read', 'Write', 'Game', 'Yomi', 'Shinbun', 'Wikipedia',
-    'Grammar', 'Movie', 'Karaoke', 'Geography', 'Yojijukugo', 'Kanken', 'Content', 'Lesson',
+    '記事',
+    '書く',
+    'アンキの勉強',
+    'カードを加える',
+    '単語',
+    'ゲーム',
+    '読む',
+    '映画を観る',
+    '歌詞',
+    '漢検',
+    '資料を集める',
 );
-
 
 my $drift = -5; # hours
 
@@ -36,7 +44,7 @@ my %day;
 my $db = Anki::Database->new;
 
 my %query_for = (
-    'Cards' => "
+    'カードを加える' => "
         select cards.firstAnswered, source.value
             from cards
             join facts on (cards.factId = facts.id)
@@ -49,7 +57,7 @@ my %query_for = (
             and cards.type >= 0
             and cards.firstAnswered >= $start
     ;",
-    'Kanji' => "
+    '漢字' => "
         select cards.created, fields.value
             from cards
             join fields on (cards.factId = fields.factId)
@@ -65,7 +73,7 @@ my %query_for = (
             and cards.created >= $start
         order by cards.created ASC
     ;",
-    'Grammar' => "
+    '文法' => "
         select cards.firstAnswered, source.value
             from cards
             join facts on (cards.factId = facts.id)
@@ -82,7 +90,7 @@ my %query_for = (
             and cards.type >= 0
             and cards.firstAnswered >= $start
     ;",
-    'Karaoke' => "
+    '歌詞' => "
         select cards.firstAnswered, fields.value
             from cards
             join facts on (cards.factId = facts.id)
@@ -94,7 +102,19 @@ my %query_for = (
             and facts.tags like '%カラオケ%'
             and cards.firstAnswered >= $start
     ;",
-    'Game' => "
+    '記事' => "
+        select cards.firstAnswered, fields.value
+            from cards
+            join facts on (cards.factId = facts.id)
+            join fields on (fields.factId = facts.id)
+            join fieldModels on (fields.fieldModelId = fieldModels.id)
+        where
+            cards.type >= 0
+            and fieldModels.name is '出所'
+            and facts.tags like '%記事%'
+            and cards.firstAnswered >= $start
+    ;",
+    'ゲーム' => "
         select cards.created, fields.value
             from cards
             join facts on (cards.factId = facts.id)
@@ -106,7 +126,7 @@ my %query_for = (
             and facts.tags like '%ゲーム%'
             and cards.created >= $start
     ;",
-    'Wikipedia' => "
+    'ウィキペディア' => "
         select cards.created, source.value
             from cards
             join facts on (cards.factId = facts.id)
@@ -120,7 +140,7 @@ my %query_for = (
             and cards.type >= 0
             and cards.created >= $start
     ;",
-    'Read' => "
+    '読む' => "
         select cards.created, fields.value
             from cards
             join facts on (cards.factId = facts.id)
@@ -132,7 +152,7 @@ my %query_for = (
             and facts.tags like '%読み物%'
             and cards.created >= $start
     ;",
-    'Movie' => "
+    '映画を観る' => "
         select cards.created, fields.value
             from cards
             join facts on (cards.factId = facts.id)
@@ -144,7 +164,7 @@ my %query_for = (
             and facts.tags like '%映画%'
             and cards.created >= $start
     ;",
-    'Geography' => "
+    '地図' => "
         select cards.firstAnswered, fields.value
             from cards
             join fields on (cards.factId = fields.factId)
@@ -157,7 +177,7 @@ my %query_for = (
             and cards.type >= 0
             and cards.firstAnswered >= $start
     ;",
-    'Yojijukugo' => "
+    '四字熟語' => "
         select cards.firstAnswered, fields.value
             from cards
             join fields on (cards.factId = fields.factId)
@@ -170,7 +190,7 @@ my %query_for = (
             and cards.type >= 0
             and cards.firstAnswered >= $start
     ;",
-    'Shinbun' => "
+    '新聞' => "
         select cards.firstAnswered, source.value
             from cards
             join facts on (cards.factId = facts.id)
@@ -208,7 +228,7 @@ my $sth = $db->prepare("
 ;");
 $sth->execute;
 while (my ($date, $value) = $sth->fetchrow_array) {
-    push @{ $day{$date}{Reviews} }, $value;
+    push @{ $day{$date}{'アンキの勉強'} }, $value;
 }
 
 my $goodreads = $ENV{GOODREADS_FEED} ? LWP::Simple::get($ENV{GOODREADS_FEED}) : undef;
@@ -224,7 +244,7 @@ if (defined $goodreads) {
             $dt->add(hours => $drift);
             my $day = $dt->ymd;
 
-            unshift @{ $day{$day}{Read} }, "[GR] $title";
+            unshift @{ $day{$day}{'読む'} }, "[GR] $title";
         }
     }
 }
@@ -237,7 +257,7 @@ if (defined $goi) {
     for my $day (keys %day) {
         while ($goi =~ /\b(\w+): #\d+ for $day/g) {
             my $value = $1;
-            push @{ $day{$day}{Vocabulary} }, $value;
+            push @{ $day{$day}{'単語'} }, $value;
         }
     }
 }
@@ -263,7 +283,7 @@ eval {
         next if !length($j_chars);
 
         my $day = $tweet->created_at->set_time_zone('America/New_York')->add(hours => $drift)->ymd;
-        unshift @{ $day{$day}{Write} }, $text;
+        unshift @{ $day{$day}{'書く'} }, $text;
     }
 };
 if ($@) {
@@ -271,15 +291,16 @@ if ($@) {
 }
 
 for my $day (sort keys %day) {
-    my $cards = $day{$day};
+    my %cards = %{ $day{$day} };
     say $day;
 
+    delete @cards{@disabled};
+
     for my $achievement (@sort) {
-        show_achievement($achievement, delete $cards->{$achievement})
-            unless $is_disabled{$achievement};
+        show_achievement($achievement, delete $cards{$achievement});
     }
 
-    die join ', ', keys %$cards if keys %$cards;
+    die 'Unsorted achievement: ' . join ', ', keys %cards if keys %cards;
 
     say "";
 }
@@ -293,10 +314,10 @@ sub show_achievement {
     my %seen;
     $seen{$_}++ for @values;
 
-    if ($achievement eq 'Kanji') {
+    if ($achievement eq '漢字') {
         say " (" . @values . "): " . join('', @values);
     }
-    elsif ($achievement eq 'Vocabulary') {
+    elsif ($achievement eq '単語') {
         say " (" . @values . "): " . join(', ', @values);
     }
     elsif (keys(%seen) > 1) {
@@ -306,7 +327,7 @@ sub show_achievement {
         my %seen2;
         for (sort { $seen{$b} <=> $seen{$a} } grep { !$seen2{$_}++ } @values) {
             print "        $_";
-            print " ($seen{$_})" unless $achievement eq 'Write';
+            print " ($seen{$_})" unless $achievement eq '書く';
             say "";
         }
     }
