@@ -25,6 +25,9 @@ my @sort = (
     '歌詞',
     '漢検',
     '資料を集める',
+
+    '文法',
+    '動画',
 );
 
 my $drift = -5; # hours
@@ -74,20 +77,27 @@ my %query_for = (
         order by cards.created ASC
     ;",
     '文法' => "
-        select cards.firstAnswered, source.value
+        select cards.firstAnswered, fields.value
             from cards
             join facts on (cards.factId = facts.id)
-            join fields as source on (source.factId = facts.id)
-            join fieldModels on (source.fieldModelId = fieldModels.id)
-            join models on (facts.modelId = models.id)
+            join fields on (fields.factId = facts.id)
+            join fieldModels on (fields.fieldModelId = fieldModels.id)
         where
-            models.name = '文'
-            and (
-                source.value = 'Tae Kim'
-                or source.value like 'http://%guidetojapanese.org/%'
-            )
-            and fieldModels.name = '出所'
-            and cards.type >= 0
+            cards.type >= 0
+            and fieldModels.name is '出所'
+            and facts.tags like '%文法%'
+            and cards.firstAnswered >= $start
+    ;",
+    '動画' => "
+        select cards.firstAnswered, fields.value
+            from cards
+            join facts on (cards.factId = facts.id)
+            join fields on (fields.factId = facts.id)
+            join fieldModels on (fields.fieldModelId = fieldModels.id)
+        where
+            cards.type >= 0
+            and fieldModels.name is '出所'
+            and facts.tags like '%動画%'
             and cards.firstAnswered >= $start
     ;",
     '歌詞' => "
