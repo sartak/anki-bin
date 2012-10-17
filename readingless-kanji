@@ -91,8 +91,10 @@ for my $kanji (@no_readings) {
     next if @sentences <= 1 && !$ARGV{full};
 
     my ($corpus_count, $regular_count) = kanji_count($kanji);
+    my $fid = fid_of($kanji);
 
     say "$i. \e[35m$kanji\e[m ($corpus_count+$regular_count=".($corpus_count+$regular_count)."):";
+    say "  fid:$fid";
     for my $sentence (@sentences) {
         $sentence =~ s/(\p{Han}*)($kanji)(\p{Han}*)/\e[m$1\e[35m$2\e[m$3\e[37m/g;
         say "  \e[37m$sentence\e[m";
@@ -152,4 +154,22 @@ sub kanji_count {
     };
 
     return ($corpus_count, $regular_count);
+}
+
+sub fid_of {
+    my $kanji = shift;
+
+    my $sth = $db->prepare("
+        SELECT fields.factID
+        FROM fields
+            JOIN fieldModels
+                ON fieldModels.id = fields.fieldModelId
+        WHERE
+            fieldModels.name='漢字'
+            AND fields.value=?
+        LIMIT 1
+    ;");
+
+    $sth->execute($kanji);
+    return ($sth->fetchrow_array)[0];
 }
