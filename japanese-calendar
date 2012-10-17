@@ -11,6 +11,7 @@ use Net::Twitter;
 
 my @disabled = qw/
     ウィキペディア
+    漢字
 /;
 
 my @sort = (
