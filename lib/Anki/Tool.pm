@@ -12,6 +12,12 @@ has dbh => (
     default => sub { Anki::Database->new },
 );
 
+has name => (
+    is      => 'ro',
+    lazy    => 1,
+    default => sub { blessed(shift) =~ s/.*:://r },
+);
+
 sub inspect {
     my $self = shift;
     my $dbh = $self->dbh;
@@ -31,12 +37,12 @@ sub inspect {
 sub report_field {
     my ($self, $field, $message) = @_;
     $message //= $field->value;
-    warn "nid:" . $field->note_id . "|$message\n";
+    warn $self->name . " nid:" . $field->note_id . "|$message\n";
 }
 
 sub report_note {
     my ($self, $note, $message) = @_;
-    warn "nid:" . $note->id . "|$message\n";
+    warn $self->name . " nid:" . $note->id . "|$message\n";
 }
 
 1;
