@@ -23,6 +23,7 @@ sub inspect {
 
 sub report_field {
     my ($self, $field, $message) = @_;
+    $message //= $field->value;
     warn "nid:" . $field->note_id . "|$message\n";
 }
 
