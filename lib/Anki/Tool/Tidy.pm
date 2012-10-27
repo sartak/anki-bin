@@ -16,8 +16,7 @@ sub each_field {
           | (?<!。)(。)$  # trailing 。
           | ([“”])        # smart quotes
     }{\e[1;41m$+\e[m}xg) {
-        $self->report_field($field, $value);
-        return 0;
+        return $self->report_field($field, $value);
     }
 
     return 1;
