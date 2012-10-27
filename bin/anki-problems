@@ -1,0 +1,27 @@
+#!/usr/bin/env perl
+use 5.16.0;
+use warnings;
+use utf8::all;
+use Anki::Database;
+use Module::Pluggable (
+    sub_name    => 'tools',
+    instantiate => 'new',
+    search_path => 'Anki::Tool',
+);
+
+my $dbh = Anki::Database->new;
+my @tools = tools();
+my @methods = (
+    'each_field',
+);
+
+for my $method (@methods) {
+    my @applicable_tools = grep { $_->can($method) } @tools;
+
+    $dbh->$method(sub {
+        for my $tool (@applicable_tools) {
+            $tool->$method(@_);
+        }
+    });
+}
+
