@@ -13,6 +13,7 @@ my $dbh = Anki::Database->new;
 my @tools = tools();
 my @methods = (
     'each_field',
+    'each_note',
 );
 
 for my $method (@methods) {

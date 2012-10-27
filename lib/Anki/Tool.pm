@@ -16,8 +16,15 @@ sub inspect {
     my $self = shift;
     my $dbh = $self->dbh;
 
-    if ($self->can('each_field')) {
-        $dbh->each_field(sub { $self->each_field(@_) });
+    my @methods = (
+        'each_field',
+        'each_note',
+    );
+
+    for my $method (@methods) {
+        if ($self->can($method)) {
+            $dbh->$method(sub { $self->$method(@_) });
+        }
     }
 }
 
@@ -25,6 +32,11 @@ sub report_field {
     my ($self, $field, $message) = @_;
     $message //= $field->value;
     warn "nid:" . $field->note_id . "|$message\n";
+}
+
+sub report_note {
+    my ($self, $note, $message) = @_;
+    warn "nid:" . $note->id . "|$message\n";
 }
 
 1;
