@@ -10,7 +10,11 @@ sub each_field {
     my ($self, $field) = @_;
     my $value = $field->value;
 
-    if ($value =~ s/^(\s+)|(\s+)$/\e[1;41m$+\e[m/g) {
+    if ($value =~ s{
+            ^(\s+)
+          | (\s+)$
+          | (?<!。)(。)$
+    }{\e[1;41m$+\e[m}xg) {
         warn $field->note_id . '|' . $value . "\n";
         return 0;
     }
