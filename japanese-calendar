@@ -246,7 +246,7 @@ my $goodreads = $ENV{GOODREADS_FEED} ? LWP::Simple::get($ENV{GOODREADS_FEED}) : 
 if (defined $goodreads) {
     while ($goodreads =~ m{<pubDate>([^<]+)</pubDate>.*?<!\[CDATA\[(.*?)\s*\]\]>}gs) {
         my ($date, $description) = ($1, $2);
-        if ($description =~ m{^.*? is on page (\d+) of (\d+) of (.+)$}) {
+        if ($description =~ m{^.*? is on page (\d+) of (\d+) of (.+)$}m) {
             my ($page, $pages, $title) = ($1, $2, $3);
 
             # Sun, 21 Aug 2011 10:12:06 -0700
