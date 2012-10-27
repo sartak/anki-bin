@@ -1,0 +1,226 @@
+#!/usr/bin/env perl
+use 5.14.0;
+use warnings;
+use utf8::all;
+use Encode 'encode_utf8';
+use Anki::Database;
+use LWP::Simple;
+use DateTime;
+use DateTime::Format::Strptime;
+use Net::Twitter;
+
+my @disabled = (
+    'ウィキペディア',
+    '漢字',
+);
+
+my @sort = (
+    '記事',
+    '書く',
+    'アンキの勉強',
+    'カードを加える',
+    '単語',
+    'ゲーム',
+    '読む',
+    '映画を観る',
+    '歌詞',
+    '漢検',
+    '資料を集める',
+
+    '文法',
+    '動画',
+);
+
+my $drift = -5; # hours
+
+my $start_dt = DateTime->now(time_zone => "America/New_York")->set(hour => 0, minute => 0, second => 0);
+if ($start_dt->day < 7) {
+    $start_dt->add(months => -1);
+    $start_dt->set(day => 23);
+}
+else {
+    $start_dt->set(day => 1);
+}
+
+my $start = $start_dt->epoch;
+my %day;
+
+my $db = Anki::Database->new;
+
+my $first_reviews = $db->first_reviews;
+
+$db->each_card(sub {
+    my ($card) = @_;
+
+    my $created = $card->created;
+    my $first_review = $first_reviews->{$card->id};
+
+    return if $created < $start;
+    return if $first_review < $start;
+    return if $card->suspended;
+
+    my $template   = $card->template;
+    my $fields     = $card->fields;
+    my $tags       = $card->tags_as_hash;
+    my $model_name = $card->model->name;
+
+    my $created_dt = DateTime->from_epoch(epoch => $created)->set_time_zone('America/New_York');
+    $created_dt->add(hours => $drift);
+    my $created_date = $created_dt->ymd;
+
+    my $reviewed_dt = DateTime->from_epoch(epoch => $first_review)->set_time_zone('America/New_York');
+    $reviewed_dt->add(hours => $drift);
+    my $reviewed_date = $reviewed_dt->ymd;
+
+    if ($fields->{'出所'}) {
+        push @{ $day{$created_date}{'カードを加える'} }, $fields->{'出所'};
+    }
+
+    if ($model_name eq '漢字' && $template eq '書け') {
+        push @{ $day{$reviewed_date}{'漢字'} }, $fields->{'漢字'};
+    }
+    elsif ($model_name eq '地図') {
+        push @{ $day{$reviewed_date}{'地図'} }, $fields->{'出所'};
+    }
+    elsif ($model_name eq '四字熟語') {
+        push @{ $day{$reviewed_date}{'四字熟語'} }, $fields->{'出所'};
+    }
+
+    if ($tags->{'文法'}) {
+        push @{ $day{$reviewed_date}{'文法'} }, $fields->{'出所'};
+    }
+    if ($tags->{'動画'}) {
+        push @{ $day{$created_date}{'動画'} }, $fields->{'出所'};
+    }
+    if ($tags->{'カラオケ'}) {
+        push @{ $day{$reviewed_date}{'歌詞'} }, $fields->{'出所'};
+    }
+    if ($tags->{'記事'}) {
+        push @{ $day{$created_date}{'記事'} }, $fields->{'出所'};
+    }
+    if ($tags->{'ゲーム'}) {
+        push @{ $day{$reviewed_date}{'ゲーム'} }, $fields->{'出所'};
+    }
+    if ($tags->{'読み物'}) {
+        push @{ $day{$reviewed_date}{'読む'} }, $fields->{'出所'};
+    }
+    if ($tags->{'映画'}) {
+        push @{ $day{$reviewed_date}{'映画を観る'} }, $fields->{'出所'};
+    }
+
+});
+
+my %day_reviews = %{ $db->day_reviews };
+for my $date (keys %day_reviews) {
+    next if $date lt $start_dt->ymd;
+    my $reviews = $day_reviews{$date};
+    push @{ $day{$date}{'アンキの勉強'} }, $reviews
+}
+
+my $goodreads = $ENV{GOODREADS_FEED} ? LWP::Simple::get($ENV{GOODREADS_FEED}) : undef;
+if (defined $goodreads) {
+    while ($goodreads =~ m{<pubDate>([^<]+)</pubDate>.*?<!\[CDATA\[(.*?)\s*\]\]>}gs) {
+        my ($date, $description) = ($1, $2);
+        if ($description =~ m{^.*? is on page (\d+) of (\d+) of (.+)$}m) {
+            my ($page, $pages, $title) = ($1, $2, $3);
+
+            # Sun, 21 Aug 2011 10:12:06 -0700
+            my $parser = DateTime::Format::Strptime->new(pattern => '%a, %d %b %Y %T %z');
+            my $dt = $parser->parse_datetime($date);
+            $dt->add(hours => $drift);
+            my $day = $dt->ymd;
+
+            unshift @{ $day{$day}{'読む'} }, "[GR] $title";
+        }
+    }
+}
+else {
+    warn "Unable to fetch goodreads feed\n";
+}
+
+my $goi = `perl -I$ENV{HOME}/devel/vocabulary/lib $ENV{HOME}/devel/vocabulary/japanese.pl 2>/dev/null`;
+if (defined $goi) {
+    for my $day (keys %day) {
+        while ($goi =~ /\b(\w+): #\d+ for $day/g) {
+            my $value = $1;
+            push @{ $day{$day}{'単語'} }, $value;
+        }
+    }
+}
+else {
+    warn "Unable to fetch vocabulary\n";
+}
+
+eval {
+    my $twitter = Net::Twitter->new(traits => [qw/API::REST InflateObjects/]);
+    my @tweets;
+    for (my $page = 1; @tweets == 0 || $tweets[-1]->created_at->epoch >= $start; ++$page) {
+        push @tweets, @{ $twitter->user_timeline({id => 'sartak', page => $page }) };
+    }
+
+    for my $tweet (@tweets) {
+        last if $tweet->created_at->epoch < $start;
+
+        my $text = $tweet->text;
+        $text =~ s/\bRT @.*//;
+
+        # *any* kana/kanji is good, but I may discard the tweet later
+        (my $j_chars = $text) =~ s/[^\p{Han}\p{Hiragana}\p{Katakana}]+//g;
+        next if !length($j_chars);
+
+        my $day = $tweet->created_at->set_time_zone('America/New_York')->add(hours => $drift)->ymd;
+        unshift @{ $day{$day}{'書く'} }, $text;
+    }
+};
+if ($@) {
+    warn "Twitter error: $@\n";
+}
+
+for my $day (sort keys %day) {
+    my %cards = %{ $day{$day} };
+    say $day;
+
+    delete @cards{@disabled};
+
+    for my $achievement (@sort) {
+        show_achievement($achievement, delete $cards{$achievement});
+    }
+
+    die 'Unsorted achievement: ' . join ', ', keys %cards if keys %cards;
+
+    say "";
+}
+
+sub show_achievement {
+    my $achievement = shift;
+    my @values = @{ shift || return };
+
+    print "    $achievement";
+
+    my %seen;
+    $seen{$_}++ for @values;
+
+    if ($achievement eq '漢字') {
+        say " (" . @values . "): " . join('', @values);
+    }
+    elsif ($achievement eq '単語') {
+        say " (" . @values . "): " . join(', ', @values);
+    }
+    elsif (keys(%seen) > 1) {
+        my $sum = @values;
+        say " ($sum): ";
+
+        my %seen2;
+        for (sort { $seen{$b} <=> $seen{$a} } grep { !$seen2{$_}++ } @values) {
+            print "        $_";
+            print " ($seen{$_})" unless $achievement eq '書く';
+            say "";
+        }
+    }
+    else {
+        my $value = $values[0];
+        print " ($seen{$value})" if $seen{$value} > 1;
+        say ": $value";
+    }
+}
+
