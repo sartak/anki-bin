@@ -14,7 +14,7 @@ sub each_field {
             ^(\s+)        # leading space
           | (\s+)$        # trailing space
           | (?<!。)(。)$  # trailing 。
-          | ([“”‘’])      # smart quotes
+          | ([“”])        # smart quotes
     }{\e[1;41m$+\e[m}xg) {
         $self->report_field($field, $value);
         return 0;
