@@ -16,7 +16,7 @@ sub each_field {
           | (?<!。)(。)$  # trailing 。
           | ([“”])        # smart quotes
     }{\e[1;41m$+\e[m}xg) {
-        warn $field->note_id . '|' . $value . "\n";
+        $self->report_field($field, $value);
         return 0;
     }
 
