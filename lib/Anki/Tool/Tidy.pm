@@ -11,9 +11,10 @@ sub each_field {
     my $value = $field->value;
 
     if ($value =~ s{
-            ^(\s+)
-          | (\s+)$
-          | (?<!。)(。)$
+            ^(\s+)        # leading space
+          | (\s+)$        # trailing space
+          | (?<!。)(。)$  # trailing 。
+          | ([“”])        # smart quotes
     }{\e[1;41m$+\e[m}xg) {
         warn $field->note_id . '|' . $value . "\n";
         return 0;
