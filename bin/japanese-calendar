@@ -56,7 +56,7 @@ $db->each_card(sub {
     my $first_review = $first_reviews->{$card->id};
 
     return if $created < $start;
-    return if $first_review < $start;
+    return if defined($first_review) && $first_review < $start;
     return if $card->suspended;
 
     my $template   = $card->template;
