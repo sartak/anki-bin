@@ -68,9 +68,12 @@ $db->each_card(sub {
     $created_dt->add(hours => $drift);
     my $created_date = $created_dt->ymd;
 
-    my $reviewed_dt = DateTime->from_epoch(epoch => $first_review)->set_time_zone('America/New_York');
-    $reviewed_dt->add(hours => $drift);
-    my $reviewed_date = $reviewed_dt->ymd;
+    my $reviewed_date;
+    if ($first_review) {
+        my $reviewed_dt = DateTime->from_epoch(epoch => $first_review)->set_time_zone('America/New_York');
+        $reviewed_dt->add(hours => $drift);
+        $reviewed_date = $reviewed_dt->ymd;
+    }
 
     if ($fields->{'出所'}) {
         push @{ $day{$created_date}{'カードを加える'} }, $fields->{'出所'};
