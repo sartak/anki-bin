@@ -1,3 +1,4 @@
+# ABSTRACT: scripts to probe and heal my Anki decks
 package Anki::Tool;
 use utf8;
 use 5.16.0;
