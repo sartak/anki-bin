@@ -1,7 +1,0 @@
-#!/usr/bin/env perl
-use 5.16.0;
-use warnings;
-use Anki::Tool::Tidy;
-use utf8::all;
-
-Anki::Tool::Tidy->new->inspect;
