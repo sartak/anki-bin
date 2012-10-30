@@ -25,7 +25,7 @@ my @allowed = qw(
     rtk3
     rtks
 
-    Leech
+    leech
     context-only
     from-corpus
     duplicate-kanji
