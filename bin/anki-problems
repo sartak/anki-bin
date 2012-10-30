@@ -10,7 +10,7 @@ use Module::Pluggable (
 );
 
 my $dbh = Anki::Database->new;
-my @tools = sort tools();
+my @tools = sort { $a cmp $b } tools();
 my @methods = (
     'each_field',
     'each_note',
