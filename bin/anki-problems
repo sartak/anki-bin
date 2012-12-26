@@ -46,3 +46,8 @@ for my $method (@methods) {
     }
 }
 
+for my $tool (@tools) {
+    if ($tool->can('done')) {
+        $tool->done;
+    }
+}
