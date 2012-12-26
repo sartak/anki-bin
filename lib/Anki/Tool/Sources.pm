@@ -210,7 +210,7 @@ sub type_of {
 
 sub each_note_文 {
     my ($self, $note) = @_;
-    my $source = $note->fields->{'出所'};
+    my $source = $note->field('出所');
     my @tags = @{ $note->tags };
 
     my $has_tag = sub {
