@@ -211,21 +211,42 @@ sub type_of {
 sub each_note_文 {
     my ($self, $note) = @_;
     my $source = $note->field('出所');
-    my @tags = @{ $note->tags };
 
+    return $self->report_note($note, "$source - has newlines")
+        if $source =~ /\n|<br/;
+
+    return $self->report_note($note, "$source - has spurious #!")
+        if $source =~ m{(twitter|facebook)\.com/\#\!};
+
+    return $self->report_note($note, "$source - links to mobile site")
+        if $source =~ m{\.m\.wikipedia};
+
+    my $type = type_of($source);
+
+    my @tags = @{ $note->tags };
     my $has_tag = sub {
         my ($tag) = @_;
         return any { $_ eq $tag } @tags;
     };
 
-    return if $has_tag->('from-corpus');
-
-    if (my $type = type_of($source)) {
-        my $expected = $expected_tags{$type};
-        if ($expected && !$has_tag->($expected)) {
-            return $self->report_note($note, "$source - didn't include tag $expected expected of $type");
+    # make sure each note has tags expected of its source material
+    unless ($has_tag->('from-corpus')) {
+        if ($type) {
+            my $expected = $expected_tags{$type};
+            if ($expected && !$has_tag->($expected)) {
+                return $self->report_note($note, "$source - didn't include tag $expected expected of $type");
+            }
         }
     }
+
+    # make sure each note has no spurious tags
+    return if $source =~ m{^http};
+    for my $tag (grep { $has_tag->($_) } keys %reverse_tags) {
+        unless ($type && grep { $type eq $_ } @{ $reverse_tags{$tag} }) {
+            return $self->report_note($note, "$source - has spurious $tag tag");
+        }
+    }
+
     return 1;
 }
 
