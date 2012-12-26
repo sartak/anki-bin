@@ -26,10 +26,9 @@ for my $method (@methods) {
             my $model_name = $note->model->name;
             my $method_L2 = "${method}_$model_name";
 
-            for my $tool (@{
-                $applicable_tools_L2{$model_name} //=
-                    [ grep { $_->can($method_L2) } @tools ]
-            }) {
+            $applicable_tools_L2{$model_name} //= [ grep { $_->can($method_L2) } @tools ];
+
+            for my $tool (@{ $applicable_tools_L2{$model_name} }) {
                 $tool->$method_L2(@_);
             }
 
