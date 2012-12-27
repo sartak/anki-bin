@@ -17,6 +17,5 @@ sub each_note_文 {
     return 1;
 }
 
-
 1;
 
