@@ -35,6 +35,11 @@ sub inspect {
     }
 }
 
+sub report {
+    my ($self, $message) = @_;
+    warn $self->name . "|$message\n";
+}
+
 sub report_field {
     my ($self, $field, $message) = @_;
     $message //= $field->value;
