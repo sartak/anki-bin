@@ -21,45 +21,13 @@ my %source_count;
 my %near_miss;
 my @i_plus;
 
-my $order = $corpus->order;
-
-my @extra;
-push @extra, "AND source NOT IN ('吾輩は猫である', 'こゝろ', '坊っちゃん')" if $ARGV{'skip-classics'};
-push @extra, "AND source NOT IN ('Twitter')" if $ARGV{'skip-twitter'};
-push @extra, "AND source NOT IN ('MFSP', 'Smart.fm', 'ARES-3', 'プログレッシブ英和・和英中辞典', '四字熟語', '四字熟語 Example', 'Twitter')" if $ARGV{'skip-nonbooks'};
-push @extra, "AND source NOT LIKE 'ハリー・ポッターと%' AND source NOT IN ('吾輩は猫である', 'こゝろ', '坊っちゃん')" if $ARGV{'skip-books'};
-my $extra = join "\n", @extra;
-my $sth = $corpus->prepare("
-    SELECT japanese, source, NULL, morphemes FROM sentences
-    WHERE suspended = 1
-    $extra
-    ORDER BY $order
-;");
-$sth->execute;
-
 open my $known_sentences, '>', 'known.txt';
 
-my $ankied = 0;
 my $prev_source = '';
 my ($i, $e) = (0, 0);
-while (1) {
-    my ($sentence, $source, $fid, $morphemes) = $sth->fetchrow_array;
-    if (!$sentence) {
-        last if $ankied || $ARGV{'skip-anki'};
 
-        $sth = $anki->prepare("
-            SELECT value, 'Anki', fields.factId, NULL FROM fields
-                JOIN fieldModels ON (fieldModels.id = fields.fieldModelId)
-                JOIN cards ON (cards.factId = fields.factId)
-            WHERE
-                fieldModels.name = '日本語'
-                AND cards.type <= 0
-        ;");
-        $sth->execute;
-        ($sentence, $source, $fid, $morphemes) = $sth->fetchrow_array;
-        $ankied = 1;
-    }
-
+sub process {
+    my ($sentence, $source, $fid, $morphemes) = @_;
     say 2**$e++ if ++$i == 2**$e;
 
     my (@known, @unknown);
@@ -95,6 +63,36 @@ while (1) {
     else {
         $source_count{$source}{unknown}++;
     }
+}
+
+my $order = $corpus->order;
+
+my @extra;
+push @extra, "AND source NOT IN ('吾輩は猫である', 'こゝろ', '坊っちゃん')" if $ARGV{'skip-classics'};
+push @extra, "AND source NOT IN ('Twitter')" if $ARGV{'skip-twitter'};
+push @extra, "AND source NOT IN ('MFSP', 'Smart.fm', 'ARES-3', 'プログレッシブ英和・和英中辞典', '四字熟語', '四字熟語 Example', 'Twitter')" if $ARGV{'skip-nonbooks'};
+push @extra, "AND source NOT LIKE 'ハリー・ポッターと%' AND source NOT IN ('吾輩は猫である', 'こゝろ', '坊っちゃん')" if $ARGV{'skip-books'};
+my $extra = join "\n", @extra;
+
+my $sth = $corpus->prepare("
+    SELECT japanese, source, NULL, morphemes FROM sentences
+    WHERE suspended = 1
+    $extra
+    ORDER BY $order
+;");
+$sth->execute;
+while (my ($sentence, $source, $fid, $morphemes) = $sth->fetchrow_array) {
+    process($sentence, $source, $fid, $morphemes);
+}
+
+unless ($ARGV{'skip-anki'}) {
+    $anki->each_card(sub {
+        my ($card) = @_;
+        return if $card->model->name ne '文';
+        return if !$card->suspended;
+
+        process($card->field('日本語'), 'Anki', $card->note_id, undef);
+    });
 }
 
 open my $freq, '>', 'freq.txt';
