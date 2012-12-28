@@ -14,16 +14,17 @@ my @tools = sort { $a cmp $b } tools();
 my @methods = (
     'each_field',
     'each_note',
+    'each_card',
 );
 
 for my $method (@methods) {
     my @applicable_tools = grep { $_->can($method) } @tools;
     my %applicable_tools_L2;
 
-    if ($method eq 'each_note') {
+    if ($method eq 'each_note' || $method eq 'each_card') {
         $dbh->$method(sub {
-            my ($note) = @_;
-            my $model_name = $note->model->name;
+            my ($object) = @_;
+            my $model_name = $object->model->name;
             my $method_L2 = "${method}_$model_name";
 
             $applicable_tools_L2{$model_name} //= [ grep { $_->can($method_L2) } @tools ];

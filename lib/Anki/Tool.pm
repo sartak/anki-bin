@@ -46,5 +46,10 @@ sub report_note {
     warn $self->name . " nid:" . $note->id . "|$message\n";
 }
 
+sub report_card {
+    my ($self, $card, $message) = @_;
+    warn $self->name . " cid:" . $card->id . "|$message\n";
+}
+
 1;
 
