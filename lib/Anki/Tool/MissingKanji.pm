@@ -9,11 +9,13 @@ extends 'Anki::Tool';
 my %sentence_kanji;
 my %studied_kanji;
 
-sub each_note_文 {
-    my ($self, $note) = @_;
-    my $sentence = $note->field('日本語');
+sub each_card_文 {
+    my ($self, $card) = @_;
+    return if $card->suspended;
 
-    $sentence_kanji{$_} = $note
+    my $sentence = $card->field('日本語');
+
+    $sentence_kanji{$_} = $card
         for $sentence =~ /\p{Han}/g;
 
     return 1;
@@ -33,8 +35,8 @@ sub done {
 
     for my $kanji (keys %sentence_kanji) {
         next if $studied_kanji{$kanji};
-        my $note = $sentence_kanji{$kanji};
-        $self->report_note($note, $note->field('日本語') . " - includes missing kanji $kanji");
+        my $card = $sentence_kanji{$kanji};
+        $self->report_card($card, $card->field('日本語') . " - includes missing kanji $kanji");
     }
 }
 
