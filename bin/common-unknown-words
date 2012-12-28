@@ -65,24 +65,26 @@ sub process {
     }
 }
 
-my $order = $corpus->order;
+unless ($ARGV{'anki-only'}) {
+    my $order = $corpus->order;
 
-my @extra;
-push @extra, "AND source NOT IN ('吾輩は猫である', 'こゝろ', '坊っちゃん')" if $ARGV{'skip-classics'};
-push @extra, "AND source NOT IN ('Twitter')" if $ARGV{'skip-twitter'};
-push @extra, "AND source NOT IN ('MFSP', 'Smart.fm', 'ARES-3', 'プログレッシブ英和・和英中辞典', '四字熟語', '四字熟語 Example', 'Twitter')" if $ARGV{'skip-nonbooks'};
-push @extra, "AND source NOT LIKE 'ハリー・ポッターと%' AND source NOT IN ('吾輩は猫である', 'こゝろ', '坊っちゃん')" if $ARGV{'skip-books'};
-my $extra = join "\n", @extra;
+    my @extra;
+    push @extra, "AND source NOT IN ('吾輩は猫である', 'こゝろ', '坊っちゃん')" if $ARGV{'skip-classics'};
+    push @extra, "AND source NOT IN ('Twitter')" if $ARGV{'skip-twitter'};
+    push @extra, "AND source NOT IN ('MFSP', 'Smart.fm', 'ARES-3', 'プログレッシブ英和・和英中辞典', '四字熟語', '四字熟語 Example', 'Twitter')" if $ARGV{'skip-nonbooks'};
+    push @extra, "AND source NOT LIKE 'ハリー・ポッターと%' AND source NOT IN ('吾輩は猫である', 'こゝろ', '坊っちゃん')" if $ARGV{'skip-books'};
+    my $extra = join "\n", @extra;
 
-my $sth = $corpus->prepare("
-    SELECT japanese, source, NULL, morphemes FROM sentences
-    WHERE suspended = 1
-    $extra
-    ORDER BY $order
-;");
-$sth->execute;
-while (my ($sentence, $source, $fid, $morphemes) = $sth->fetchrow_array) {
-    process($sentence, $source, $fid, $morphemes);
+    my $sth = $corpus->prepare("
+        SELECT japanese, source, NULL, morphemes FROM sentences
+        WHERE suspended = 1
+        $extra
+        ORDER BY $order
+    ;");
+    $sth->execute;
+    while (my ($sentence, $source, $fid, $morphemes) = $sth->fetchrow_array) {
+        process($sentence, $source, $fid, $morphemes);
+    }
 }
 
 unless ($ARGV{'skip-anki'}) {
