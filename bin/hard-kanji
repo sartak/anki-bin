@@ -1,0 +1,29 @@
+#!/usr/bin/env perl
+use 5.16.0;
+use warnings;
+use utf8::all;
+use Anki::Database;
+
+my $anki = Anki::Database->new;
+
+my %by_no_count;
+
+$anki->each_card(sub {
+    my ($card) = @_;
+
+    return unless $card->model->name eq '漢字'
+               && $card->template eq '書け';;
+
+    my $kanji = $card->field('漢字');
+    my ($right, $wrong) = $anki->card_scores($card->id);
+    push @{ $by_no_count{$wrong} }, $kanji;
+});
+
+my $limit = 156;
+for my $count (sort { $b <=> $a } keys %by_no_count) {
+    my @kanji = @{ $by_no_count{$count} };
+    say "$count ✗ " . (join '', @kanji);
+    $limit -= @kanji;
+    last if $limit < 0;
+}
+
