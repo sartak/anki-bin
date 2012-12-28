@@ -12,7 +12,7 @@ sub each_note_文 {
     my $sentence = $note->field('日本語');
     my $context  = $note->field('前後関係');
 
-    my @readings = map { /^([^【]+)/ } split /<br.*?>/, $note->field('読み');
+    my @readings = $note->field('読み') =~ m{(^|>)(.*?)【}g;
     my @spurious;
     for my $kanji (grep defined, map { /(\p{Han}+)/g } @readings) {
         my $regex = join 'っ*', split '', $kanji;
