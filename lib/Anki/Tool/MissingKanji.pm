@@ -23,7 +23,6 @@ sub each_note_漢字 {
     my ($self, $note) = @_;
     my $kanji = $note->field('漢字');
     $studied_kanji{$kanji}++;
-    delete $sentence_kanji{$_};
 }
 
 sub done {
