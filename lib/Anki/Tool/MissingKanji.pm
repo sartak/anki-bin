@@ -24,6 +24,11 @@ sub each_card_文 {
 sub each_note_漢字 {
     my ($self, $note) = @_;
     my $kanji = $note->field('漢字');
+
+    if ($kanji =~ /[a-z]/i) {
+        $self->report_note($note, "$kanji - romaji in the 漢字 field");
+    }
+
     $studied_kanji{$kanji}++;
 }
 
