@@ -40,6 +40,11 @@ sub report {
     warn $self->name . "|$message\n";
 }
 
+sub report_hint {
+    my ($self, $message) = @_;
+    warn((' ' x length $self->name) . "|$message\n");
+}
+
 sub report_field {
     my ($self, $field, $message) = @_;
     $message //= $field->value;
