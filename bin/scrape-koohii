@@ -55,8 +55,9 @@ while (my $kanji = shift @kanji) {
             $info =~ s/\[0?★/[/;
             $info =~ s/ 0?⚠//;
             $info = "" if $info eq '[]';
+            $info = "$info " if $info;
 
-            say "   $info $story->{text}";
+            say "   $info$story->{text}";
         }
     }
     else {
