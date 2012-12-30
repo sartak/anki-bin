@@ -29,7 +29,6 @@ my @allowed = qw(
     context-only
     from-corpus
     duplicate-kanji
-    atomic-prompt
 );
 
 sub each_note {
