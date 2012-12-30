@@ -82,9 +82,6 @@ $db->each_card(sub {
     if ($model_name eq '漢字' && $template eq '書け') {
         push @{ $day{$reviewed_date}{'漢字'} }, $fields->{'漢字'};
     }
-    elsif ($model_name eq '地図') {
-        push @{ $day{$reviewed_date}{'地図'} }, $fields->{'出所'};
-    }
     elsif ($model_name eq '四字熟語') {
         push @{ $day{$reviewed_date}{'四字熟語'} }, $fields->{'出所'};
     }
