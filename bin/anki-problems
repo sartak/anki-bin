@@ -1,0 +1,54 @@
+#!/usr/bin/env perl
+use 5.16.0;
+use warnings;
+use utf8::all;
+use Anki::Database;
+use Module::Pluggable (
+    sub_name    => 'tools',
+    instantiate => 'new',
+    search_path => 'Anki::Tool',
+);
+
+my $dbh = Anki::Database->new;
+my @tools = sort { $a cmp $b } tools();
+my @methods = (
+    'each_field',
+    'each_note',
+    'each_card',
+);
+
+for my $method (@methods) {
+    my @applicable_tools = grep { $_->can($method) } @tools;
+    my %applicable_tools_L2;
+
+    if ($method eq 'each_note' || $method eq 'each_card') {
+        $dbh->$method(sub {
+            my ($object) = @_;
+            my $model_name = $object->model->name;
+            my $method_L2 = "${method}_$model_name";
+
+            $applicable_tools_L2{$model_name} //= [ grep { $_->can($method_L2) } @tools ];
+
+            for my $tool (@{ $applicable_tools_L2{$model_name} }) {
+                $tool->$method_L2(@_);
+            }
+
+            for my $tool (@applicable_tools) {
+                $tool->$method(@_);
+            }
+        });
+    }
+    else {
+        $dbh->$method(sub {
+            for my $tool (@applicable_tools) {
+                $tool->$method(@_);
+            }
+        });
+    }
+}
+
+for my $tool (@tools) {
+    if ($tool->can('done')) {
+        $tool->done;
+    }
+}

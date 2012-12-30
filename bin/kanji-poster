@@ -60,44 +60,24 @@ my $status_file = "$ENV{HOME}/devel/vocabulary/.kanji-poster";
 my %old_kanji_status;
 %old_kanji_status = %{ from_json(slurp($status_file, err_mode => 'quiet') || '{}', { utf8 => 1 } ) };
 
-my $db = Anki::Database->new;
-my $kanji_sth = $db->prepare("
-    select kanji.value, reading.value
-    from fields as kanji
-        join fieldModels as kanjiField on (kanji.fieldModelId = kanjiField.id)
-        join fields as reading on (kanji.factId = reading.factId)
-        join fieldModels as readingField on (reading.fieldModelId = readingField.id)
-        join cards on (cards.factId = kanji.factId)
-        join cardModels on (cards.cardModelId = cardModels.id)
-        join facts on (cards.factId = facts.id)
-    where
-        kanjiField.name = '漢字'
-        and readingField.name = '読み'
-        and cardModels.name = '書け'
-        and facts.tags not like '%duplicate-kanji%'
-        order by cards.created asc
-;");
-
-my $sentence_sth = $db->prepare("
-    select sentence.value
-    from fields as sentence
-        join fieldModels on (fieldModels.id = sentence.fieldModelId)
-        join models on (fieldModels.modelId = models.id)
-        join cards on (cards.factId = sentence.factId)
-    where
-        fieldModels.name = '日本語'
-        and models.name = '文'
-        and cards.type >= 0
-;");
-
-$kanji_sth->execute;
+my $anki = Anki::Database->new;
 
 my %kanji_status;
 my @nonrtk;
 my %nonrtk;
 my $has_changes = 0;
 
-while (my ($kanji, $reading) = $kanji_sth->fetchrow_array) {
+my %seen_line;
+my %seen_joyo;
+
+my $process_kanji_card = sub {
+    my ($card) = @_;
+
+    return if $card->has_tag('duplicate-kanji');
+
+    my $kanji = $card->field('漢字');
+    my $reading = $card->field('読み');
+
     my $status = 'card';
 
     $status = 'reading' if length $reading;
@@ -108,40 +88,24 @@ while (my ($kanji, $reading) = $kanji_sth->fetchrow_array) {
     }
 
     $kanji_status{$kanji} = $status;
-}
+};
 
-$sentence_sth->execute;
+my $process_sentence_card = sub {
+    my ($card) = @_;
 
-while (my ($sentence) = $sentence_sth->fetchrow_array) {
+    return if $card->suspended;
+
+    my $sentence = $card->field('日本語');
+
     for my $kanji ($sentence =~ /(\p{Han})/g) {
         $kanji_status{$kanji} = 'sentence'
             if ($kanji_status{$kanji}||'card') eq 'card';
         push @nonrtk, $kanji
             if !heisig_number($kanji) && $nonrtk{$kanji}++ == 0;
     }
-}
 
-my $yomi_sth = $db->prepare("
-    select yomi.value
-        from fields as yomi
-            join fieldModels on (yomi.fieldModelId = fieldModels.id)
-            join models on (fieldModels.modelId = models.id)
-            join cards on (yomi.factId = cards.factId)
-            join facts on (cards.factId = facts.id)
-        where
-            models.name = '文'
-            and fieldModels.name = '読み'
-            and yomi.value <> ''
-            and facts.tags not like '%duplicate-kanji%'
-            and cards.type >= 0
-;");
-$yomi_sth->execute;
-
-my %seen_line;
-my %seen_joyo;
-
-while (my ($yomi) = $yomi_sth->fetchrow_array) {
-    for my $line (split /<br.*?>/, $yomi) {
+    my $yomi = $card->field('読み');
+    for my $line (grep /\S/, split /<.*?>/, $yomi) {
         next if $seen_line{$line}++;
         unless ($line =~ /^([^【]+)【([^】]+)】$/) {
             warn "invalid reading line: $line";
@@ -159,7 +123,19 @@ while (my ($yomi) = $yomi_sth->fetchrow_array) {
             }
         }
     }
-}
+};
+
+$anki->each_card(sub {
+    my ($card) = @_;
+    my $model_name = $card->model->name;
+
+    if ($model_name eq '漢字') {
+        $process_kanji_card->($card);
+    }
+    elsif ($model_name eq '文') {
+        $process_sentence_card->($card);
+    }
+});
 
 for my $kanji (keys %kanji_status) {
     next unless $kanji_status{$kanji} eq 'reading';

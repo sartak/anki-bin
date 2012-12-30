@@ -1,13 +1,12 @@
-#!/usr/bin/env perl
-use 5.14.0;
+package Anki::Tool::Sources;
+use utf8;
+use 5.16.0;
 use warnings;
-use utf8::all;
-use Anki::Database;
+use Any::Moose;
 use List::Util 'first';
+use List::MoreUtils 'any';
 
-my %known_sources;
-my @regex_sources;
-my %type_of;
+extends 'Anki::Tool';
 
 my %sources = (
     games => [
@@ -34,7 +33,7 @@ my %sources = (
         'もじとも',
         '大きな字の漢字ナンクロ',
         'Cut the Rope',
-        '魔女と勇者',
+        qr/^魔女と勇者\d*$/,
     ],
     novels => [
         qr/^デューン砂の惑星[1-4]$/,
@@ -60,6 +59,7 @@ my %sources = (
         qr/^バガボンド\d+$/,
         qr/^鋼の錬金術師\d+$/,
         qr/^ブリーチ\d+$/,
+        qr/^日本人の知らない日本語\d+$/,
     ],
     movies => [
         'マトリックス',
@@ -178,12 +178,7 @@ my %expected_tags = (
     movies     => '映画',
 );
 
-my %reverse_tags;
-for my $type (keys %expected_tags) {
-    my $tag = $expected_tags{$type};
-    push @{ $reverse_tags{$tag} }, $type;
-}
-
+my (%known_sources, @regex_sources, %type_of);
 for my $type (keys %sources) {
     for my $source (@{ $sources{$type} }) {
         $type_of{$source} = $type;
@@ -197,6 +192,12 @@ for my $type (keys %sources) {
     }
 }
 
+my %reverse_tags;
+for my $type (keys %expected_tags) {
+    my $tag = $expected_tags{$type};
+    push @{ $reverse_tags{$tag} }, $type;
+}
+
 sub type_of {
     my $source = shift;
     my $source_template = $known_sources{$source} || first { $source =~ $_ } @regex_sources;
@@ -208,81 +209,47 @@ sub type_of {
     return $type;
 }
 
-my $db = Anki::Database->new;
-my $sth = $db->prepare("
-    select fields.value, fields.factId, facts.tags
-    from fields
-        join fieldModels on (fields.fieldModelId = fieldModels.id)
-        join models on (fieldModels.modelId = models.id)
-        join facts on (fields.factId = facts.id)
-    where
-        models.name is '文'
-        and fieldModels.name like '%出所%'
-        and fields.value not like 'http%'
-        and fields.value not like '# %'
-;");
+sub each_note_文 {
+    my ($self, $note) = @_;
+    my $source = $note->field('出所');
 
-$sth->execute;
+    return $self->report_note($note, "$source - has newlines")
+        if $source =~ /\n|<br/;
 
-my %count;
+    return $self->report_note($note, "$source - has spurious #!")
+        if $source =~ m{(twitter|facebook)\.com/\#\!};
 
-while (my ($source, $factid, $tags) = $sth->fetchrow_array) {
-    if (my $type = type_of($source)) {
-        if ($expected_tags{$type} && $tags !~ $expected_tags{$type}) {
-            warn "$factid|$source - didn't include tag $expected_tags{$type} expected of $type\n" unless $tags =~ /from-corpus/;
-        }
-        next;
-    }
+    return $self->report_note($note, "$source - links to mobile site")
+        if $source =~ m{\.m\.wikipedia};
 
-    $count{$source}++;
-}
+    my $type = type_of($source);
 
-for my $source (sort { $count{$b} <=> $count{$a} } keys %count) {
-    say "$count{$source}\t$source";
-    say "\t\tYou meant プログレッシブ英和・和英中辞典" if $source eq 'Dictionary.app';
-}
+    my @tags = @{ $note->tags };
+    my $has_tag = sub {
+        my ($tag) = @_;
+        return any { $_ eq $tag } @tags;
+    };
 
-$sth = $db->prepare("
-    select fields.value, fields.factId
-    from fields
-        join fieldModels on (fields.fieldModelId = fieldModels.id)
-        join models on (fieldModels.modelId = models.id)
-    where
-        models.name is '文'
-        and fieldModels.name like '%出所%'
-;");
-
-$sth->execute;
-
-while (my ($source, $factid) = $sth->fetchrow_array) {
-    say "$factid|$source" if $source =~ /\n|<br/;
-    say $source if $source =~ m{(twitter|facebook)\.com/\#\!};
-    say $source if $source =~ m{\.m\.wikipedia};
-}
-
-for my $tag (keys %reverse_tags) {
-    my @types = @{ $reverse_tags{$tag} };
-
-    my $sth = $db->prepare("
-        select fields.value, fields.factId
-        from fields
-            join fieldModels on (fields.fieldModelId = fieldModels.id)
-            join models on (fieldModels.modelId = models.id)
-            join facts on (fields.factId = facts.id)
-        where
-            models.name is '文'
-            and facts.tags like ?
-            and fieldModels.name like '%出所%'
-            and fields.value not like 'http%'
-            and fields.value not like '# %'
-    ;");
-
-    $sth->execute("%$tag%");
-
-    while (my ($source, $factid) = $sth->fetchrow_array) {
-        my $type = type_of($source);
-        unless ($type && grep { $type eq $_ } @types) {
-            say "$factid|$source has spurious $tag tag";
+    # make sure each note has tags expected of its source material
+    unless ($has_tag->('from-corpus')) {
+        if ($type) {
+            my $expected = $expected_tags{$type};
+            if ($expected && !$has_tag->($expected)) {
+                return $self->report_note($note, "$source - didn't include tag $expected expected of $type");
+            }
         }
     }
+
+    # make sure each note has no spurious tags
+    return if $source =~ m{^http};
+    for my $tag (grep { $has_tag->($_) } keys %reverse_tags) {
+        unless ($type && grep { $type eq $_ } @{ $reverse_tags{$tag} }) {
+            return $self->report_note($note, "$source - has spurious $tag tag");
+        }
+    }
+
+    return 1;
 }
+
+1;
+

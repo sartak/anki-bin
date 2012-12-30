@@ -1,0 +1,33 @@
+#!/usr/bin/env perl
+use utf8::all;
+use 5.16.0;
+use warnings;
+use Anki::Database;
+
+my %seen;
+
+$seen{$_} = 1 for "@ARGV" =~ /\p{Han}/g;
+
+my $anki = Anki::Database->new;
+
+$anki->each_card(sub {
+    my ($card) = @_;
+    return unless $card->model->name eq '漢字';
+    $seen{ $card->field('漢字') }++;
+});
+
+$seen{'々'}++;
+$seen{'〇'}++;
+
+@ARGV=();
+
+while (<>) {
+    my $listed = 0;
+    for my $kanji (/\p{Han}/g) {
+        if (!$seen{$kanji}) {
+            print $kanji;
+            $listed++;
+        }
+    }
+    print "\n" if $listed;
+}

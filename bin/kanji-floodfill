@@ -6,12 +6,14 @@ use JSON;
 use File::Slurp 'slurp', 'write_file';
 use Lingua::JA::Heisig 'kanji', 'heisig_number';
 
+my $rtk3 = 0;
+
 my $status_file = "$ENV{HOME}/devel/vocabulary/.kanji-poster";
 my %kanji_status = %{ from_json(slurp($status_file), { utf8 => 1 } ) };
 
 my @status;
 my @row;
-for my $i (0..2041) {
+for my $i (0 .. ($rtk3 ? 3029 : 2041)) {
     my $kanji = (kanji)[$i];
 
     my $status = 0;
@@ -74,7 +76,7 @@ for my $index (sort { $count_of{$b} <=> $count_of{$a} } keys %count_of) {
 }
 
 my ($x, $y) = (0, 0);
-for my $i (0..2041) {
+for my $i (0 .. ($rtk3 ? 3029 : 2041)) {
     my $kanji = (kanji)[$i];
 
     if ($colored[$y][$x]) {
