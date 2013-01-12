@@ -47,16 +47,12 @@ my %day;
 
 my $db = Anki::Database->new;
 
-my $first_reviews = $db->first_reviews;
-
 $db->each_card(sub {
     my ($card) = @_;
 
     my $created = $card->created;
-    my $first_review = $first_reviews->{$card->id};
 
     return if $created < $start;
-    return if defined($first_review) && $first_review < $start;
     return if $card->suspended;
 
     my $template   = $card->template;
@@ -68,44 +64,37 @@ $db->each_card(sub {
     $created_dt->add(hours => $drift);
     my $created_date = $created_dt->ymd;
 
-    my $reviewed_date;
-    if ($first_review) {
-        my $reviewed_dt = DateTime->from_epoch(epoch => $first_review)->set_time_zone('America/New_York');
-        $reviewed_dt->add(hours => $drift);
-        $reviewed_date = $reviewed_dt->ymd;
-    }
-
     if ($fields->{'出所'}) {
         push @{ $day{$created_date}{'カードを加える'} }, $fields->{'出所'};
     }
 
     if ($model_name eq '漢字' && $template eq '書け') {
-        push @{ $day{$reviewed_date}{'漢字'} }, $fields->{'漢字'};
+        push @{ $day{$created_date}{'漢字'} }, $fields->{'漢字'};
     }
     elsif ($model_name eq '四字熟語') {
-        push @{ $day{$reviewed_date}{'四字熟語'} }, $fields->{'出所'};
+        push @{ $day{$created_date}{'四字熟語'} }, $fields->{'出所'};
     }
 
     if ($tags->{'文法'}) {
-        push @{ $day{$reviewed_date}{'文法'} }, $fields->{'出所'};
+        push @{ $day{$created_date}{'文法'} }, $fields->{'出所'};
     }
     if ($tags->{'動画'}) {
         push @{ $day{$created_date}{'動画'} }, $fields->{'出所'};
     }
     if ($tags->{'カラオケ'}) {
-        push @{ $day{$reviewed_date}{'歌詞'} }, $fields->{'出所'};
+        push @{ $day{$created_date}{'歌詞'} }, $fields->{'出所'};
     }
     if ($tags->{'記事'}) {
         push @{ $day{$created_date}{'記事'} }, $fields->{'出所'};
     }
     if ($tags->{'ゲーム'}) {
-        push @{ $day{$reviewed_date}{'ゲーム'} }, $fields->{'出所'};
+        push @{ $day{$created_date}{'ゲーム'} }, $fields->{'出所'};
     }
     if ($tags->{'読み物'}) {
-        push @{ $day{$reviewed_date}{'読む'} }, $fields->{'出所'};
+        push @{ $day{$created_date}{'読む'} }, $fields->{'出所'};
     }
     if ($tags->{'映画'}) {
-        push @{ $day{$reviewed_date}{'映画を観る'} }, $fields->{'出所'};
+        push @{ $day{$created_date}{'映画を観る'} }, $fields->{'出所'};
     }
 
 });
