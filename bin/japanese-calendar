@@ -9,11 +9,6 @@ use DateTime;
 use DateTime::Format::Strptime;
 use Net::Twitter;
 
-my @disabled = (
-    'ウィキペディア',
-    '漢字',
-);
-
 my @sort = (
     '記事',
     '書く',
@@ -168,8 +163,6 @@ if ($@) {
 for my $day (sort keys %day) {
     my %cards = %{ $day{$day} };
     say $day;
-
-    delete @cards{@disabled};
 
     for my $achievement (@sort) {
         show_achievement($achievement, delete $cards{$achievement});
