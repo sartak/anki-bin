@@ -5,6 +5,8 @@ use utf8::all;
 use Anki::Database;
 use List::MoreUtils 'uniq';
 
+# http://forum.koohii.com/viewtopic.php?pid=194634
+
 my $anki = Anki::Database->new;
 
 my %sentences_for_kanji;
