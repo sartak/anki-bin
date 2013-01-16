@@ -1,0 +1,103 @@
+#!/usr/bin/env perl
+use 5.14.0;
+use warnings;
+use utf8::all;
+use Anki::Morphology;
+use List::MoreUtils 'uniq';
+
+# http://forum.koohii.com/viewtopic.php?pid=194634
+
+my $morph = Anki::Morphology->new;
+my $anki = $morph->anki;
+
+my %first_reviews = %{ $anki->first_reviews };
+my %sentences_for;
+my %source_of;
+my %readings_of;
+my %review_of;
+
+$anki->each_card(sub {
+    my ($card) = @_;
+    my $model_name = $card->model->name;
+
+    if ($model_name ne '文') {
+        return;
+    }
+
+    my $sentence = $card->field('日本語');
+    $source_of{$sentence} = $card->field('出所');
+    $review_of{$sentence} = $first_reviews{$card->id};
+
+    for my $morpheme ($morph->morphemes_of($sentence)) {
+        my $dict = $morpheme->{dictionary};
+        push @{ $sentences_for{$dict} }, $sentence;
+    }
+
+    my @readings = split /<.*?>/, $card->field('読み');
+    for (grep length, @readings) {
+        if (my ($word, $reading) = /^([^【]+)【([^】]+)】$/) {
+            push @{ $readings_of{$word} }, $reading;
+        }
+    }
+});
+
+say '<?xml version="1.0" encoding="UTF-8"?>
+<d:dictionary xmlns="http://www.w3.org/1999/xhtml" xmlns:d="http://www.apple.com/DTDs/DictionaryService-1.0.rng">';
+
+my $id = 0;
+for my $word ($morph->known_morphemes) {
+    my @sentences = uniq @{ $sentences_for{$word} };
+    my @readings  = uniq @{ $readings_of{$word} };
+
+    ++$id;
+
+    say qq{
+        <d:entry id="kanji_$id" d:title="$word">
+        <d:index d:value="$word"/>
+    };
+
+    if (@readings) {
+        say "<p>";
+        say qq{<span class="headword">$word</span>};
+        say qq{<span class="readings">}
+          . (join "、", map { qq[<span class="reading">【$_】</span>] } @readings)
+          . qq{</span>};
+        say "</p>";
+    }
+    else {
+        say "<h1>$word</h1>";
+    }
+
+    if (@sentences) {
+        say qq{<ul class="sentences">};
+        for my $sentence (@sentences) {
+            say "<li>$sentence";
+
+            my $date;
+            if ($review_of{$sentence}) {
+                my ($year, $month, $day) = (localtime($review_of{$sentence}))[5, 4, 3];
+                $year += 1900;
+                $month++;
+                $date = sprintf '%04d-%02d-%02d', $year, $month, $day;
+            }
+
+            my $source = $source_of{$sentence};
+
+            if ($date) {
+                say qq{<ul class="source"><li><span class="date">$date</span> $source</li></ul>};
+            }
+            else {
+                say qq{<ul class="source"><li>$source</li></ul>};
+            }
+
+            say "</li>";
+        }
+        say "</ul>";
+    }
+
+    say qq{
+        </d:entry>
+    };
+}
+
+say '</d:dictionary>';
