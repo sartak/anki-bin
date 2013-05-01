@@ -19,6 +19,10 @@ sub each_field {
         return $self->report_field($field, $value);
     }
 
+    if ($value =~ /<span/ && $field->name eq '出所') {
+        return $self->report_field($field, $value);
+    }
+
     return 1;
 }
 
