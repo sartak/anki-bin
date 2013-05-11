@@ -92,7 +92,10 @@ sub each_card_文 {
         my @sentence_kanji = uniq($sentence =~ /\p{Han}/g);
         my @reading_kanji = uniq($reading_field =~ /\p{Han}/g);
 
-        if ("@sentence_kanji" ne "@reading_kanji") {
+        my @sorted_sentence = sort @sentence_kanji;
+        my @sorted_reading = sort @reading_kanji;
+
+        if ("@sorted_sentence" eq "@sorted_reading" && "@sentence_kanji" ne "@reading_kanji") {
             return $self->report_card($card, "Kanji order:\ngot      @reading_kanji\nexpected @sentence_kanji");
         }
     }
