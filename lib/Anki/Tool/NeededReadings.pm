@@ -12,7 +12,7 @@ sub each_card_文 {
     return if $card->suspended;
 
     my $sentence      = $card->field('日本語');
-    my $reading_field = $card->field('読み');
+    my $reading_field = $card->field('読み') || '';
 
     my @needed;
     for my $kanji ($sentence =~ /(\p{Han}|[０１２３４５６７８９])/g) {

@@ -221,6 +221,9 @@ sub each_note_文 {
     my ($self, $note) = @_;
     my $source = $note->field('出所');
 
+    return $self->report_note($note, "source is empty")
+        if !$source;
+
     return $self->report_note($note, "$source - has newlines")
         if $source =~ /\n|<br/;
 

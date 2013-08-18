@@ -86,7 +86,8 @@ sub each_card_文 {
     my ($self, $card) = @_;
 
     my $sentence = $card->field('日本語');
-    my $reading_field = $card->field('読み');
+    my $reading_field = $card->field('読み')
+        or return;
     my $nid = $card->note_id;
 
     if (!$card->suspended) {
