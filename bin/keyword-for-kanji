@@ -5,17 +5,17 @@ use utf8::all;
 use Anki::Database;
 
 my @kanji = map { split '', $_ } @ARGV;
-my %keyword = map { $_ => "" } @kanji;
+my %keyword = map { $_ => [] } @kanji;
 
 my $dbh = Anki::Database->new;
 $dbh->each_note(sub {
     my ($note) = @_;
 
-    $keyword{$note->field('漢字')} = $note->field('英語')
+    push @{ $keyword{$note->field('漢字')} }, $note->field('英語')
         if exists $keyword{$note->field('漢字')};
 }, '漢字');
 
 for my $kanji (@kanji) {
     print "$kanji: " if @kanji > 1;
-    say $keyword{$kanji};
+    say join ', ', @{ $keyword{$kanji} };
 }
