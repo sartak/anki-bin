@@ -7,8 +7,6 @@ use Anki::Database;
 my $dbh = Anki::Database->new;
 $dbh->each_note(sub {
     my ($note) = @_;
-    return unless $note->model->name eq '文';
-
     my %tags = map { $_ => 1 } @ARGV;
 
     for my $tag (@{ $note->tags }) {
@@ -17,5 +15,5 @@ $dbh->each_note(sub {
     return if %tags;
 
     say $note->field('日本語');
-});
+}, '文');
 

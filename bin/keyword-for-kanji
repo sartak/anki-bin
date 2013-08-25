@@ -10,11 +10,10 @@ my %keyword = map { $_ => "" } @kanji;
 my $dbh = Anki::Database->new;
 $dbh->each_note(sub {
     my ($note) = @_;
-    return unless $note->model->name eq '漢字';
 
     $keyword{$note->field('漢字')} = $note->field('英語')
         if exists $keyword{$note->field('漢字')};
-});
+}, '漢字');
 
 for my $kanji (@kanji) {
     print "$kanji: " if @kanji > 1;
