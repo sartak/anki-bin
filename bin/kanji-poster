@@ -82,7 +82,7 @@ my $process_kanji_card = sub {
 
     $status = 'reading' if length $reading;
 
-    if (!heisig_number($kanji)) {
+    if (!heisig_number($kanji) && !$nonrtk{$kanji}) {
         push @nonrtk, $kanji;
         $nonrtk{$kanji} = 1;
     }
@@ -198,6 +198,8 @@ my $print_second_poster = 0;
 $print_second_poster = 1 if grep { ($kanji_status{$_} || '') ne ($old_kanji_status{$_} || '') } (kanji)[2042..3029];
 $print_second_poster = 1 if $ARGV{html} || $ARGV{full};
 
+my $print_nonrtk = $ARGV{html} || $ARGV{full} || $ARGV{nonrtk};
+
 if ($print_second_poster) {
     print newline;
 
@@ -225,22 +227,24 @@ if ($print_second_poster) {
     }
 }
 
-if ($ARGV{html}) {
-    print newline . newline;
-    print '<h5>Non-RTK</h5>';
-    $i = 0;
+if ($print_nonrtk || $ARGV{html}) {
+    print newline;
 
+    if ($ARGV{html}) {
+        print '<h5>Non-RTK</h5>';
+    }
+
+    $i = 0;
     for my $kanji (@nonrtk) {
         next if $kanji =~ /[々〇]/;
         print_kanji($kanji);
     }
-
 }
 
 my $write_file = $ARGV{commit};
 if (!exists($ARGV{commit}) && $has_changes && !$ARGV{html}) {
     local $| = 1;
-    print "Do you want to commit? [yN] ";
+    print "\nDo you want to commit? [yN] ";
     my $commit = <>;
     if ($commit =~ /^y/i) {
         $write_file = 1;
