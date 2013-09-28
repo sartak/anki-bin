@@ -55,6 +55,7 @@ my %sources = (
         '吾輩は猫である',
         'こゝろ',
         '坊っちゃん',
+        qr/^ミストボーン[1-3]$/,
     ],
     manga => [
         qr/^ドラゴンボール\d+$/,
@@ -92,6 +93,8 @@ my %sources = (
         '千と千尋の神隠し',
         'フィフス・エレメント',
         'ビッグ・リボウスキ',
+        'Dark Knight Rises',
+        'The Living Daylights',
     ],
     television => [
         qr/^ドラゴンボール改\d+$/,

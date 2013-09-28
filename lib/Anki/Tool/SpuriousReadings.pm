@@ -10,6 +10,9 @@ sub each_note_文 {
     my ($self, $note) = @_;
 
     my $sentence = $note->field('日本語');
+
+    return if $sentence =~ /<img/;
+
     my $context  = $note->field('前後関係');
     my $readings = $note->field('読み')
         or return;
