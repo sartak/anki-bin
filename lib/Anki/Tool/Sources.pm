@@ -95,6 +95,7 @@ my %sources = (
         'ビッグ・リボウスキ',
         'Dark Knight Rises',
         'The Living Daylights',
+        'ルーパー',
     ],
     television => [
         qr/^ドラゴンボール改\d+$/,
