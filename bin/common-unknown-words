@@ -101,9 +101,15 @@ if ($ARGV{'from-file'}) {
     open my $handle, '<', $ARGV{'from-file'}
         or die "unable to open $ARGV{'from-file'} for reading: $!";
     while (<$handle>) {
-        next if /^\s*$/;
-        chomp;
-        process($_, $ARGV{'from-file'}, undef, undef);
+        for (/[「」【】『』〈〉]/ ? $_ : split /。/, $_) {
+            next unless /[\p{Han}\p{Hiragana}\p{Katakana}]/;
+
+            chomp;
+            s/^\s+//;
+            s/\s+$//;
+
+            process($_, $ARGV{'from-file'}, undef, undef);
+        }
     }
 }
 
