@@ -97,6 +97,16 @@ unless ($ARGV{'skip-anki'}) {
     });
 }
 
+if ($ARGV{'from-file'}) {
+    open my $handle, '<', $ARGV{'from-file'}
+        or die "unable to open $ARGV{'from-file'} for reading: $!";
+    while (<$handle>) {
+        next if /^\s*$/;
+        chomp;
+        process($_, $ARGV{'from-file'}, undef, undef);
+    }
+}
+
 open my $freq, '>', 'freq.txt';
 for my $word (sort { $anti_i{$b} <=> $anti_i{$a} } keys %anti_i) {
     print $freq "# " if $ARGV{'verbose'} && $i{$word};
