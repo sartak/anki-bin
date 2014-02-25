@@ -65,7 +65,7 @@ sub process {
     }
 }
 
-unless ($ARGV{'anki-only'}) {
+unless ($ARGV{'skip-corpus'}) {
     my $order = $corpus->order;
 
     my @extra;
