@@ -43,6 +43,7 @@ my %sources = (
         'Rogue Ninja',
         qr/^ロックマンX?[1-9]*$/,
         'ドラゴンボールRPG',
+        '100TURN勇者',
     ],
     novels => [
         qr/^デューン砂の惑星[1-4]$/,
