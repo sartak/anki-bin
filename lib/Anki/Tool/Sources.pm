@@ -151,6 +151,7 @@ my %sources = (
         qr/^カラフィナ - .*$/,
         qr/^きゃりーぱみゅぱみゅ - .*$/,
         qr/^Supercell - .*$/,
+        qr/^capsule - .*$/,
     ],
     apps => [
         'RT',
