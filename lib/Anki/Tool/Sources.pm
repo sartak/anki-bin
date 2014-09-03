@@ -46,6 +46,7 @@ my %sources = (
         '100TURN勇者',
         'ラーニングドラゴン',
         'Braid',
+        'Ninja Smasher',
     ],
     novels => [
         qr/^デューン砂の惑星[1-4]$/,
