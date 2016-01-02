@@ -108,7 +108,7 @@ my %sources = (
         'Dark Knight Rises',
         'The Living Daylights',
         'ルーパー',
-        'ガキの使い',
+        'GoldenEye',
     ],
     television => [
         qr/^ドラゴンボール改\d+$/,
@@ -116,6 +116,9 @@ my %sources = (
         'あやかの突撃英会話',
         'ドラゴンボール改',
         'ロス・タイム・ライフ',
+        'ガキの使い',
+        'リンカーン',
+        'ドラゴンボール超',
     ],
     tools => [
         'プログレッシブ英和・和英中辞典',
