@@ -111,14 +111,13 @@ my %sources = (
         'GoldenEye',
     ],
     television => [
-        qr/^ドラゴンボール改\d+$/,
+        qr/^ドラゴンボール改\d*$/,
         qr/^北斗の拳\d+話目$/,
         'あやかの突撃英会話',
-        'ドラゴンボール改',
         'ロス・タイム・ライフ',
         'ガキの使い',
         'リンカーン',
-        'ドラゴンボール超',
+        qr/^ドラゴンボール超\d*$/,
     ],
     tools => [
         'プログレッシブ英和・和英中辞典',
@@ -208,6 +207,7 @@ my %expected_tags = (
     manga      => '読み物',
     references => '読み物',
     movies     => '映画',
+    television => 'テレビ',
 );
 
 my (%known_sources, @regex_sources, %type_of);
