@@ -29,6 +29,7 @@ my @allowed = qw(
     rtks
 
     leech
+    marked
     context-only
     from-corpus
     duplicate-kanji
