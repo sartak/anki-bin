@@ -22,5 +22,10 @@ sub each_note_詰碁 {
     }
 }
 
+sub each_note_定石 {
+    my ($self, $note) = @_;
+    return $self->each_note_詰碁($note);
+}
+
 1;
 
