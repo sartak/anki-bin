@@ -47,8 +47,17 @@ for my $method (@methods) {
     }
 }
 
+my $reports = 0;
 for my $tool (@tools) {
     if ($tool->can('done')) {
         $tool->done;
     }
+    $reports += $tool->report_count;
+}
+
+if ($reports > 1) {
+    warn "Found $reports issues.\n";
+}
+elsif ($reports == 1) {
+    warn "Found 1 issue.\n";
 }

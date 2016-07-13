@@ -19,6 +19,12 @@ has name => (
     default => sub { blessed(shift) =~ s/.*:://r },
 );
 
+has report_count => (
+    is      => 'rw',
+    isa     => 'Int',
+    default => 0,
+);
+
 sub inspect {
     my $self = shift;
     my $dbh = $self->dbh;
@@ -37,27 +43,32 @@ sub inspect {
 
 sub report {
     my ($self, $message) = @_;
+    $self->report_count($self->report_count + 1);
     warn $self->name . "|$message\n";
 }
 
 sub report_hint {
     my ($self, $message) = @_;
+    $self->report_count($self->report_count + 1);
     warn((' ' x length $self->name) . "|$message\n");
 }
 
 sub report_field {
     my ($self, $field, $message) = @_;
+    $self->report_count($self->report_count + 1);
     $message //= $field->value;
     warn $self->name . " nid:" . $field->note_id . "|$message\n";
 }
 
 sub report_note {
     my ($self, $note, $message) = @_;
+    $self->report_count($self->report_count + 1);
     warn $self->name . " nid:" . $note->id . "|$message\n";
 }
 
 sub report_card {
     my ($self, $card, $message) = @_;
+    $self->report_count($self->report_count + 1);
     warn $self->name . " nid:" . $card->note_id . "|$message\n";
 }
 
