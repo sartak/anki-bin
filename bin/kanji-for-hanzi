@@ -1,0 +1,39 @@
+#!/usr/bin/env perl
+use utf8::all;
+use 5.16.0;
+use warnings;
+use Anki::Database;
+use List::MoreUtils 'uniq';
+
+my %seen;
+my %needed;
+
+my $anki = Anki::Database->new;
+
+$anki->each_card(sub {
+    my ($card) = @_;
+    if ($card->model->name eq '漢字') {
+        $seen{ $card->field('漢字') }++;
+    }
+    elsif ($card->model->name eq '粵語文') {
+        for my $hanzi ($card->field('粵語') =~ /\p{Han}/g) {
+            push @{ $needed{$hanzi} }, $card->field('粵語');
+        }
+    }
+});
+
+for my $hanzi (keys %needed) {
+    next if $seen{$hanzi};
+
+    print $hanzi . ": ";
+
+    s/<.*?>//g for @{ $needed{$hanzi} };
+
+    my $i = 0;
+    for my $sentence (sort { $a cmp $b } uniq @{ $needed{$hanzi} }) {
+        $sentence =~ s/$hanzi/\e[35m$&\e[m/g;
+        print "　: " if $i++;
+        print $sentence, "\n";
+    }
+    print "\n";
+}
