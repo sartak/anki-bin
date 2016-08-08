@@ -78,6 +78,29 @@ sub _validate_rank {
     return $self->report_note($note, "Unexpected rank '$rank'");
 }
 
+sub _validate_source {
+    my ($self, $note) = @_;
+    my $source = $note->field('Source');
+
+    return if $source =~ m{\A
+        Graded\ Go\ Problems\ for\ Beginners\ Volume\ (One|Two|Three)\ \#\d+
+      | Cho\ Chikun's\ Encyclopedia\ of\ Life\ and\ Death\ part\ 1\ \#\d+
+      | Get\ Strong\ at\ (Attacking|Invading)\ \#\d+
+
+      | In\ the\ Beginning\ p\d+
+      | Tesuji\ p\d+
+      | The\ Monkey\ Jump\ section\ [123]\ chapter\ \d+
+      | Relentless\ p\d+
+
+      | Nick\ Sibicky\ \#\d+
+      | Andrew\ Jackson\ \d\d\d\d-\d\d-\d\d
+
+      | https?://.+
+    \z}x;
+
+    return $self->report_note($note, "Unexpected source '$source'");
+}
+
 sub each_note_詰碁 {
     my ($self, $note) = @_;
 
@@ -88,7 +111,8 @@ sub each_note_詰碁 {
         || $self->_validate_html($note, $sgf)
         || $self->_validate_newlines($note, $sgf)
         || $self->_validate_prompt($note, $sgf)
-        || $self->_validate_rank($note);
+        || $self->_validate_rank($note)
+        || $self->_validate_source($note);
 }
 
 sub each_note_定石 {
@@ -112,7 +136,8 @@ sub each_note_計算 {
 
     return $self->_validate_html($note, $sgf)
         || $self->_validate_newlines($note, $sgf)
-        || $self->_validate_syntax($note, $sgf);
+        || $self->_validate_syntax($note, $sgf)
+        || $self->_validate_source($note);
 }
 
 1;
