@@ -124,6 +124,12 @@ sub each_card_文 {
         }
 
         s/\n/\\n/g;
+
+        s{
+            ^ (\s+)        # leading space
+            | (\s+) $      # trailing space
+        }{\e[1;41m$+\e[m}xg;
+
         return $self->report_card($card, "Malformed reading: $_");
     }
 
