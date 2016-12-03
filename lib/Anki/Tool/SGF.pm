@@ -85,7 +85,8 @@ sub _validate_source {
     return if $source =~ m{\A
         Graded\ Go\ Problems\ for\ Beginners\ Volume\ (One|Two|Three)\ \#\d+
       | Cho\ Chikun's\ Encyclopedia\ of\ Life\ and\ Death\ part\ 1\ \#\d+
-      | Get\ Strong\ at\ (Attacking|Invading)\ \#\d+
+      | Get\ Strong\ at\ (Attacking|Invading)\ (\#\d+|p\.[ivx]+)
+      | Five\ Hundred\ and\ One\ Tesuji\ Problems\ \#\d+
 
       | In\ the\ Beginning\ p\d+
       | Tesuji\ p\d+
