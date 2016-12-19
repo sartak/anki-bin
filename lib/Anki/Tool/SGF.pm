@@ -83,10 +83,13 @@ sub _validate_source {
     my $source = $note->field('Source');
 
     return if $source =~ m{\A
-        Graded\ Go\ Problems\ for\ Beginners\ Volume\ (One|Two|Three)\ \#\d+
+        Graded\ Go\ Problems\ for\ Beginners\ Volume\ (One|Two|Three|Four)\ \#\d+
       | Cho\ Chikun's\ Encyclopedia\ of\ Life\ and\ Death\ part\ 1\ \#\d+
       | Get\ Strong\ at\ (Attacking|Invading)\ (\#\d+|p\.[ivx]+)
       | Five\ Hundred\ and\ One\ Tesuji\ Problems\ \#\d+
+      | One\ Thousand\ and\ One\ Life-and-Death\ Problems\ \#\d+
+      | 中盤の基本\ \#\d+
+      | 詰碁の基本\ \#\d+
 
       | In\ the\ Beginning\ p\d+
       | Tesuji\ p\d+
