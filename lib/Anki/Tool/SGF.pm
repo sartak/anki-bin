@@ -64,6 +64,44 @@ sub _validate_prompt {
     return;
 }
 
+sub _validate_alternatives {
+    my ($self, $note, $sgf) = @_;
+
+    my $grove = eval { decode_sgf($sgf) };
+    my $game = $grove->[0];
+    my (@variations, $varying_player);
+
+    if (@$game == 1) {
+        $varying_player = uc($game->[0]{PL} || 'B');
+        push @variations, [$_, $varying_player] for @{$game->[0]{variations}};
+    }
+    else {
+        my $meta = shift @$game;
+        $varying_player = uc($meta->{PL} || 'B');
+        push @variations, [$game, $varying_player];
+    }
+
+    while (my $variation = shift @variations) {
+        my ($tree, $player) = @$variation;
+        for my $node (@$tree) {
+            if (!$node->{$player}) {
+                use Data::Dumper;
+                return $self->report_note($note, "Expected a node with $player; instead got " . Dumper($node));
+            }
+
+            $player = $player eq 'B' ? 'W' : 'B';
+            if ($node->{variations}) {
+                if ($player ne $varying_player) {
+                    return $self->report_note($note, "Variations for non-varying player $player");
+                }
+                push @variations, [$_, $player] for @{ $node->{variations} };
+            }
+        }
+    }
+
+    return;
+}
+
 sub _validate_rank {
     my ($self, $note) = @_;
     my $rank = $note->field('Rank');
@@ -115,6 +153,7 @@ sub each_note_詰碁 {
         || $self->_validate_html($note, $sgf)
         || $self->_validate_newlines($note, $sgf)
         || $self->_validate_prompt($note, $sgf)
+        || $self->_validate_alternatives($note, $sgf)
         || $self->_validate_rank($note)
         || $self->_validate_source($note);
 }
