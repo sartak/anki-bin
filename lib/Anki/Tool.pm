@@ -49,7 +49,6 @@ sub report {
 
 sub report_hint {
     my ($self, $message) = @_;
-    $self->report_count($self->report_count + 1);
     warn((' ' x length $self->name) . "|$message\n");
 }
 
