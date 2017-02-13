@@ -49,21 +49,6 @@ sub _validate_syntax {
     return;
 }
 
-sub _validate_prompt {
-    my ($self, $note, $sgf) = @_;
-
-    my $grove = eval { decode_sgf($sgf) };
-
-    return $self->report_note($note, $@)
-        if $@ || !$grove;
-
-    my $game = $grove->[0][0];
-    return $self->report_note($note, "No prompt for initial position")
-        if !$game->{C};
-
-    return;
-}
-
 sub _validate_alternatives {
     my ($self, $note, $sgf) = @_;
 
@@ -152,7 +137,6 @@ sub each_note_詰碁 {
     return $self->_validate_CH($note, $sgf)
         || $self->_validate_html($note, $sgf)
         || $self->_validate_newlines($note, $sgf)
-        || $self->_validate_prompt($note, $sgf)
         || $self->_validate_alternatives($note, $sgf)
         || $self->_validate_rank($note)
         || $self->_validate_source($note);
