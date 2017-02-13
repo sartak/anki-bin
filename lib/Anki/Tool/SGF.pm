@@ -118,6 +118,7 @@ sub _validate_source {
       | Tesuji\ p\d+
       | The\ Monkey\ Jump\ section\ [123]\ chapter\ \d+
       | Relentless\ p\d+
+      | Double\ Digit\ Kyu\ Games,\ game\ \#\d
 
       | Nick\ Sibicky\ \#\d+
       | Andrew\ Jackson\ \d\d\d\d-\d\d-\d\d
