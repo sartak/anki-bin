@@ -96,6 +96,8 @@ sub _validate_rank {
       | (\d+) \  dan
       | Double-digit \ kyu
       | Single-digit \ kyu
+      | Professional
+      | AYD
     \z}x;
 
     return $self->report_note($note, "Unexpected rank '$rank'");
