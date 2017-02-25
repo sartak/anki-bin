@@ -125,6 +125,7 @@ sub _validate_source {
       | Nick\ Sibicky\ \#\d+
       | Andrew\ Jackson\ \d\d\d\d-\d\d-\d\d
 
+      | \d\d\d\d-\d\d-\d\d[a-z]{1,3}
       | https?://.+
     \z}x;
 
