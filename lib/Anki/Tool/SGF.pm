@@ -129,6 +129,7 @@ sub _validate_source {
       | The\ Monkey\ Jump\ section\ [123]\ chapter\ \d+
       | Relentless\ p\d+
       | Double\ Digit\ Kyu\ Games,\ game\ \#\d
+      | Opening\ Theory\ Made\ Easy\ principle\ \d+:.+
 
       | Nick\ Sibicky\ \#\d+
       | Andrew\ Jackson\ \d\d\d\d-\d\d-\d\d
