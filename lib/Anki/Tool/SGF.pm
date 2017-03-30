@@ -31,6 +31,14 @@ sub _validate_html {
     return;
 }
 
+sub _validate_duplicate {
+    my ($self, $note, $sgf) = @_;
+
+    return $self->report_note($note, "duplicate SGF")
+        if $self->{seen_sgf}{$sgf}++;
+    return;
+}
+
 sub _validate_newlines {
     my ($self, $note, $sgf) = @_;
 
@@ -143,7 +151,8 @@ sub each_note_詰碁 {
         || $self->_validate_newlines($note, $sgf)
         || $self->_validate_alternatives($note, $sgf)
         || $self->_validate_rank($note)
-        || $self->_validate_source($note);
+        || $self->_validate_source($note)
+        || $self->_validate_duplicate($note, $sgf);
 }
 
 sub each_note_定石 {
