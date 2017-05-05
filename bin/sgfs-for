@@ -1,0 +1,18 @@
+#!/usr/bin/env perl
+use 5.16.0;
+use warnings;
+use utf8::all;
+use Anki::Database;
+
+my $anki = Anki::Database->new;
+my $regex = qr/$ARGV[0]/;
+
+$anki->each_note(sub {
+    my ($note) = @_;
+
+    return unless $note->model->name eq '詰碁';
+    return unless $note->field('Source') =~ $regex;
+
+    say(($1 ? "$1: " : "") . $note->field('SGF'));
+});
+
