@@ -33,6 +33,9 @@ my @allowed = qw(
     context-only
     from-corpus
     duplicate-kanji
+
+    no-color
+    no-coords
 );
 
 sub each_note {
