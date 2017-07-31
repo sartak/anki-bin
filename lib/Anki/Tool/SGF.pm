@@ -123,6 +123,7 @@ sub _validate_source {
       | One\ Thousand\ and\ One\ Life-and-Death\ Problems\ \#\d+
       | 中盤の基本\ \#\d+
       | 詰碁の基本\ \#\d+
+      | Making\ Good\ Shape\ \#\d+
 
       | In\ the\ Beginning\ p\d+
       | Tesuji\ p\d+
