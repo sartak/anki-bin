@@ -123,7 +123,9 @@ sub _validate_source {
       | One\ Thousand\ and\ One\ Life-and-Death\ Problems\ \#\d+
       | 中盤の基本\ \#\d+
       | 詰碁の基本\ \#\d+
+      | 手筋の基本\ \#\d+
       | Making\ Good\ Shape\ \#\d+
+      | Tricks\ in\ Joseki\ \#\d+
 
       | In\ the\ Beginning\ p\d+
       | Tesuji\ p\d+
@@ -131,6 +133,7 @@ sub _validate_source {
       | Relentless\ p\d+
       | Double\ Digit\ Kyu\ Games,\ game\ \#\d
       | Opening\ Theory\ Made\ Easy\ principle\ \d+:.+
+      | Life\ and\ Death\ chapter\ \d+\ problem\ \d+
 
       | Nick\ Sibicky\ \#\d+
       | Andrew\ Jackson\ \d\d\d\d-\d\d-\d\d
