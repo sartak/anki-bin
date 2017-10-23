@@ -104,6 +104,8 @@ sub _validate_rank {
       | (\d+) \  dan
       | Double-digit \ kyu
       | Single-digit \ kyu
+      | Low\ dan
+      | High\ dan
       | Professional
       | AYD
     \z}x;
