@@ -1,0 +1,66 @@
+#!/usr/bin/env perl
+use 5.16.0;
+use warnings;
+use utf8::all;
+use Anki::Database;
+
+my $anki = Anki::Database->new;
+my $outdir = shift or die "usage: $0 outdir\n";
+unless (-d $outdir) {
+    mkdir $outdir or die $!;
+}
+
+sub explode {
+    my ($a, $b, $c, $d) = @_;
+    my $out = "";
+    for my $x ($a..$c) {
+        for my $y ($b..$d) {
+           $out .= "[$x$y]";
+        }
+    }
+    return $out;
+}
+
+$anki->each_note(sub {
+    my ($note) = @_;
+
+    return unless $note->model->name eq '詰碁';
+    my $id = $note->id;
+
+    my $sgf = $note->field('SGF');
+    return unless $sgf =~ /SZ\[19\]/;
+
+    my $filename = $outdir . "/" . $id . ".sgf";
+
+    $sgf =~ s/(AP|PB|PW|KM|RU|EV|DT|GN)\[.*?\]//g;
+
+    my $source = $note->field('Source');
+    $source =~ tr/[]//d;
+
+    my $date = do {
+        my $time = $id / 1000;
+        my (undef, undef, undef, $day, $month, $year) = gmtime($time);
+        $month++;
+        $year += 1900;
+        sprintf "%04d-%02d-%02d", $year, $month, $day;
+    };
+
+    $sgf =~ s/(SZ\[)/DT[$date]PW[$source]PB[$id]$1/;
+    $sgf =~ s/<.+?>//g;
+
+    # kombilo can't handle AW/AB rectangles
+    $sgf =~ s/\[(\w)(\w):(\w)(\w)\]/explode($1, $2, $3, $4)/eg;
+
+    if (-e $filename) {
+        open my $handle, '<', $filename or die $!;
+        local $/;
+        my $contents = <$handle>;
+        return if $contents eq $sgf;
+    }
+
+    open my $handle, '>', $filename or die $!;
+
+    print $handle $sgf or die $!;
+    close $handle or die $!;
+});
+
