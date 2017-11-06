@@ -1,0 +1,44 @@
+#!/usr/bin/env perl
+use 5.16.0;
+use warnings;
+use utf8::all;
+use Anki::Database;
+use JSON 'encode_json';
+
+my $anki = Anki::Database->new;
+my $anki_dbh = $anki->dbh;
+my $decks = $anki->decks;
+
+my $db_file = ($ENV{QS_DATABASE_FILE} or die "QS_DATABASE_FILE env var required");
+my $qs_dbh = DBI->connect("dbi:SQLite:dbname=$db_file", "", "", { RaiseError => 1 });
+$qs_dbh->{sqlite_unicode} = 1;
+
+my %event_types = map { $_->[0] => $_->[1] } @{ $qs_dbh->selectall_arrayref("SELECT event_types.label, event_types.id FROM event_types LEFT JOIN event_types AS parent_type ON parent_type.id = event_types.parent WHERE parent_type.label = 'Anki' AND parent_type.parent = 0;") };
+
+my $get_sth = $anki_dbh->prepare("SELECT revlog.id, revlog.cid, revlog.usn, revlog.ease, revlog.ivl, revlog.lastIvl, revlog.factor, revlog.time, revlog.type, cards.did FROM revlog JOIN cards ON cards.id = revlog.cid ORDER BY revlog.id ASC;");
+$get_sth->execute;
+
+my $insert_sth = $qs_dbh->prepare("INSERT INTO events VALUES (NULL, ?, ?, ?, ?, 1, 0, 0, 0);");
+
+$anki_dbh->begin_work;
+
+my $i = 0;
+while (my ($id, $cid, $usn, $ease, $ivl, $lastIvl, $factor, $time, $type, $did) = $get_sth->fetchrow_array) {
+    warn "$i\n" if $i++ % 1000 == 0;
+    my $deck = $decks->{$did};
+    my $event_type = $event_types{$deck} or die "No event_type for $deck";
+
+    my $uri = "anki://$id";
+    my $metadata = encode_json({
+        cid => $cid,
+        ease => $ease,
+        ivl => $ivl,
+        lastIvl => $lastIvl,
+        factor => $factor,
+        time => $time,
+        type => $type,
+    });
+    $insert_sth->execute(int($id/1000), $event_type, $uri, $metadata);
+}
+
+$anki_dbh->commit;
