@@ -1,0 +1,90 @@
+#!/usr/bin/env perl
+use 5.16.0;
+use warnings;
+use utf8::all;
+use Anki::Database;
+use JSON 'encode_json', 'decode_json';
+use LWP::UserAgent;
+
+sub get_event_types {
+    my $ua = shift;
+    my $response = $ua->get('https://qs.sartak.org/types');
+    my %type_tree = %{ decode_json $response->decoded_content };
+    my %event_types;
+    for my $id (keys %type_tree) {
+        if ($type_tree{$id}{label} eq 'Anki') {
+            my $anki_tree = $type_tree{$id};
+            $event_types{'Anki'} = $id;
+            for my $subid (grep { /^\d+$/ } keys %$anki_tree) {
+                $event_types{$anki_tree->{$subid}{label}} = $subid;
+            }
+        }
+    }
+    return \%event_types;
+}
+
+sub get_last_review_id {
+    my $ua = shift;
+    my $type = shift;
+
+    my $response = $ua->get('https://qs.sartak.org/events?type=' . $type);
+    my @events = @{ decode_json $response->decoded_content };
+    my $last_review = $events[0];
+    my ($id) = $last_review->{uri} =~ m{^anki://(\d+)$}
+        or die "Unable to parse review uri: $last_review->{uri}";
+    return $id;
+}
+
+my $username = ($ENV{QS_USERNAME} or die "QS_USERNAME env var required");
+my $password = ($ENV{QS_PASSWORD} or die "QS_PASSWORD env var required");
+
+my $ua = LWP::UserAgent->new;
+$ua->default_header('X-QS-Username', $username);
+$ua->default_header('X-QS-Password', $password);
+
+my $event_types = get_event_types($ua);
+my $last_id = get_last_review_id($ua, $event_types->{Anki});
+
+my $anki = Anki::Database->new;
+my $anki_dbh = $anki->dbh;
+my $decks = $anki->decks;
+
+my $get_sth = $anki_dbh->prepare("SELECT revlog.id, revlog.cid, revlog.usn, revlog.ease, revlog.ivl, revlog.lastIvl, revlog.factor, revlog.time, revlog.type, cards.did FROM revlog JOIN cards ON cards.id = revlog.cid WHERE revlog.id > ? ORDER BY revlog.id ASC;");
+$get_sth->execute($last_id);
+
+my $added_reviews = 0;
+while (my ($id, $cid, $usn, $ease, $ivl, $lastIvl, $factor, $time, $type, $did) = $get_sth->fetchrow_array) {
+    my $deck = $decks->{$did};
+    my $event_type = $event_types->{$deck} or die "No event_type for $deck";
+
+    my $uri = "anki://$id";
+    my $metadata = encode_json({
+        cid => $cid,
+        ease => $ease,
+        ivl => $ivl,
+        lastIvl => $lastIvl,
+        factor => $factor,
+        time => $time,
+        type => $type,
+    });
+    my $timestamp = int($id/1000);
+
+    my $response = $ua->post("https://qs.sartak.org/add", [
+        timestamp  => $timestamp,
+        type       => $event_type,
+        uri        => $uri,
+        metadata   => $metadata,
+        isDiscrete => 1,
+    ]);
+
+    if ($response->code != 201) {
+        warn $response->code;
+        warn $response->decoded_content;
+        last;
+    }
+
+    $added_reviews++;
+}
+
+print "Added 1 new review.\n" if $added_reviews == 1;
+print "Added $added_reviews new reviews.\n" if $added_reviews > 1;
