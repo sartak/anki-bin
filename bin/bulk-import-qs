@@ -18,9 +18,9 @@ my %event_types = map { $_->[0] => $_->[1] } @{ $qs_dbh->selectall_arrayref("SEL
 my $get_sth = $anki_dbh->prepare("SELECT revlog.id, revlog.cid, revlog.usn, revlog.ease, revlog.ivl, revlog.lastIvl, revlog.factor, revlog.time, revlog.type, cards.did FROM revlog JOIN cards ON cards.id = revlog.cid ORDER BY revlog.id ASC;");
 $get_sth->execute;
 
-my $insert_sth = $qs_dbh->prepare("INSERT INTO events VALUES (NULL, ?, ?, ?, ?, 1, 0, 0, 0);");
+my $insert_sth = $qs_dbh->prepare("INSERT INTO events VALUES (NULL, ?, ?, ?, ?, 1, NULL, NULL, NULL);");
 
-$anki_dbh->begin_work;
+$qs_dbh->begin_work;
 
 my $i = 0;
 while (my ($id, $cid, $usn, $ease, $ivl, $lastIvl, $factor, $time, $type, $did) = $get_sth->fetchrow_array) {
@@ -41,4 +41,4 @@ while (my ($id, $cid, $usn, $ease, $ivl, $lastIvl, $factor, $time, $type, $did) 
     $insert_sth->execute(int($id/1000), $event_type, $uri, $metadata);
 }
 
-$anki_dbh->commit;
+$qs_dbh->commit;
