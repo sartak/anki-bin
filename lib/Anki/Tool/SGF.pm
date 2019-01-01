@@ -142,6 +142,7 @@ sub _validate_source {
 
       | \d\d\d\d-\d\d-\d\d[a-z]{1,3}
       | https?://.+
+      | Kogo's\ Joseki\ Dictionary
     \z}x;
 
     return $self->report_note($note, "Unexpected source '$source'");
