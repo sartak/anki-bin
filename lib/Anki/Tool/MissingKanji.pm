@@ -21,6 +21,18 @@ sub each_card_文 {
     return 1;
 }
 
+sub each_card_粵語文 {
+    my ($self, $card) = @_;
+    return if $card->suspended;
+
+    my $sentence = $card->field('粵語');
+
+    $sentence_kanji{$_} = $card
+        for $sentence =~ /\p{Han}/g;
+
+    return 1;
+}
+
 sub each_note_漢字 {
     my ($self, $note) = @_;
     my $kanji = $note->field('漢字');
@@ -41,7 +53,7 @@ sub done {
     for my $kanji (keys %sentence_kanji) {
         next if $studied_kanji{$kanji};
         my $card = $sentence_kanji{$kanji};
-        my $sentence = $card->field('日本語');
+        my $sentence = $card->field('日本語') || $card->field('粵語');
         $sentence =~ s/$kanji/\e[1;35m$kanji\e[m/g;
         $self->report_card($card, "$sentence - includes missing kanji $kanji");
     }
