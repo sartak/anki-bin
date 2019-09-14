@@ -1,0 +1,24 @@
+#!/usr/bin/env perl
+use 5.16.0;
+use warnings;
+use utf8::all;
+use Anki::Database;
+use Text::CSV_XS;
+use DateTime;
+
+@ARGV >= 2 or die "usage: $0 model [field / _created]...\n";
+my $model = shift;
+my @fields = @ARGV;
+
+my $anki = Anki::Database->new;
+my $csv = Text::CSV_XS->new({binary => 1, auto_diag => 1});
+
+$anki->each_note(sub {
+    my ($note) = @_;
+
+    return unless $note->model->name eq $model;
+
+    my @values = map { $_ eq '_created' ? DateTime->from_epoch(epoch => $note->id/1000)->ymd : $note->field($_) } @fields;
+    $csv->say(\*STDOUT, \@values);
+});
+
