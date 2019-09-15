@@ -1,0 +1,24 @@
+#!/usr/bin/env perl
+use 5.14.0;
+use warnings;
+use utf8::all;
+use Anki::Database;
+use DateTime;
+
+my $anki = Anki::Database->new;
+
+my $by_date = {};
+
+for my $model ('漢字', 'かな') {
+  $anki->each_note(sub {
+    my ($note) = @_;
+
+    my $date = DateTime->from_epoch(epoch => $note->id/1000)->ymd;
+    push @{$by_date->{$date}}, $note->field($model);
+  }, $model);
+}
+
+for my $date (sort keys %$by_date) {
+  my @moji = @{$by_date->{$date}};
+  say "$date (" . @moji . "): @moji";
+}
