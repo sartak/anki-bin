@@ -1,0 +1,15 @@
+#!/usr/bin/env perl
+use 5.14.0;
+use utf8::all;
+use warnings;
+use Anki::Morphology;
+
+my $morph = Anki::Morphology->new;
+my $anki = $morph->anki;
+
+my $by_date = $morph->morphemes_by_date;
+for my $date (sort keys %$by_date) {
+  my @words = @{$by_date->{$date}};
+  say "$date (" . @words . "): @words";
+}
+
