@@ -54,6 +54,7 @@ sub done {
         next if $studied_kanji{$kanji};
         my $card = $sentence_kanji{$kanji};
         my $sentence = $card->field('日本語') || $card->field('粵語');
+        $sentence =~ s/<.*?>//g;
         $sentence =~ s/$kanji/\e[1;35m$kanji\e[m/g;
         $self->report_card($card, "$sentence - includes missing kanji $kanji");
     }
