@@ -43,8 +43,6 @@ sub done {
         my $kanji = $note->field('漢字');
         my @sentences = uniq @{ $sentences_for{$kanji} || next };
 
-        next if @sentences <= 1;
-
         $self->report_note($note, "\e[35m$kanji\e[m has potential readings");
         for my $sentence (@sentences) {
 	    my ($cantonese, $readings) = @$sentence;
