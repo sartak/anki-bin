@@ -1,0 +1,17 @@
+#!/bin/bash
+set -e
+
+DIR=/home/shawn/Dropbox/Documents/metrics
+export ANKI2_DECK=/home/shawn/Dropbox/Documents/collection.anki2
+
+new-moji-by-day > $DIR/new-kanji.txt
+new-models-by-day 文 > $DIR/japanese/new-sentences.txt
+new-models-by-day 粵語文 > $DIR/cantonese/new-sentences.txt
+new-models-by-day 詰碁 > $DIR/go/new-tsumego.txt
+
+reviews-by-day 漢字 > $DIR/kanji-reviews.txt
+reviews-by-day かな 地図 文 > $DIR/japanese/sentence-reviews.txt
+reviews-by-day 粵語文 > $DIR/cantonese/sentence-reviews.txt
+reviews-by-day 詰碁 > $DIR/go/tsumego-reviews.txt
+
+canto-vocabulary $DIR/cantonese/vocabulary.tsv
