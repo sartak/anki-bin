@@ -9,6 +9,7 @@ extends 'Anki::Tool';
 
 my %readings_of_word;
 my %nids_for_word;
+my %kanji_for_word;
 
 sub each_note_粵語文 {
     my ($self, $note) = @_;
@@ -37,6 +38,17 @@ sub each_note_粵語文 {
     return 1;
 }
 
+sub each_note_漢字 {
+    my ($self, $note) = @_;
+    return if $note->has_tag('duplicate-kanji');
+
+    my $cantonese = $note->field('粵語') or return;
+    my $kanji = $note->field('漢字');
+
+    $kanji_for_word{$kanji} = [$cantonese, $note->id];
+    $readings_of_word{$kanji}{$cantonese}++;
+}
+
 sub done {
     my ($self) = @_;
 
@@ -56,11 +68,15 @@ sub done {
             keys %{ $readings_of_word{$word} };
 
         for my $reading (keys %{ $readings_of_word{$word} }) {
-            my @nids = @{ $nids_for_word{$word}{$reading} };
+            my @nids = @{ $nids_for_word{$word}{$reading} || next };
             if (@nids < 4) {
                 $report .= "\n    $reading: " . join(', ', @nids);
             }
         }
+
+	if ($kanji_for_word{$word}) {
+            $report .= "\n    $kanji_for_word{$word}[0]: (漢字) " . $kanji_for_word{$word}[1]
+	}
 
         $self->report($report);
     }
