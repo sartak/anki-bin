@@ -1,0 +1,82 @@
+#!/usr/bin/env perl
+use 5.14.0;
+use warnings;
+use utf8::all;
+use Anki::Database;
+use DateTime;
+use List::Util 'uniq';
+
+my $anki = Anki::Database->new;
+
+my (%tsv_date_of, %tsv_readings_of);
+{
+  my $tsv = shift or die "usage: $0 vocabulary.tsv\n";
+  open my $handle, '<', $tsv or die "$tsv: $!";
+  while (<$handle>) {
+  	next if $. == 1;
+  	chomp;
+  	my @fields = split "\t", $_;
+  	next if $. == 2 && (@fields == 0 || @fields == 1);
+  	die "expected 3 fields, got " . int(@fields) . ": " . $_ if @fields != 3;
+  	my ($date, $word, $reading) = @fields;
+	$tsv_date_of{$word} = $date if !$tsv_date_of{$word} or $date lt $tsv_date_of{$word};
+	$tsv_readings_of{$word}{$reading} = 1;
+
+        my @sentence_kanji = $word =~ /\p{Han}|[a-zA-Z]+/g;
+        my @reading_kanji = split ' ', $reading;
+        if (@sentence_kanji != @reading_kanji) {
+              die "Kanji readings tsv line $.\ngot      " . scalar(@reading_kanji) . ": @reading_kanji \nexpected " . scalar(@sentence_kanji) . ": @sentence_kanji";
+        }
+
+	for my $i (0..$#sentence_kanji) {
+	  my $word = $sentence_kanji[$i];
+	  my $reading = $reading_kanji[$i];
+
+	  $tsv_date_of{$word} = $date if !$tsv_date_of{$word} or $date lt $tsv_date_of{$word};
+	  $tsv_readings_of{$word}{$reading} = 1;
+	}
+}
+}
+
+my %anki_date_of;
+
+$anki->each_note(sub {
+  my ($note) = @_;
+
+  my $date = DateTime->from_epoch(epoch => $note->id/1000)->ymd;
+  my $sentence = $note->field('粵語');
+  my $reading_field = $note->field('発音') || '';
+  my $nid = $note->id;
+
+  s/<.*?>//g for $sentence, $reading_field;
+
+  my @sentence_kanji = $sentence =~ /\p{Han}|[a-zA-Z]+/g;
+  my @reading_kanji = split ' ', $reading_field;
+  if (@sentence_kanji != @reading_kanji) {
+        die "Kanji readings nid:$nid\ngot      " . scalar(@reading_kanji) . ": @reading_kanji \nexpected " . scalar(@sentence_kanji) . ": @sentence_kanji";
+  }
+
+  for my $i (0..$#sentence_kanji) {
+    my $word = $sentence_kanji[$i];
+    my $reading = $reading_kanji[$i];
+  
+    if (!$tsv_readings_of{$word}) {
+      warn "anki character '$word' (nid:$nid) added on $date does not exist in tsv";
+      next;
+    }
+
+    if (!$tsv_readings_of{$word}{$reading}) {
+      warn "anki character '$word' (nid:$nid) does not have reading '$reading' in tsv (has " . join(', ', sort keys %{$tsv_readings_of{$word}}) . ")";
+      next;
+    }
+
+    $anki_date_of{$word} = $date if !$anki_date_of{$word} or $date lt $anki_date_of{$word};
+  }
+}, '粵語文');
+
+for my $word (sort { $anki_date_of{$a} cmp $anki_date_of{$b} } keys %anki_date_of) {
+    if ($tsv_date_of{$word} ne $anki_date_of{$word}) {
+      warn "character '$word' first added to anki $anki_date_of{$word} but added to tsv $tsv_date_of{$word})";
+      next;
+    }
+}
