@@ -4,6 +4,7 @@ use 5.16.0;
 use warnings;
 use Any::Moose;
 use List::MoreUtils 'uniq';
+use Unicode::Normalize;
 
 extends 'Anki::Tool';
 
@@ -14,8 +15,8 @@ my %kanji_for_word;
 sub each_note_粵語文 {
     my ($self, $note) = @_;
 
-    my $sentence = $note->field('粵語');
-    my $reading_field = $note->field('発音') || '';
+    my $sentence = NFC($note->field('粵語'));
+    my $reading_field = NFC($note->field('発音') || '');
     my $nid = $note->id;
 
     s/<.*?>//g for $sentence, $reading_field;
@@ -42,8 +43,8 @@ sub each_note_漢字 {
     my ($self, $note) = @_;
     return if $note->has_tag('duplicate-kanji');
 
-    my $cantonese = $note->field('粵語') or return;
-    my $kanji = $note->field('漢字');
+    my $cantonese = NFC($note->field('粵語') or return);
+    my $kanji = NFC($note->field('漢字'));
 
     $kanji_for_word{$kanji} = [$cantonese, $note->id];
     $readings_of_word{$kanji}{$cantonese}++;
