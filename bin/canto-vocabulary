@@ -50,7 +50,7 @@ $anki->each_note(sub {
 
   s/<.*?>//g for $sentence, $reading_field;
 
-  my @sentence_kanji = $sentence =~ /\p{Han}|[a-zA-Z]+/g;
+  my @sentence_kanji = $sentence =~ /\p{Han}|[a-zA-Z0-9]+/g;
   my @reading_kanji = split ' ', $reading_field;
   if (@sentence_kanji != @reading_kanji) {
         die "Kanji readings nid:$nid\ngot      " . scalar(@reading_kanji) . ": @reading_kanji \nexpected " . scalar(@sentence_kanji) . ": @sentence_kanji";
@@ -59,6 +59,7 @@ $anki->each_note(sub {
   for my $i (0..$#sentence_kanji) {
     my $word = $sentence_kanji[$i];
     my $reading = $reading_kanji[$i];
+    next unless $word =~ /\p{Han}/;
   
     if (!$tsv_readings_of{$word}) {
       warn "anki character '$word' (nid:$nid) added on $date does not exist in tsv";

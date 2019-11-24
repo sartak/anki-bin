@@ -21,7 +21,7 @@ sub each_note_粵語文 {
 
     s/<.*?>//g for $sentence, $reading_field;
 
-    my @sentence_kanji = $sentence =~ /\p{Han}|[a-zA-Z]+/g;
+    my @sentence_kanji = $sentence =~ /\p{Han}|[a-zA-Z0-9]+/g;
     my @reading_kanji = split ' ', $reading_field;
 
     if (@sentence_kanji != @reading_kanji) {
