@@ -1,0 +1,63 @@
+#!/usr/bin/env perl
+use 5.16.0;
+use warnings;
+use utf8::all;
+use Anki::Database;
+use Text::CSV_XS;
+use DateTime;
+
+@ARGV == 5 or die "usage: $0 model field tag minimumNotes maximumSpan\n";
+my ($model, $field, $tag, $minNotes, $maxSpan) = @ARGV;
+
+my $anki = Anki::Database->new;
+my $csv = Text::CSV_XS->new({binary => 1, auto_diag => 1});
+
+my @currentSession;
+
+sub prevValue {
+  if (!@currentSession) {
+    return undef;
+  }
+
+  return $currentSession[-1]->field($field);
+}
+
+sub prevTime {
+  my $index = shift // -1;
+  if (!@currentSession) {
+    return undef;
+  }
+
+  return int($currentSession[$index]->id / 1000);
+}
+
+sub emitAndReset {
+  if (@currentSession >= $minNotes) {
+    $csv->say(\*STDOUT, [scalar @currentSession, prevTime(0), prevTime(-1), prevTime(-1) - prevTime(0), prevValue()]);
+  }
+  @currentSession = ();
+}
+
+$anki->each_note(sub {
+  my ($note) = @_;
+
+  if (!$note->has_tag($tag)) {
+    emitAndReset();
+    return;
+  }
+
+  my $value = $note->field($field);
+  my $epoch = int($note->id / 1000);
+
+  {
+    no warnings 'uninitialized';
+    if (@currentSession && (prevValue() ne $value || $epoch - prevTime() > $maxSpan)) {
+      emitAndReset();
+      return;
+    }
+  }
+
+  push @currentSession, $note;
+}, $model);
+
+emitAndReset();
