@@ -14,4 +14,9 @@ export ANKI2_DECK=/home/shawn/Dropbox/Documents/collection.anki2
 /usr/local/bin/reviews-by-day 粵語文 > $DIR/cantonese/sentence-reviews.txt
 /usr/local/bin/reviews-by-day 詰碁 > $DIR/go/tsumego-reviews.txt
 
+/usr/local/bin/review-time-by-day 漢字 > $DIR/kanji-review-time.txt
+/usr/local/bin/review-time-by-day かな 地図 文 > $DIR/japanese/sentence-review-time.txt
+/usr/local/bin/review-time-by-day 粵語文 > $DIR/cantonese/sentence-review-time.txt
+/usr/local/bin/review-time-by-day 詰碁 > $DIR/go/tsumego-review-time.txt
+
 /usr/local/bin/canto-vocabulary $DIR/cantonese/vocabulary.tsv
