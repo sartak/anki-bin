@@ -1,0 +1,20 @@
+#!/usr/bin/env perl
+use 5.16.0;
+use warnings;
+use utf8::all;
+use Anki::Database;
+
+@ARGV == 2 || @ARGV == 3 or die "usage: $0 model field [studied]\n";
+my ($model, $field, $studied) = @ARGV;
+my $anki = Anki::Database->new;
+
+$anki->each_card(sub {
+    my ($card) = @_;
+
+    return if $card->suspended;
+
+    my $value = $card->field($field);
+    my ($right, $wrong) = $anki->card_scores($card->id);
+    print "$value\n" if (!$studied && !$right) || ($studied && $right);
+}, $model);
+

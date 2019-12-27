@@ -1,0 +1,24 @@
+#!/usr/bin/env perl
+use strict;
+use warnings;
+
+my %seen_words;
+
+open my $handle, 'new-cards 粵語文 粵語 | wordify-cantonese |' or die $!;
+while (<$handle>) {
+  for (split ' ', $_) {
+    $seen_words{$_}++;
+  }
+}
+
+open $handle, 'new-cards 粵語文 粵語 1 |  wordify-cantonese |' or die $!;
+while (<$handle>) {
+  for (split ' ', $_) {
+    delete $seen_words{$_};
+  }
+}
+
+for my $word (sort { $seen_words{$b} <=> $seen_words{$a} || $a cmp $b } keys %seen_words) {
+  print "$seen_words{$word}x $word\n";
+}
+

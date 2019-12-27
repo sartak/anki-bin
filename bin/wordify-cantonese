@@ -1,0 +1,58 @@
+#!/usr/bin/env perl
+use strict;
+use warnings;
+use utf8::all;
+
+my %is_word;
+open my $handle, '<', "$ENV{HOME}/Dropbox/Documents/metrics/cantonese/vocabulary.tsv" or die $!;
+while (<$handle>) {
+  my @fields = split "\t", $_;
+  next if $. == 2 && (@fields == 0 || @fields == 1);
+  die "expected 3 fields, got " . int(@fields) . ": " . $_ if @fields != 3;
+  my ($date, $word, $reading) = @fields;
+  my $w = join '', grep {/\p{Han}/} split '', $word;
+  $is_word{$word} = 1;
+  $is_word{$w} = 1;
+}
+
+LINE: while (<>) {
+  chomp(my $line = $_);
+  my @characters = grep {/\p{Han}/} split '', $line;
+  my @words;
+
+  WORD: while (@characters) {
+    # 爸、爸爸很快便會來到！！
+    if (@characters > 2 && $characters[0] eq $characters[1] && $characters[0] eq $characters[2] && !$is_word{"$characters[0]$characters[1]$characters[2]"}) {
+      shift @characters;
+    }
+
+    for my $i (reverse 0..$#characters) {
+      my $rest = join "", @characters[0..$i];
+      if ($is_word{$rest}) {
+        push @words, $rest;
+	splice @characters, 0, $i+1;
+	#warn $rest . ": " . join " ", @characters;
+
+	#instead, add this word and the remaining characters to a queue
+	#so we get all possible parses
+        next WORD;
+      }
+    }
+
+    # 可⋯可惡⋯像⋯像你這種人⋯
+    if (@characters > 1 && $characters[0] eq $characters[1]) {
+      shift @characters;
+      redo WORD;
+    }
+
+    # 你鍾唔鍾意呢個呀
+    if (@characters > 2 && $characters[0] eq $characters[2] && $characters[1] eq '唔') {
+      push @words, shift @characters;
+      push @words, shift @characters;
+      redo WORD;
+    }
+
+    die "Unable to parse $line (starting from " . join("", @characters) . ")";
+  }
+  print((join " ", @words), "\n");
+}
