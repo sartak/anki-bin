@@ -49,7 +49,15 @@ sub done {
 	    $cantonese =~ s/<.*?>//g;
 	    $readings =~ s/<.*?>//g;
 
-	    my $index = index $cantonese, $kanji;
+           my @sentence_kanji = $cantonese =~ /\p{Han}|[a-zA-Z0-9]+/g;
+	    my $index;
+	    for my $i (0..$#sentence_kanji) {
+		    if ($sentence_kanji[$i] =~ $kanji) {
+			    $index = $i;
+			    last;
+                    }
+	    }
+
 	    my $reading = (split ' ', $readings)[$index];
 
             $cantonese =~ s/(\p{Han}*)($kanji)(\p{Han}*)/\e[m$1\e[35m$2\e[m$3\e[37m/g;
