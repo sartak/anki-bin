@@ -5,12 +5,14 @@ use warnings;
 use Any::Moose;
 use List::MoreUtils 'uniq';
 use Unicode::Normalize;
+use Anki::Morphology;
 
 extends 'Anki::Tool';
 
 my %readings_of_word;
 my %nids_for_word;
 my %kanji_for_word;
+my $morph = Anki::Morphology->new;
 
 sub each_note_粵語文 {
     my ($self, $note) = @_;
@@ -23,6 +25,14 @@ sub each_note_粵語文 {
 
     my @sentence_kanji = $sentence =~ /\p{Han}|[a-zA-Z0-9]+/g;
     my @reading_kanji = split ' ', $reading_field;
+
+    if (@sentence_kanji > 0 && @reading_kanji == 0) {
+        return $self->report_note(
+		$note,
+		"Missing kanji readings for $sentence\n" .
+		join('', map { "perhaps: " .  join(' ', map { (join '/', $morph->canto_readings_for($_)) || $_ } @$_) . "\n" } $morph->canto_morphemes_of($sentence))
+	);
+    }
 
     if (@sentence_kanji != @reading_kanji) {
         return $self->report_note($note, "Kanji readings\ngot      " . scalar(@reading_kanji) . ": @reading_kanji \nexpected " . scalar(@sentence_kanji) . ": @sentence_kanji");
@@ -46,38 +56,40 @@ sub each_note_漢字 {
     my $cantonese = NFC($note->field('粵語') or return);
     my $kanji = NFC($note->field('漢字'));
 
-    $kanji_for_word{$kanji} = [$cantonese, $note->id];
-    $readings_of_word{$kanji}{$cantonese}++;
+    my @readings = split ', ', $cantonese;
+
+    $kanji_for_word{$kanji} = [$cantonese, \@readings, $note->id];
+    for my $reading (@readings) {
+      $readings_of_word{$kanji}{$reading}++;
+    }
 }
 
 sub done {
     my ($self) = @_;
 
     for my $word (sort keys %readings_of_word) {
-	    #if ($known_homographs{$word}) {
-	    #$readings_of_word{$word}{$_} = 0 for @{ $known_homographs{$word} };
-	    #}
-
-        # only show words with more than one reading
-        # or with kanji in the reading itself (probably over-eagerly converted)
-        next if (grep { $_ } values %{ $readings_of_word{$word} }) <= 1
-            && (join '', keys %{ $readings_of_word{$word} }) !~ /\p{Han}/;
+	if ($kanji_for_word{$word}) {
+            my %seen = %{$readings_of_word{$word}};
+  	    $seen{$_} = 0 for @{ $kanji_for_word{$word}[1] };
+	    next if !(grep { $_ } values %seen);
+	}
+	else {
+            next if (grep { $_ } values %{ $readings_of_word{$word} }) <= 1;
+	}
 
         my $report = "$word: " . join ', ',
             map { "$_ ($readings_of_word{$word}{$_}x)" }
             sort { $readings_of_word{$word}{$b} <=> $readings_of_word{$word}{$a} }
             keys %{ $readings_of_word{$word} };
 
+	if ($kanji_for_word{$word}) {
+            $report .= "\n    $kanji_for_word{$word}[0]: (漢字) " . $kanji_for_word{$word}[2];
+	}
+
         for my $reading (keys %{ $readings_of_word{$word} }) {
             my @nids = @{ $nids_for_word{$word}{$reading} || next };
-            if (@nids < 4) {
-                $report .= "\n    $reading: " . join(', ', @nids);
-            }
+            $report .= "\n    $reading: " . join(', ', @nids);
         }
-
-	if ($kanji_for_word{$word}) {
-            $report .= "\n    $kanji_for_word{$word}[0]: (漢字) " . $kanji_for_word{$word}[1]
-	}
 
         $self->report($report);
     }

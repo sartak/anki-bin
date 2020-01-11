@@ -9,15 +9,26 @@ my $SENTENCE = '粵語';
 my $READING = '発音';
 my $SOURCE = '出所';
 
-my ($sender, @recipients) = @ARGV or die "usage: $0 sender recipient...";
+@ARGV >= 3 or die "usage: $0 history sender recipient...";
+my %seen;
+my ($history, $sender, @recipients) = @ARGV;
+open my $handle, '<', $history or die $!;
+while (<$handle>) {
+  chomp;
+  $seen{$_}++;
+}
+
 my $anki = Anki::Database->new;
 my ($today, $tomorrow);
 my $today_count;
 
-open my $handle, 'canto-targets |' or die $!;
+undef $handle;
+open $handle, 'canto-targets |' or die $!;
 while (<$handle>) {
   my ($count, $word) = /^(\d+)x (.+)$/;
   die "cannot parse: $_" unless $count;
+  next if $seen{$word};
+
   if (!$today) {
     $today = $word;
     $today_count = $count;
@@ -27,6 +38,8 @@ while (<$handle>) {
     last;
   }
 }
+
+die "no word of the day found" if !$today;
 
 my $reading = reading($today);
 die "no reading: $today" if !$reading;
@@ -58,10 +71,23 @@ print "</ol>";
 
 if ($tomorrow) {
   my $reading = reading($tomorrow);
-  print qq{<hr \><p>Tomorrow's word of the day: $tomorrow ($reading)</p>};
+  print qq{<hr \><p>Tomorrow's (likely) word of the day: $tomorrow ($reading)</p>};
+}
+
+my $overlooked = `canto-overlooked`;
+if ($overlooked =~ /\S/) {
+  my @overlooked = grep { /\S/ } split "\n", $overlooked;
+  print qq{<hr \><p>Sentences you should be able to understand already:</p><ul>};
+  print qq{<li>$_</li>} for @overlooked;
+  print qq{</ul>};
 }
 
 print "</body>";
+
+undef $handle;
+open $handle, '>>', $history or die $!;
+print $handle "$today\n";
+close $handle;
 
 sub reading {
   my $needle = shift;
