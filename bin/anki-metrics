@@ -19,4 +19,12 @@ export ANKI2_DECK=/home/shawn/Dropbox/Documents/collection.anki2
 /usr/local/bin/review-time-by-day 粵語文 > $DIR/cantonese/sentence-review-time.txt
 /usr/local/bin/review-time-by-day 詰碁 > $DIR/go/tsumego-review-time.txt
 
+/usr/local/bin/extract-mining-sessions 文 出所 読み物 1 900 > $DIR/japanese/reading-sessions.txt
+/usr/local/bin/extract-mining-sessions 文 出所 ゲーム 1 900 > $DIR/japanese/game-sessions.txt
+/usr/local/bin/extract-mining-sessions 文 出所 記事 1 900 > $DIR/japanese/article-sessions.txt
+/usr/local/bin/extract-mining-sessions 粵語文 出所 読み物 1 900 | grep -v ',[^,]*ゲーム[^,]*$' > $DIR/cantonese/reading-sessions.txt
+/usr/local/bin/extract-mining-sessions 粵語文 出所 ゲーム 1 900 > $DIR/cantonese/game-sessions.txt
+/usr/local/bin/extract-mining-sessions 詰碁 Source 読み物 1 900 > $DIR/go/reading-sessions.txt
+/usr/local/bin/extract-mining-sessions 詰碁 Source 動画 1 900 > $DIR/go/viewing-sessions.txt
+
 /usr/local/bin/canto-vocabulary $DIR/cantonese/vocabulary.tsv
