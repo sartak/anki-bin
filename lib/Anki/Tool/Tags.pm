@@ -36,6 +36,8 @@ my @allowed = qw(
 
     no-color
     no-coords
+    人工知能
+    自己吟味
 );
 
 sub each_note {

@@ -117,7 +117,20 @@ sub _validate_source {
     my ($self, $note) = @_;
     my $source = $note->field('Source');
 
-    return if $source =~ m{\A
+    return $self->report_note($note, "source is empty")
+        if !$source;
+
+    return $self->report_note($note, "$source - has newlines")
+        if $source =~ /\n|<br/;
+
+    my $major_tags = 0;
+    $major_tags++ if $note->has_tag('読み物');
+    $major_tags++ if $note->has_tag('記事');
+    $major_tags++ if $note->has_tag('動画');
+    $major_tags++ if $note->has_tag('自己吟味');
+    return $self->report_note($note, "$source - has multiple major tags: " . join(', ', @{$note->tags})) if $major_tags > 1;
+
+    if ($source =~ m{\A
         Graded\ Go\ Problems\ for\ Beginners\ Volume\ (One|Two|Three|Four)\ \#\d+
       | Cho\ Chikun's\ Encyclopedia\ of\ Life\ and\ Death\ part\ 1\ \#\d+
       | Get\ Strong\ at\ (Attacking|Invading)\ (\#\d+|p\.[ivx]+)
@@ -128,7 +141,6 @@ sub _validate_source {
       | 手筋の基本\ \#\d+
       | Making\ Good\ Shape\ \#\d+
       | Tricks\ in\ Joseki\ \#\d+
-
       | In\ the\ Beginning\ p\d+
       | Tesuji\ p\d+
       | The\ Monkey\ Jump\ section\ [123]\ chapter\ \d+
@@ -136,14 +148,34 @@ sub _validate_source {
       | Double\ Digit\ Kyu\ Games,\ game\ \#\d
       | Opening\ Theory\ Made\ Easy\ principle\ \d+:.+
       | Life\ and\ Death\ chapter\ \d+\ problem\ \d+
+    \z}x) {
+      return $self->report_note($note, "$source - didn't include tag 読み物") if !$note->has_tag('読み物');
+      return;
+    }
 
-      | Nick\ Sibicky\ \#\d+
+    if ($source =~ m{\A
+        Nick\ Sibicky\ \#\d+
       | Andrew\ Jackson\ \d\d\d\d-\d\d-\d\d
+      | https?://[^/]*yunguseng\.com/
+      | https?://[^/]*youtube\.com/
+    \z}x) {
+      return $self->report_note($note, "$source - didn't include tag 動画") if !$note->has_tag('動画');
+      return;
+    }
 
-      | \d\d\d\d-\d\d-\d\d[a-z]{1,3}
-      | https?://.+
+    if ($source =~ m{\A
+        https?://.+
+    \z}x) {
+      return $self->report_note($note, "$source - didn't include tag 読み物, 記事, 動画, 人工知能, or 自己吟味") if !$major_tags && !$note->has_tag('人工知能');
+      return;
+    }
+
+    if ($source =~ m{\A
+        \d\d\d\d-\d\d-\d\d[a-z]{1,3}
       | Kogo's\ Joseki\ Dictionary
-    \z}x;
+    \z}x) {
+      return;
+    }
 
     return $self->report_note($note, "Unexpected source '$source'");
 }
