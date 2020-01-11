@@ -2,7 +2,7 @@
 set -e
 
 DIR=/home/shawn/Dropbox/Documents/metrics
-export ANKI2_DECK=/home/shawn/Dropbox/Documents/collection.anki2
+export ANKI2_DECK=/home/shawn/collection.anki2
 
 /usr/local/bin/new-moji-by-day > $DIR/new-kanji.txt
 /usr/local/bin/new-models-by-day 文 > $DIR/japanese/new-sentences.txt
