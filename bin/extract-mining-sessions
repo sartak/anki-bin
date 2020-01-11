@@ -33,7 +33,8 @@ sub prevTime {
 
 sub emitAndReset {
   if (@currentSession >= $minNotes) {
-    $csv->say(\*STDOUT, [scalar @currentSession, prevTime(0), prevTime(-1), prevTime(-1) - prevTime(0), prevValue()]);
+    my %tags = map { $_ => 1 } map { @{$_->tags} } @currentSession;
+    $csv->say(\*STDOUT, [scalar @currentSession, prevTime(0), prevTime(-1), prevTime(-1) - prevTime(0), prevValue(), join " ", sort keys %tags]);
   }
   @currentSession = ();
 }
