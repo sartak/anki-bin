@@ -6,9 +6,12 @@ use Anki::Database;
 use DateTime;
 use List::Util 'uniq';
 
+@ARGV == 1 || @ARGV == 2 or die "usage: $0 vocabulary.tsv [print-correct]\n";
 my $anki = Anki::Database->new;
+my $print_correct = $ARGV[1];
 
 my (%tsv_date_of, %tsv_readings_of);
+my @tsv_words;
 {
   my $tsv = shift or die "usage: $0 vocabulary.tsv\n";
   open my $handle, '<', $tsv or die "$tsv: $!";
@@ -19,6 +22,7 @@ my (%tsv_date_of, %tsv_readings_of);
   	next if $. == 2 && (@fields == 0 || @fields == 1);
   	die "expected 3 fields, got " . int(@fields) . ": " . $_ if @fields != 3;
   	my ($date, $word, $reading) = @fields;
+	push @tsv_words, $word;
 	$tsv_date_of{$word} = $date if !$tsv_date_of{$word} or $date lt $tsv_date_of{$word};
 	$tsv_readings_of{$word}{$reading} = 1;
 
@@ -62,22 +66,29 @@ $anki->each_note(sub {
     next unless $word =~ /\p{Han}/;
   
     if (!$tsv_readings_of{$word}) {
-      warn "anki character '$word' (nid:$nid) added on $date does not exist in tsv";
+      warn "anki character '$word' (nid:$nid) added on $date does not exist in tsv" unless $print_correct;
       next;
     }
 
     if (!$tsv_readings_of{$word}{$reading}) {
       warn "anki character '$word' (nid:$nid) does not have reading '$reading' in tsv (has " . join(', ', sort keys %{$tsv_readings_of{$word}}) . ")";
-      next;
+      next unless $print_correct;
     }
 
     $anki_date_of{$word} = $date if !$anki_date_of{$word} or $date lt $anki_date_of{$word};
   }
 }, '粵語文');
 
-for my $word (sort { $anki_date_of{$a} cmp $anki_date_of{$b} } keys %anki_date_of) {
-    if ($tsv_date_of{$word} ne $anki_date_of{$word}) {
-      warn "character '$word' first added to anki $anki_date_of{$word} but added to tsv $tsv_date_of{$word})";
-      next;
-    }
+if ($print_correct) {
+  for my $word (@tsv_words) {
+    say $anki_date_of{$word} || $tsv_date_of{$word};
+  }
+}
+else {
+  for my $word (sort { $anki_date_of{$a} cmp $anki_date_of{$b} } keys %anki_date_of) {
+      if ($tsv_date_of{$word} ne $anki_date_of{$word}) {
+        warn "character '$word' first added to anki $anki_date_of{$word} but added to tsv $tsv_date_of{$word})";
+        next;
+      }
+  }
 }
