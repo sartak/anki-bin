@@ -5,41 +5,29 @@ use utf8::all;
 use Anki::Database;
 use DateTime;
 use List::Util 'uniq';
+use Anki::Morphology;
 
 @ARGV == 1 || @ARGV == 2 or die "usage: $0 vocabulary.tsv [print-correct]\n";
-my $anki = Anki::Database->new;
 my $print_correct = $ARGV[1];
 
-my (%tsv_date_of, %tsv_readings_of);
+my $anki = Anki::Database->new;
+my $morph = Anki::Morphology->new;
+
+my %tsv_date_of;
 my @tsv_words;
 {
-  my $tsv = shift or die "usage: $0 vocabulary.tsv\n";
+  my $tsv = shift;
   open my $handle, '<', $tsv or die "$tsv: $!";
   while (<$handle>) {
-  	next if $. == 1;
-  	chomp;
-  	my @fields = split "\t", $_;
-  	next if $. == 2 && (@fields == 0 || @fields == 1);
-  	die "expected 3 fields, got " . int(@fields) . ": " . $_ if @fields != 3;
-  	my ($date, $word, $reading) = @fields;
-	push @tsv_words, $word;
-	$tsv_date_of{$word} = $date if !$tsv_date_of{$word} or $date lt $tsv_date_of{$word};
-	$tsv_readings_of{$word}{$reading} = 1;
-
-        my @sentence_kanji = $word =~ /\p{Han}|[a-zA-Z]+/g;
-        my @reading_kanji = split ' ', $reading;
-        if (@sentence_kanji != @reading_kanji) {
-              die "Kanji readings tsv line $.\ngot      " . scalar(@reading_kanji) . ": @reading_kanji \nexpected " . scalar(@sentence_kanji) . ": @sentence_kanji";
-        }
-
-	for my $i (0..$#sentence_kanji) {
-	  my $word = $sentence_kanji[$i];
-	  my $reading = $reading_kanji[$i];
-
-	  $tsv_date_of{$word} = $date if !$tsv_date_of{$word} or $date lt $tsv_date_of{$word};
-	  $tsv_readings_of{$word}{$reading} = 1;
-	}
-}
+    next if $. == 1;
+    chomp;
+    my @fields = split "\t", $_;
+    next if $. == 2 && (@fields == 0 || @fields == 1);
+    die "expected 3 fields, got " . int(@fields) . ": " . $_ if @fields != 3;
+    my ($date, $word, $reading) = @fields;
+    push @tsv_words, $word;
+    $tsv_date_of{$word} = $date if !$tsv_date_of{$word} or $date lt $tsv_date_of{$word};
+  }
 }
 
 my %anki_date_of;
@@ -47,36 +35,68 @@ my %anki_date_of;
 $anki->each_note(sub {
   my ($note) = @_;
 
-  my $date = DateTime->from_epoch(epoch => $note->id/1000)->ymd;
+  my $date = DateTime->from_epoch(epoch => $note->id/1000 - 10*3600)->ymd;
   my $sentence = $note->field('粵語');
   my $reading_field = $note->field('発音') || '';
   my $nid = $note->id;
 
   s/<.*?>//g for $sentence, $reading_field;
 
-  my @sentence_kanji = $sentence =~ /\p{Han}|[a-zA-Z0-9]+/g;
-  my @reading_kanji = split ' ', $reading_field;
-  if (@sentence_kanji != @reading_kanji) {
-        die "Kanji readings nid:$nid\ngot      " . scalar(@reading_kanji) . ": @reading_kanji \nexpected " . scalar(@sentence_kanji) . ": @sentence_kanji";
+  if (!$reading_field) {
+    warn "$nid: No readings for sentence:\n  $sentence\n\n";
+    return;
   }
 
-  for my $i (0..$#sentence_kanji) {
-    my $word = $sentence_kanji[$i];
-    my $reading = $reading_kanji[$i];
-    next unless $word =~ /\p{Han}/;
-  
-    if (!$tsv_readings_of{$word}) {
-      warn "anki character '$word' (nid:$nid) added on $date does not exist in tsv" unless $print_correct;
-      next;
-    }
+  my $results = $morph->canto_match_sentence_reading($sentence, $reading_field);
 
-    if (!$tsv_readings_of{$word}{$reading}) {
-      warn "anki character '$word' (nid:$nid) does not have reading '$reading' in tsv (has " . join(', ', sort keys %{$tsv_readings_of{$word}}) . ")";
-      next unless $print_correct;
-    }
-
-    $anki_date_of{$word} = $date if !$anki_date_of{$word} or $date lt $anki_date_of{$word};
+  if ($results->{no_parse}) {
+    my @unknown = grep { $_->{type} eq 'unknown' } @{ $results->{no_parse} };
+    warn "$nid: Unable to parse this sentence:\n  $sentence\n  missing vocabulary for " . join('、', map { $_->{word} } @unknown) . "\n\n";
+    return;
   }
+
+  my @correct = @{ $results->{correct} };
+
+  for my $parse (@correct) {
+    for my $morpheme (@{ $parse->{morphemes} }) {
+      next unless $morpheme->{type} eq 'primary' || $morpheme->{type} eq 'modifier';
+      my $word = $morpheme->{word};
+      $anki_date_of{$word} = $date if !$anki_date_of{$word} || $date lt $anki_date_of{$word};
+    }
+  }
+
+  return if @correct;
+
+  my @misparses = @{ $results->{misparses} };
+
+  my @suggestions;
+  for my $misparse (@misparses) {
+    my $word = $misparse->{word};
+    my @expected = @{ $misparse->{expected} };
+    my @sentence_readings = @{ $misparse->{sentence_readings} };
+    my @sentence_readings_left = @{ $misparse->{sentence_readings_left} };
+
+    my $start_caret = (length join " ", @sentence_readings) - (length join " ", @sentence_readings_left);
+    my $caret_words = 0;
+    for (@expected) {
+      my @words = split ' ', $_;
+      if ($caret_words < @words) {
+        $caret_words = @words;
+      }
+    }
+    $caret_words = @sentence_readings_left if $caret_words > @sentence_readings_left;
+
+    my $caret_length = length join " ", @sentence_readings_left[0..$caret_words-1];
+    my @suggestion;
+
+    push @suggestion, join " ", map { $sentence_readings[$_] } 0 .. @sentence_readings - 1;
+    push @suggestion, (" " x $start_caret) . ("^" x $caret_length);
+    push @suggestion, "for $word, expected one of: " . join(', ', map { qq["$_"] } @expected);
+
+    push @suggestions, [@suggestion];
+  }
+
+  warn "$nid: Unable to parse this sentence:\n  $sentence\n" . join("", map { "  $_\n" } map { (map { @$_ } $_), "" } @suggestions) . "\n";
 }, '粵語文');
 
 if ($print_correct) {
@@ -87,7 +107,7 @@ if ($print_correct) {
 else {
   for my $word (sort { $anki_date_of{$a} cmp $anki_date_of{$b} } keys %anki_date_of) {
       if ($tsv_date_of{$word} ne $anki_date_of{$word}) {
-        warn "character '$word' first added to anki $anki_date_of{$word} but added to tsv $tsv_date_of{$word})";
+        warn "word '$word' first added to anki $anki_date_of{$word} but added to tsv $tsv_date_of{$word})";
         next;
       }
   }
