@@ -27,10 +27,30 @@ sub each_note_粵語文 {
     my @reading_kanji = split ' ', $reading_field;
 
     if (@sentence_kanji > 0 && @reading_kanji == 0) {
+        my @parses;
+	for my $parse ($morph->canto_morphemes_of($sentence, {allow_unknown => 1})) {
+          my @suggestions;
+	  for my $morpheme (@$parse) {
+	    my $word = $morpheme->{word};
+	    my @s = $morph->canto_readings_for($word);
+	    if (!@s) {
+	      for my $character (split '', $word) {
+	        my @r = $morph->canto_kanji_readings_for($character);
+	        if (!@r) {
+		  push @r, "$character??";
+		}
+		push @s, @r;
+	      }
+	    }
+	    push @suggestions, join "/", @s;
+	  }
+	  push @parses, \@suggestions;
+	}
+
         return $self->report_note(
 		$note,
-		"Missing kanji readings for $sentence\n" .
-		join('', map { "perhaps: " .  join(' ', map { (join '/', $morph->canto_readings_for($_)) || $_ } @$_) . "\n" } $morph->canto_morphemes_of($sentence))
+		"Missing reading for $sentence\n" .
+		join('', uniq map { "perhaps: " .  join(' ', @$_) . "\n" } @parses)
 	);
     }
 
