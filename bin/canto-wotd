@@ -3,6 +3,8 @@ use strict;
 use warnings;
 use utf8::all;
 use Anki::Database;
+use Anki::Morphology;
+use List::Util 'uniq';
 
 my $MODEL = '粵語文';
 my $SENTENCE = '粵語';
@@ -10,39 +12,172 @@ my $READING = '発音';
 my $SOURCE = '出所';
 
 @ARGV >= 3 or die "usage: $0 history sender recipient...";
-my %seen;
 my ($history, $sender, @recipients) = @ARGV;
+
+my @history;
 open my $handle, '<', $history or die $!;
 while (<$handle>) {
   chomp;
-  $seen{$_}++;
+  push @history, $_;
 }
 
 my $anki = Anki::Database->new;
-my ($today, $tomorrow);
-my $today_count;
+my $morph = Anki::Morphology->new;
 
-undef $handle;
-open $handle, 'canto-targets |' or die $!;
-while (<$handle>) {
-  my ($count, $word) = /^(\d+)x (.+)$/;
-  die "cannot parse: $_" unless $count;
-  next if $seen{$word};
+my @parsed_cards;
 
-  if (!$today) {
-    $today = $word;
-    $today_count = $count;
-  } elsif (!$tomorrow) {
-    $tomorrow = $word;
-  } else {
-    last;
+$anki->each_card(sub {
+  my ($card) = @_;
+
+  return if $card->suspended;
+
+  my ($right, $wrong) = $anki->card_scores($card->id);
+
+  my $sentence = $card->field('粵語');
+  my $reading_field = $card->field('発音') || '';
+  my $source = $card->field('出所') || '???';
+
+  s/<.*?>//g for $sentence, $reading_field;
+
+  if (!$reading_field) {
+    return;
+  }
+
+  my $results = $morph->canto_match_sentence_reading($sentence, $reading_field);
+
+  if ($results->{no_parse}) {
+    return;
+  }
+
+  if (!@{ $results->{correct} }) {
+    return;
+  }
+
+  push @parsed_cards, [$card->id, $right, $sentence, $source, $results->{correct}];
+
+}, '粵語文');
+
+my %knows_word;
+for my $parsed_card (@parsed_cards) {
+  my $cid = $parsed_card->[0];
+  my $right = $parsed_card->[1];
+  my $sentence = $parsed_card->[2];
+  my $source = $parsed_card->[3];
+  my @parses = @{ $parsed_card->[4] };
+
+  next unless $right;
+
+  for my $parse (@parses) {
+    for my $morpheme (@{ $parse->{morphemes} }) {
+      next unless $morpheme->{type} eq 'primary' || $morpheme->{type} eq 'modifier';
+      my $word = $morpheme->{word};
+      $knows_word{$word}++;
+    }
   }
 }
 
-die "no word of the day found" if !$today;
+sub find_next_word {
+  my %extra = map { $_ => 1 } @_, @history;
 
-my $reading = reading($today);
+  my %target_first_seen;
+  my %target_iplus;
+  my @overlooked;
+  
+  for my $parsed_card (@parsed_cards) {
+    my $cid = $parsed_card->[0];
+    my $right = $parsed_card->[1];
+    my $sentence = $parsed_card->[2];
+    my $source = $parsed_card->[3];
+    my @parses = @{ $parsed_card->[4] };
+  
+    next if $right;
+  
+    my @best_known;
+    my @best_unknown;
+    my $best_parse;
+  
+    for my $parse (@parses) {
+      my @known_words;
+      my @unknown_words;
+  
+      for my $morpheme (@{ $parse->{morphemes} }) {
+        next unless $morpheme->{type} eq 'primary' || $morpheme->{type} eq 'modifier';
+        my $word = $morpheme->{word};
+        if ($knows_word{$word} || $extra{$word}) {
+          push @known_words, $word;
+        }
+        else {
+          push @unknown_words, $word;
+        }
+      }
+  
+      @unknown_words = uniq @unknown_words;
+  
+      if ((@unknown_words < @best_unknown) || (@unknown_words == @best_unknown && (length join '', @unknown_words) < (length join '', @best_unknown)) || (!$best_parse)) {
+        @best_known = @known_words;
+        @best_unknown = @unknown_words;
+	$best_parse = $parse;
+      }
+    }
+  
+    if (@best_unknown == 0) {
+      push @overlooked, $sentence;
+    }
+  
+    for my $word (@best_unknown) {
+      $target_first_seen{$word} = $cid if !$target_first_seen{$word} || $cid < $target_first_seen{$word};
+      push @{ $target_iplus{$word}[scalar @best_unknown] }, [$sentence, $source, $best_parse];
+    }
+  }
+
+  my $compare_words = sub {
+    my ($a, $b) = @_;
+    my $max_iplus = @{ $target_iplus{$a} };
+    $max_iplus = @{ $target_iplus{$b} } if @{ $target_iplus{$b} } > $max_iplus;
+  
+    for my $iplus (1 .. $max_iplus) {
+      my $a_iplus = @{ $target_iplus{$a}[$iplus] || [] };
+      my $b_iplus = @{ $target_iplus{$b}[$iplus] || [] };
+  
+      # we have more i+1 of left card
+      if ($a_iplus > $b_iplus) {
+        return -1;
+      }
+      # we have more i+1 of right card
+      elsif ($a_iplus < $b_iplus) {
+        return 1;
+      }
+      # if we have the same number of i+1, compare by date
+      elsif ($a_iplus > 0 && $b_iplus > 0) {
+        last;
+      }
+      # otherwise continue checking i+2 etc
+    }
+
+    return $target_first_seen{$a} <=> $target_first_seen{$b};
+  };
+
+  my @targets = sort { $compare_words->($a, $b) } keys %target_first_seen;
+  return if !@targets;
+  return [$targets[0], $target_iplus{$targets[0]}, \@overlooked];
+}
+
+my $today_package = find_next_word();
+die "no word of the day found" if !$today_package;
+
+my ($today, $iplus_sentences, $overlooked) = @$today_package;
+my @overlooked = @$overlooked;
+
+my ($tomorrow) = @{ find_next_word($today) || [] };
+
+my $today_count = 0;
+for my $iplus (1 .. @$iplus_sentences - 1) {
+  $today_count += @{ $iplus_sentences->[$iplus] || 0 };
+}
+
+my $reading = join " / ", $morph->canto_readings_for($today);
 die "no reading: $today" if !$reading;
+
 print "From: $sender\n";
 print "To: " . join(', ', @recipients) . "\n";
 print "Content-Type: text/html; charset=UTF-8\n";
@@ -53,30 +188,47 @@ print qq{<h1 style="color: #EB37C1; margin: 0">$today</h1>\n};
 print "<h3>($reading)</h3>\n";
 print "\n";
 
-print "<br /><br />Examples:<br />";
-print qq{<ol style="font-size: 1.2em">\n};
-#my $i = 1;
-for my $card (cards($today)) {
-  # print $i++ . ". ";
-  my $s = tidy($card->field($SENTENCE));
-  $s =~ s{$today}{<b style="color: #EB37C1">$today</b>}g;
-
-  my $r = tidy($card->field($READING));
-  $r =~ s{$reading}{<u>$reading</u>}g;
-
-  my $source = tidy($card->field($SOURCE));
-  print qq{<li><span style="font-size: 1.1em">$s</span><br />$r<br /><span style="color: gray; font-size: 0.9em">(from: $source)</span><br /><br /></li>\n\n};
+my @japanese = $morph->readings_for_word($today);
+if (@japanese) {
+  print "<p>";
+  print "日本語：" . join " ", map { "【$_】" } @japanese;
+  print "</p>";
 }
-print "</ol>";
+
+print "<h4>Examples:</h4>";
+
+for my $iplus (1 .. @$iplus_sentences - 1) {
+  next if !$iplus_sentences->[$iplus];
+  print qq{<p>i+$iplus</p>\n};
+  print qq{<ol style="font-size: 1.2em">\n};
+  for (@{ $iplus_sentences->[$iplus] }) {
+    my ($sentence, $source, $parse) = @$_;
+
+   $sentence =~ s{$today}{<b style="color: #EB37C1">$today</b>}g;
+
+   my @readings;
+   for my $j (0 .. @{ $parse->{morphemes} } - 1) {
+       my $word = $parse->{morphemes}[$j]{word};
+       my $readings = $parse->{readings}[$j];
+       $readings = "<u>$readings</u>" if $word eq $today;
+       
+       push @readings, $readings;
+   }
+
+   my $reading = join " ", @readings;
+
+   print qq{<li><span style="font-size: 1.1em">$sentence</span><br />$reading<br /><span style="color: gray; font-size: 0.9em">(from: $source)</span><br /><br /></li>\n\n};
+  }
+  print "</ol>";
+}
 
 if ($tomorrow) {
-  my $reading = reading($tomorrow);
-  print qq{<hr \><p>Tomorrow's (likely) word of the day: $tomorrow ($reading)</p>};
+  my $reading = join ' / ', $morph->canto_readings_for($tomorrow);
+  $reading = $reading ? " ($reading)" : "";
+  print qq{<hr \><p>Tomorrow's (likely) word of the day: $tomorrow$reading</p>};
 }
 
-my $overlooked = `canto-overlooked`;
-if ($overlooked =~ /\S/) {
-  my @overlooked = grep { /\S/ } split "\n", $overlooked;
+if (@overlooked) {
   print qq{<hr \><p>Sentences you should be able to understand already:</p><ul>};
   print qq{<li>$_</li>} for @overlooked;
   print qq{</ul>};
@@ -89,41 +241,3 @@ open $handle, '>>', $history or die $!;
 print $handle "$today\n";
 close $handle;
 
-sub reading {
-  my $needle = shift;
-  my $n = join '', grep {/\p{Han}/} split '', $needle;
-
-  open my $handle, '<', "$ENV{HOME}/Dropbox/Documents/metrics/cantonese/vocabulary.tsv" or die $!;
-  while (<$handle>) {
-    chomp;
-    my ($date, $word, $reading) = split "\t", $_;
-    my $w = join '', grep {/\p{Han}/} split '', $word;
-    return $reading if $word eq $needle || $w eq $n;
-  }
-  return;
-}
-
-sub cards {
-  my $word = shift;
-  my @cards;
-  $anki->each_card(sub {
-      my ($card) = @_;
-  
-      return if $card->suspended;
-  
-      my $sentence = $card->field($SENTENCE);
-
-      # TODO: wordify-cantonese
-      return unless $sentence =~ $word;
-
-      push @cards, $card;
-  }, $MODEL);
-
-  return sort { $a->id <=> $b->id } @cards;
-}
-
-sub tidy {
-  my $x = shift;
-  $x =~ s/<.*?>//g;
-  return $x;
-}
