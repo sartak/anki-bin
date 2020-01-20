@@ -29,11 +29,12 @@ my @parsed_cards;
 $anki->each_card(sub {
   my ($card) = @_;
 
-  return if $card->suspended;
+  return unless $card->template eq '解れ';
+
+  my $sentence = $card->field('粵語');
 
   my ($right, $wrong) = $anki->card_scores($card->id);
 
-  my $sentence = $card->field('粵語');
   my $reading_field = $card->field('発音') || '';
   my $source = $card->field('出所') || '???';
 
@@ -121,12 +122,12 @@ sub find_next_word {
     }
   
     if (@best_unknown == 0) {
-      push @overlooked, $sentence;
+      push @overlooked, [$cid, $sentence];
     }
   
     for my $word (@best_unknown) {
       $target_first_seen{$word} = $cid if !$target_first_seen{$word} || $cid < $target_first_seen{$word};
-      push @{ $target_iplus{$word}[scalar @best_unknown] }, [$sentence, $source, $best_parse];
+      push @{ $target_iplus{$word}[scalar @best_unknown] }, [$cid, $sentence, $source, $best_parse];
     }
   }
 
@@ -202,7 +203,7 @@ for my $iplus (1 .. @$iplus_sentences - 1) {
   print qq{<p>i+$iplus</p>\n};
   print qq{<ol style="font-size: 1.2em">\n};
   for (@{ $iplus_sentences->[$iplus] }) {
-    my ($sentence, $source, $parse) = @$_;
+    my ($cid, $sentence, $source, $parse) = @$_;
 
    $sentence =~ s{$today}{<b style="color: #EB37C1">$today</b>}g;
 
@@ -230,11 +231,14 @@ if ($tomorrow) {
 
 if (@overlooked) {
   print qq{<hr \><p>Sentences you should be able to understand already:</p><ul>};
-  print qq{<li>$_</li>} for @overlooked;
+  print qq{<li>$_->[1]</li>} for @overlooked;
   print qq{</ul>};
 }
 
-print "</body>";
+print qq{<hr /><tt style="color: gray; font-size: 0.9em">};
+print join ' OR ', map { "cid:$_->[0]" } @overlooked, map { @$_ } grep {$_} @$iplus_sentences;
+
+print "</tt></body>";
 
 undef $handle;
 open $handle, '>>', $history or die $!;
