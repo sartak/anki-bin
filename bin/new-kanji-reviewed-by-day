@@ -15,6 +15,7 @@ my $now = time * 1000;
 
 my @groups = ('rtk1', 'rtk3', 'rtks', 'other');
 my %group_for;
+my %negs;
 
 $anki->each_card(sub {
   my ($card) = @_;
@@ -32,28 +33,39 @@ $anki->each_card(sub {
       $first_review = $epoch_ms;
     }
 
-    if ($type == 0 || ($include_relearn && $type == 2)) {
-      if ($kanji eq '一') {
-        push @wipes, $epoch_ms;
+    if ($include_relearn) {
+      # first review
+      if (!@known) {
+        push @known, [$epoch_ms, $epoch_ms + $interval * 24*60*60*1000];
       }
-
-      push @known, [$epoch_ms, $epoch_ms];
-    }
-    elsif ($include_relearn) {
-      die $kanji if @known == 0;
-      if ($ease > 1) {
+      # correct
+      elsif ($ease > 1) {
         $known[-1][1] = $epoch_ms + $interval * 24*60*60*1000;
-      } else {
-	# charitably assume we forgot this two days ago
-        if ($known[-1][1] > $epoch_ms - 24*60*60*1000*2) {
-          $known[-1][1] = $epoch_ms - 24*60*60*1000*2;
+      }
+      # incorrect
+      else {
+        my $ymd = DateTime->from_epoch(epoch => $epoch_ms / 1000)->ymd;
+        $negs{$kanji}{$ymd} = 1;
+
+	# charitably assume we forgot this just before the review
+        if ($known[-1][1] > $epoch_ms - 24*60*60*1000) {
+          $known[-1][1] = $epoch_ms - 24*60*60*1000;
 	}
         push @known, [$epoch_ms, $epoch_ms];
       }
     }
-    elsif ($ease > 1) {
-      die $kanji if @known == 0;
-      $known[-1][1] = $epoch_ms;
+    else {
+      if ($type == 0) {
+        if ($kanji eq '一') {
+          push @wipes, $epoch_ms;
+        }
+
+        push @known, [$epoch_ms, $epoch_ms];
+      }
+      elsif ($ease > 1) {
+        die $kanji if @known == 0;
+        $known[-1][1] = $epoch_ms;
+      }
     }
   }
 }, '漢字');
@@ -98,7 +110,7 @@ for my $kanji (keys %kanji_known) {
     my $start_ymd = DateTime->from_epoch(epoch => $start / 1000)->ymd;
     for my $ymd (@dates) {
       if (($ymd gt $start_ymd || $ymd eq $start_ymd) && ($ymd lt $end_ymd || $end eq $end_ymd)) {
-        $by_date{$ymd}{$group}++;
+        $by_date{$ymd}{$group}++ unless $negs{$kanji}{$ymd};
       }
     }
   }
