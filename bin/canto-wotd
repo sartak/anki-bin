@@ -173,7 +173,7 @@ my ($tomorrow) = @{ find_next_word($today) || [] };
 
 my $today_count = 0;
 for my $iplus (1 .. @$iplus_sentences - 1) {
-  $today_count += @{ $iplus_sentences->[$iplus] || 0 };
+  $today_count += @{ $iplus_sentences->[$iplus] || [] };
 }
 
 my $reading = join " / ", $morph->canto_readings_for($today);
