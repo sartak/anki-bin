@@ -36,7 +36,7 @@ $anki->each_note(sub {
   my ($note) = @_;
 
   my $date = DateTime->from_epoch(epoch => $note->id/1000 - 10*3600)->ymd;
-  my $sentence = $note->field('粵語');
+  my $sentence = $note->field('廣東話');
   my $reading_field = $note->field('発音') || '';
   my $nid = $note->id;
 
@@ -97,7 +97,7 @@ $anki->each_note(sub {
   }
 
   warn "$nid: Unable to parse this sentence:\n  $sentence\n" . join("", map { "  $_\n" } map { (map { @$_ } $_), "" } @suggestions) . "\n";
-}, '粵語文');
+}, '廣東話文');
 
 if ($print_correct) {
   for my $word (@tsv_words) {

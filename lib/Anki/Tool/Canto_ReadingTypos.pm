@@ -14,10 +14,10 @@ my %nids_for_word;
 my %kanji_for_word;
 my $morph = Anki::Morphology->new;
 
-sub each_note_粵語文 {
+sub each_note_廣東話文 {
     my ($self, $note) = @_;
 
-    my $sentence = NFC($note->field('粵語'));
+    my $sentence = NFC($note->field('廣東話'));
     my $reading_field = NFC($note->field('発音') || '');
     my $nid = $note->id;
 
@@ -73,7 +73,7 @@ sub each_note_漢字 {
     my ($self, $note) = @_;
     return if $note->has_tag('duplicate-kanji');
 
-    my $cantonese = NFC($note->field('粵語') or return);
+    my $cantonese = NFC($note->field('廣東話') or return);
     my $kanji = NFC($note->field('漢字'));
 
     my @readings = split ', ', $cantonese;

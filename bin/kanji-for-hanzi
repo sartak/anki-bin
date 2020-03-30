@@ -15,9 +15,9 @@ $anki->each_card(sub {
     if ($card->model->name eq '漢字') {
         $seen{ $card->field('漢字') }++;
     }
-    elsif ($card->model->name eq '粵語文') {
-        for my $hanzi ($card->field('粵語') =~ /\p{Han}/g) {
-            push @{ $needed{$hanzi} }, $card->field('粵語');
+    elsif ($card->model->name eq '廣東話文') {
+        for my $hanzi ($card->field('廣東話') =~ /\p{Han}/g) {
+            push @{ $needed{$hanzi} }, $card->field('廣東話');
         }
     }
 });

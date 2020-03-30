@@ -7,7 +7,7 @@ use List::MoreUtils 'uniq';
 
 extends 'Anki::Tool';
 
-sub each_note_粵語文 {
+sub each_note_廣東話文 {
     my ($self, $note) = @_;
 
     my @missing_fields = grep { !$note->field($_) } qw/出所/;

@@ -6,8 +6,8 @@ use Anki::Database;
 use Anki::Morphology;
 use List::Util 'uniq';
 
-my $MODEL = '粵語文';
-my $SENTENCE = '粵語';
+my $MODEL = '廣東話文';
+my $SENTENCE = '廣東話';
 my $READING = '発音';
 my $SOURCE = '出所';
 
@@ -31,7 +31,7 @@ $anki->each_card(sub {
 
   return unless $card->template eq '解れ';
 
-  my $sentence = $card->field('粵語');
+  my $sentence = $card->field('廣東話');
 
   my ($right, $wrong) = $anki->card_scores($card->id);
 
@@ -56,7 +56,7 @@ $anki->each_card(sub {
 
   push @parsed_cards, [$card->id, $right, $sentence, $source, $results->{correct}];
 
-}, '粵語文');
+}, '廣東話文');
 
 my %knows_word;
 for my $parsed_card (@parsed_cards) {

@@ -5,12 +5,12 @@ use warnings;
 my %studied_word;
 my @to_study;
 
-open my $handle, 'new-cards 粵語文 粵語 | wordify-cantonese |' or die $!;
+open my $handle, 'new-cards 廣東話文 廣東話 | wordify-cantonese |' or die $!;
 while (<$handle>) {
   push @to_study, [split ' ', $_];
 }
 
-open $handle, 'new-cards 粵語文 粵語 1 |  wordify-cantonese |' or die $!;
+open $handle, 'new-cards 廣東話文 廣東話 1 |  wordify-cantonese |' or die $!;
 while (<$handle>) {
   for (split ' ', $_) {
     $studied_word{$_}++;

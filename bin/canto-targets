@@ -4,14 +4,14 @@ use warnings;
 
 my %seen_words;
 
-open my $handle, 'new-cards 粵語文 粵語 | wordify-cantonese |' or die $!;
+open my $handle, 'new-cards 廣東話文 廣東話 | wordify-cantonese |' or die $!;
 while (<$handle>) {
   for (split ' ', $_) {
     $seen_words{$_}++;
   }
 }
 
-open $handle, 'new-cards 粵語文 粵語 1 |  wordify-cantonese |' or die $!;
+open $handle, 'new-cards 廣東話文 廣東話 1 |  wordify-cantonese |' or die $!;
 while (<$handle>) {
   for (split ' ', $_) {
     delete $seen_words{$_};

@@ -13,15 +13,15 @@ my @sentences;
 sub each_note_漢字 {
     my ($self, $note) = @_;
     return if $note->has_tag('duplicate-kanji');
-    return if $note->field('粵語');
+    return if $note->field('廣東話');
 
     push @no_readings, $note;
 }
 
-sub each_note_粵語文 {
+sub each_note_廣東話文 {
     my ($self, $note) = @_;
 
-    push @sentences, [$note->field('粵語'), $note->field('発音')];
+    push @sentences, [$note->field('廣東話'), $note->field('発音')];
 }
 
 sub done {
