@@ -26,6 +26,10 @@ my @tsv_words;
     die "expected 3 fields, got " . int(@fields) . ": " . $_ if @fields != 3;
     my ($date, $word, $reading) = @fields;
     push @tsv_words, $word;
+
+    warn "$.: [$word] [$reading]: Leading whitespace\n" if $word =~ /^\s+/ || $reading =~ /^\s+/;
+    warn "$.: [$word] [$reading]: Trailing whitespace\n" if $word =~ /\s+$/ || $reading =~ /\s+$/;
+
     $tsv_date_of{$word} = $date if !$tsv_date_of{$word} or $date lt $tsv_date_of{$word};
   }
 }
