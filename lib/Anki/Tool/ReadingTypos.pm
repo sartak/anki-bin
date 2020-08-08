@@ -118,6 +118,10 @@ sub each_card_文 {
                 return $self->report_card($card, "Duplicate reading: $_");
             }
 
+	    if ($reading =~ /\?|？/) {
+                return $self->report_card($card, "Incomplete reading: $_");
+	    }
+
             $readings_of_word{$word}{$reading}++;
             push @{ $nids_for_word{$word}{$reading} }, $nid;
 
