@@ -59,17 +59,16 @@ $anki->each_note(sub {
     return;
   }
 
-  my @correct = @{ $results->{correct} };
+  my ($parse) = sort { @{ $a->{morphemes} } <=> @{ $b->{morphemes} } } @{ $results->{correct} };
 
-  for my $parse (@correct) {
+  if ($parse) {
     for my $morpheme (@{ $parse->{morphemes} }) {
       next unless $morpheme->{type} eq 'primary' || $morpheme->{type} eq 'modifier';
       my $word = $morpheme->{word};
       $anki_date_of{$word} = $date if !$anki_date_of{$word} || $date lt $anki_date_of{$word};
     }
+    return;
   }
-
-  return if @correct;
 
   my @misparses = @{ $results->{misparses} };
 
