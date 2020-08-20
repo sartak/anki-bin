@@ -55,7 +55,7 @@ $anki->each_note(sub {
 
   if ($results->{no_parse}) {
     my @unknown = grep { $_->{type} eq 'unknown' } @{ $results->{no_parse} };
-    warn "$nid: Unable to parse this sentence:\n  $sentence\n  missing vocabulary for " . join('、', map { $_->{word} } @unknown) . "\n\n";
+    warn "$nid: Unable to parse this sentence:\n  $sentence\n  $reading_field\nmissing vocabulary for " . join('、', map { $_->{word} } @unknown) . "\n\n";
     return;
   }
 
@@ -99,7 +99,7 @@ $anki->each_note(sub {
     push @suggestions, [@suggestion];
   }
 
-  warn "$nid: Unable to parse this sentence:\n  $sentence\n" . join("", map { "  $_\n" } map { (map { @$_ } $_), "" } @suggestions) . "\n";
+  warn "$nid: Unable to parse this sentence:\n  $sentence\n  $reading_field\n" . join("", map { "  $_\n" } map { (map { @$_ } $_), "" } @suggestions) . "\n";
 }, '廣東話文');
 
 if ($print_correct) {
