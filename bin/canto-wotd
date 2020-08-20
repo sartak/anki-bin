@@ -7,9 +7,11 @@ use Anki::Morphology;
 use List::Util 'uniq';
 
 my $MODEL = '廣東話文';
+my $TEMPLATE = '解れ';
 my $SENTENCE = '廣東話';
 my $READING = '発音';
 my $SOURCE = '出所';
+my $CONTEXT = '前後関係';
 
 @ARGV >= 3 or die "usage: $0 history sender recipient...";
 my ($history, $sender, @recipients) = @ARGV;
@@ -29,14 +31,14 @@ my @parsed_cards;
 $anki->each_card(sub {
   my ($card) = @_;
 
-  return unless $card->template eq '解れ';
+  return unless $card->template eq $TEMPLATE;
 
-  my $sentence = $card->field('廣東話');
+  my $sentence = $card->field($SENTENCE);
 
   my ($right, $wrong) = $anki->card_scores($card->id);
 
-  my $reading_field = $card->field('発音') || '';
-  my $source = $card->field('出所') || '???';
+  my $reading_field = $card->field($READING) || '';
+  my $source = $card->field($SOURCE) || '???';
 
   s/<.*?>//g for $sentence, $reading_field;
 
@@ -54,9 +56,13 @@ $anki->each_card(sub {
     return;
   }
 
-  push @parsed_cards, [$card->id, $right, $sentence, $source, $results->{correct}];
+  my $context = $card->field($CONTEXT) || '';
+  my ($img) = $context =~ m{(<img[^>]+>)};
+  undef $img if $img && $img !~ /study\.sartak\.org/;
 
-}, '廣東話文');
+  push @parsed_cards, [$card->id, $right, $sentence, $source, $img, $results->{correct}];
+
+}, $MODEL);
 
 my %knows_word;
 for my $parsed_card (@parsed_cards) {
@@ -64,7 +70,8 @@ for my $parsed_card (@parsed_cards) {
   my $right = $parsed_card->[1];
   my $sentence = $parsed_card->[2];
   my $source = $parsed_card->[3];
-  my @parses = @{ $parsed_card->[4] };
+  my $img = $parsed_card->[4];
+  my @parses = @{ $parsed_card->[5] };
 
   next unless $right;
 
@@ -89,7 +96,8 @@ sub find_next_word {
     my $right = $parsed_card->[1];
     my $sentence = $parsed_card->[2];
     my $source = $parsed_card->[3];
-    my @parses = @{ $parsed_card->[4] };
+    my $img = $parsed_card->[4];
+    my @parses = @{ $parsed_card->[5] };
   
     next if $right;
   
@@ -127,7 +135,7 @@ sub find_next_word {
   
     for my $word (@best_unknown) {
       $target_first_seen{$word} = $cid if !$target_first_seen{$word} || $cid < $target_first_seen{$word};
-      push @{ $target_iplus{$word}[scalar @best_unknown] }, [$cid, $sentence, $source, $best_parse];
+      push @{ $target_iplus{$word}[scalar @best_unknown] }, [$cid, $sentence, $source, $img, $best_parse];
     }
   }
 
@@ -203,7 +211,7 @@ for my $iplus (1 .. @$iplus_sentences - 1) {
   print qq{<p>i+$iplus</p>\n};
   print qq{<ol style="font-size: 1.2em">\n};
   for (@{ $iplus_sentences->[$iplus] }) {
-    my ($cid, $sentence, $source, $parse) = @$_;
+    my ($cid, $sentence, $source, $img, $parse) = @$_;
 
    $sentence =~ s{$today}{<b style="color: #EB37C1">$today</b>}g;
 
@@ -217,8 +225,9 @@ for my $iplus (1 .. @$iplus_sentences - 1) {
    }
 
    my $reading = join " ", @readings;
+   $img = $img ? "$img<br />" : "";
 
-   print qq{<li><span style="font-size: 1.1em">$sentence</span><br />$reading<br /><span style="color: gray; font-size: 0.9em">(from: $source)</span><br /><br /></li>\n\n};
+   print qq{<li><span style="font-size: 1.1em">$sentence</span><br />$img$reading<br /><span style="color: gray; font-size: 0.9em">(from: $source)</span><br /><br /></li>\n\n};
   }
   print "</ol>";
 }
