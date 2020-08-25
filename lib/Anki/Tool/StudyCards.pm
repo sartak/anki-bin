@@ -20,12 +20,6 @@ my $dbh = DBI->connect("dbi:SQLite:dbname=" . $ENV{STUDY_DATABASE}, undef, undef
 });
 $dbh->{sqlite_unicode} = 1;
 
-my %game_id;
-for (@{ $dbh->selectall_arrayref("SELECT id, name FROM games") }) {
-  my ($id, $name) = @$_;
-  $game_id{$name} = $id;
-}
-
 my $sth = $dbh->prepare("SELECT content FROM sentences WHERE screenshot=(SELECT id FROM screenshots WHERE path=?)");
 
 sub check_study {
@@ -39,7 +33,6 @@ sub check_study {
 
     my $expected = $note->field($sentence_field);
     my $source = $note->field($source_field);
-    $game_id{$source} or return $self->report_note($note, "No game in $ENV{STUDY_DATABASE} found for source: $source");
 
     $expected =~ s/<.*?>//g;
 
