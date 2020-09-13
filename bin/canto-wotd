@@ -190,6 +190,7 @@ die "no reading: $today" if !$reading;
 print "From: $sender\n";
 print "To: " . join(', ', @recipients) . "\n";
 print "Content-Type: text/html; charset=UTF-8\n";
+print "Content-Transfer-Encoding: 8bit\n";
 print "Subject: ★$today★ ($reading) ${today_count}x - Shawn's Cantonese word of the day\n\n";
 
 print q{<body style="font-size: 1.3em">};
