@@ -144,6 +144,28 @@ sub each_card_文 {
     return 1;
 }
 
+sub each_note_漢字 {
+    my ($self, $note) = @_;
+    if (my $japanese = $note->field('読み')) {
+        if ($japanese =~ s{
+            ([^\p{Han}\p{Hiragana}\p{Katakana}ー・、]+) # Non-Japanese
+        }{\e[1;41m$+\e[m}xg) {
+            return $self->report_note($note, "Malformed 読み: $japanese");
+        }
+    }
+
+    if (my $cantonese = $note->field('廣東話')) {
+        if ($cantonese =~ s{
+              ^ (\s+)                # leading space
+              | (\s+) $              # trailing space
+              | (<.*?>)              # HTML
+              | ([\p{Han}\p{Hiragana}\p{Katakana}ー]+) # Japanese
+          }{\e[1;41m$+\e[m}xg) {
+            return $self->report_note($note, "Malformed 廣東話: $cantonese");
+        }
+    }
+}
+
 sub done {
     my ($self) = @_;
 
