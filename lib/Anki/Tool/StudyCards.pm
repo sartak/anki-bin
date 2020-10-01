@@ -83,7 +83,8 @@ sub done {
     my $anki = $self->dbh;
     while (my ($content, $paths) = $sth->fetchrow_array) {
         my @paths = split /\n/, $paths;
-        my ($model, $field) = $paths[0] =~ m{^/j/} ? ('文', '日本語') : ('廣東話文', '廣東話');
+	my $is_j = $paths[0] =~ m{^/j/};
+        my ($model, $field) = $is_j ? ('文', '日本語') : ('廣東話文', '廣東話');
 
         # no note for this screenshot sentence, so skip
         my $note = $anki->find_notes($model, $field => $content)
@@ -91,7 +92,7 @@ sub done {
 
         my $context = $note->field('前後関係') || '';
 
-        my @missing_paths = grep { $context !~ /\Q$_\E/ } @paths
+        my @missing_paths = grep { $context !~ /\Q$_\E/ } grep { !!$is_j == !!m{^/j} } @paths
             or next;
 
         $self->report_note($note, "Matches content but does not link to @{[ join ', ', @missing_paths ]}");
