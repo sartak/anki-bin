@@ -1,0 +1,51 @@
+#!/usr/bin/env perl
+use 5.14.0;
+use warnings;
+use utf8::all;
+use Anki::Morphology;
+use Encode 'decode_utf8';
+
+my $morph = Anki::Morphology->new;
+my $anki = $morph->anki;
+
+my %seen;
+$anki->each_card(sub {
+  my ($card) = @_;
+  my $queue = $card->queue;
+  my $sentence = $card->field('日本語');
+  return if $queue <= 0;
+
+  for my $morpheme ($morph->morphemes_of($sentence)) {
+    my $word = $morpheme->{dictionary} || $morpheme->{surface};
+    $seen{$word}++;
+  }
+}, '文');
+
+my $study_re = qr/$ENV{STUDY_URL_REGEX}/;
+
+my %missing;
+$anki->each_card(sub {
+  my ($card) = @_;
+  my $queue = $card->queue;
+  my $sentence = $card->field('日本語');
+  return if $queue > 0;
+
+  # skip game cards waiting for screenshot
+  return if $queue < 0 && $card->has_tag('ゲーム') && $card->field('出所') !~ $study_re;
+
+  my $ok = 1;
+  for my $morpheme ($morph->morphemes_of($sentence)) {
+    my $word = $morpheme->{dictionary} || $morpheme->{surface};
+    if (!$seen{$word}) {
+      $ok = 0;
+      $missing{$word}++;
+    }
+  }
+  print $card->id, "|", $sentence, "\n" if $ok;
+}, '文');
+
+my $i = 0;
+for my $word (sort { $missing{$b} <=> $missing{$a} } keys %missing) {
+  print "$word: $missing{$word}x\n";
+  last if ++$i > 10;
+}
