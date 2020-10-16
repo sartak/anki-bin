@@ -51,6 +51,7 @@ my %sources = (
         'Pokemon Go',
         'Super Mario Run',
 	'セレステ',
+	'ビヨンド ザ ビヨンド',
     ],
     novels => [
         qr/^デューン砂の惑星[1-4]$/,
