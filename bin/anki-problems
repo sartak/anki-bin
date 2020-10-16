@@ -17,6 +17,27 @@ my @methods = (
     'each_card',
 );
 
+if (@ARGV) {
+  my @t;
+  my @all;
+  my %saw;
+  for my $t (@tools) {
+    my $suffix = ref($t); $suffix =~ s/.*:://;
+    push @all, $suffix;
+    if (grep { $suffix eq $_ } @ARGV) {
+      push @t, $t;
+      $saw{$suffix}++;
+    }
+  }
+
+  die "No matching tools: " . (join ", ", @all) . "\n" if !@t;
+
+  my @missing = grep { !$saw{$_} } @ARGV;
+  die "No matching tool for " . join(", ", @missing) . "\n" if @missing;
+
+  @tools = @t;
+}
+
 for my $method (@methods) {
     my @applicable_tools = grep { $_->can($method) } @tools;
     my %applicable_tools_L2;
