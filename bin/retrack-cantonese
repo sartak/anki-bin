@@ -17,15 +17,13 @@ $anki->each_card(sub {
 
   return if $card->template ne '解れ';
 
-  my $sentence = $card->field('日本語');
+  my $sentence = $card->field('廣東話');
 
-  for my $morpheme ($morph->morphemes_of($sentence)) {
-    my $word = $morpheme->{dictionary} || $morpheme->{surface};
+  for my $morpheme (@{ $morph->canto_morphemes_of($sentence, { best => 1, allow_unknown => 1, include_alphanumeric => 1 }) }) {
+    my $word = $morpheme->{word};
     $seen{$word}++;
   }
-}, '文');
-
-my $study_re = qr/$ENV{STUDY_URL_REGEX}/;
+}, '廣東話文');
 
 my %missing;
 $anki->each_card(sub {
@@ -36,14 +34,11 @@ $anki->each_card(sub {
 
   return if $card->template ne '解れ';
 
-  # skip game cards waiting for screenshot
-  return if $queue < 0 && $card->has_tag('ゲーム') && $card->field('出所') !~ $study_re;
-
-  my $sentence = $card->field('日本語');
+  my $sentence = $card->field('廣東話');
 
   my $ok = 1;
-  for my $morpheme ($morph->morphemes_of($sentence)) {
-    my $word = $morpheme->{dictionary} || $morpheme->{surface};
+  for my $morpheme (@{ $morph->canto_morphemes_of($sentence, { best => 1, allow_unknown => 1, include_alphanumeric => 1 }) }) {
+    my $word = $morpheme->{word};
     if (!$seen{$word}) {
       $ok = 0;
       $missing{$word}++;
@@ -52,7 +47,7 @@ $anki->each_card(sub {
 
   my $suspended = $card->suspended ? "suspended|" : "";
   print "cid:", $card->id, "|", $suspended, $sentence, "\n" if $ok;
-}, '文');
+}, '廣東話文');
 
 my $i = 0;
 for my $word (sort { $missing{$b} <=> $missing{$a} } keys %missing) {

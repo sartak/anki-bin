@@ -1,0 +1,56 @@
+#!/usr/bin/env perl
+use 5.14.0;
+use warnings;
+use utf8::all;
+use Anki::Morphology;
+use Encode 'decode_utf8';
+
+my $morph = Anki::Morphology->new;
+my $anki = $morph->anki;
+
+my @grades;
+
+$anki->each_card(sub {
+  my ($card) = @_;
+
+  my $queue = $card->queue;
+  return if $queue > 0;
+
+  my $kanji = $card->field('漢字');
+  my $keyword = $card->field('英語');
+  my $yomi = $card->field('読み');
+  my $canto = $card->field('廣東話');
+  my $rtk1 = $card->has_tag('rtk1') || $card->has_tag('rtks');
+  my $rtk3 = $card->has_tag('rtk3');
+
+  my $suspended = $card->suspended ? "suspended|" : "";
+  my $content = "cid:" . $card->id . "|" . $suspended . $kanji . " " . $keyword;
+
+  my $grade = 0;
+
+  if ($yomi && $canto) {
+
+  } elsif ($yomi) {
+    $grade += 1;
+  } elsif ($canto) {
+    $grade += 2;
+  } else {
+    $grade += 3;
+  }
+
+  if ($rtk1) {
+
+  } elsif ($rtk3) {
+    $grade += 4;
+  } else {
+    $grade += 8;
+  }
+
+  push @{ $grades[$grade] }, $content;
+}, '漢字');
+
+for my $g (@grades) {
+  next unless @{ $g || [] };
+  print "$_\n" for @$g;
+  last;
+}
