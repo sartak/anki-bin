@@ -6,17 +6,30 @@ use Anki::Database;
 use Text::CSV_XS;
 use DateTime;
 
-@ARGV >= 2 or die "usage: $0 model [field / _created / _created_unix / tags]...\n";
+@ARGV >= 2 or die "usage: $0 model [field / _created / _created_unix / _suspended | _tags]...\n";
 my $model = shift;
-my @fields = @ARGV;
+my $suspended = 0;
+my @fields;
+
+for (@ARGV) {
+  if ($_ eq '_suspended') {
+    $suspended = 1;
+  } else {
+    push @fields, $_;
+  }
+}
 
 my $anki = Anki::Database->new;
 my $csv = Text::CSV_XS->new({binary => 1, auto_diag => 1});
 
-$anki->each_note(sub {
-    my ($note) = @_;
+$anki->each_card(sub {
+    my ($card) = @_;
 
-    my @values = map { $_ eq '_created_unix' ? int($note->id/1000) : $_ eq '_created' ? DateTime->from_epoch(epoch => $note->id/1000)->ymd : $_ eq '_tags' ? $note->tags_as_string : $note->field($_) } @fields;
+    if ($suspended) {
+      return unless $card->suspended;
+    }
+
+    my @values = map { $_ eq '_created_unix' ? int($card->id/1000) : $_ eq '_created' ? DateTime->from_epoch(epoch => $card->id/1000)->ymd : $_ eq '_tags' ? $card->tags_as_string : $card->field($_) } @fields;
     $csv->say(\*STDOUT, \@values);
 }, $model);
 
