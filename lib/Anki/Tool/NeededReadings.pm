@@ -3,8 +3,11 @@ use utf8;
 use 5.16.0;
 use warnings;
 use Any::Moose;
+use Anki::Morphology;
 
 extends 'Anki::Tool';
+
+my $morph = Anki::Morphology->new;
 
 sub each_card_文 {
     my ($self, $card) = @_;
@@ -21,7 +24,8 @@ sub each_card_文 {
     }
 
     if (@needed) {
-        return $self->report_card($card, "$sentence - needs readings for @needed");
+        my $readings = $morph->readings_for($sentence, 1);
+        return $self->report_card($card, "$sentence - needs readings for @needed\n$readings");
     }
 }
 
