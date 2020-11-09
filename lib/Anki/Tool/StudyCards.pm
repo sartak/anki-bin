@@ -38,6 +38,8 @@ sub check_study {
 
     my $ok = 1;
     PATH: for my $path (@imgs) {
+      $path =~ s/#.*//;
+
       $sth->execute($path);
       my @got = map { $_->[0] } @{ $sth->fetchall_arrayref };
       next PATH if grep { $expected eq $_ } @got;
