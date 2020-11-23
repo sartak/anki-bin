@@ -49,11 +49,12 @@ sub check_study {
 
       if (@got) {
         $self->report_hint("$study_prefix/game/@{[uri_escape($source, qq< >)]}/_all#$path");
-        $self->report_hint("card:       $expected");
         $self->report_hint("screenshot: $_") for @got;
       } else {
         $self->report_hint("The screenshot is missing");
       }
+
+      $self->report_hint("card:       $expected");
     }
 
     return $ok;
