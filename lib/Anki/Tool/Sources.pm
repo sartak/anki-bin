@@ -38,7 +38,7 @@ my %sources = (
         'ブラックジャック',
         '石ころ勇者',
         'フェアルーン',
-        'マジック',
+        'マジック：ザ・ギャザリング',
         'キンを集めてまいれ！',
         'Rogue Ninja',
         qr/^ロックマンX?[1-9]*$/,
@@ -46,6 +46,7 @@ my %sources = (
         '100TURN勇者',
         'ラーニングドラゴン',
         'Braid',
+	'Ninja Striker',
         'Ninja Smasher',
         'Alchemic Dungeons',
         'Pokemon Go',
@@ -87,6 +88,8 @@ my %sources = (
         qr/^ブリーチ\d*$/,
         qr/^日本人の知らない日本語\d*$/,
 	qr/^テラフォーマーズ\d*$/,
+        'ドラえもん四字熟語100',
+        'ドラえもんのまんがで英語辞典覚える',
     ],
     movies => [
         'マトリックス',
@@ -125,6 +128,7 @@ my %sources = (
         'あやかの突撃英会話',
         'ロス・タイム・ライフ',
         'ガキの使い',
+	'ゲームセンターCX',
         'リンカーン',
         qr/^ドラゴンボール超\d*$/,
     ],
@@ -137,10 +141,8 @@ my %sources = (
         'Dirty Guide to Japanese',
         'Genki',
         'A Dictionary of Japanese Particles',
-        'ドラえもん四字熟語100',
         '大辞泉',
         '大辞林',
-        'ドラえもんのまんがで英語辞典覚える',
         'goo',
         'ARES-3',
     ],
@@ -172,21 +174,15 @@ my %sources = (
         'Jifty',
         'Facebook',
         'OS X',
-        'Gmail',
         'Echofon',
         'YouTube',
         'Twitter',
-        'Foursquare',
-        'Google Reader',
         'Firefox',
         'Skype',
         'NetNewsWire',
-        'Last.fm',
         'iOS',
         'Japanese.app',
-        'Amazon',
         'Anki',
-        'ニコニコ動画',
         'Siri',
         'Lightroom',
     ],
@@ -200,8 +196,6 @@ my %sources = (
         qr/^@\w+$/,
     ],
     real_life => [
-        '中村先生',
-        '高橋先生',
         '公共交通機関',
         qr/^(Sign|Announcement|Conversation|Pamphlet) (at|in|on|with|from) .+/,
         'YAPC::Asia',
@@ -274,13 +268,10 @@ sub each_note_文 {
         return any { $_ eq $tag } @tags;
     };
 
-    # make sure each note has tags expected of its source material
-    unless ($has_tag->('from-corpus')) {
-        if ($type) {
-            my $expected = $expected_tags{$type};
-            if ($expected && !$has_tag->($expected)) {
-                return $self->report_note($note, "$source - didn't include tag $expected expected of $type");
-            }
+    if ($type) {
+        my $expected = $expected_tags{$type};
+        if ($expected && !$has_tag->($expected)) {
+            return $self->report_note($note, "$source - didn't include tag $expected expected of $type");
         }
     }
 

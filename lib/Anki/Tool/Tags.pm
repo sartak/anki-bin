@@ -14,7 +14,6 @@ my @allowed = qw(
     記事
     文法
     動画
-    写真
     テレビ
     話
 
@@ -31,8 +30,7 @@ my @allowed = qw(
 
     leech
     marked
-    context-only
-    from-corpus
+    study
     duplicate-kanji
 
     no-color
