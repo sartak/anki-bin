@@ -20,7 +20,8 @@ $anki->each_card(sub {
   my $keyword = $card->field('英語');
   my $yomi = $card->field('読み');
   my $canto = $card->field('廣東話');
-  my $rtk1 = $card->has_tag('rtk1') || $card->has_tag('rtks');
+  my $rtk1 = $card->has_tag('rtk1');
+  my $rtks = $card->has_tag('rtks');
   my $rtk3 = $card->has_tag('rtk3');
 
   my $suspended = $card->suspended ? "suspended|" : "";
@@ -39,11 +40,12 @@ $anki->each_card(sub {
   }
 
   if ($rtk1) {
-
-  } elsif ($rtk3) {
+  } elsif ($rtks) {
     $grade += 4;
-  } else {
+  } elsif ($rtk3) {
     $grade += 8;
+  } else {
+    $grade += 12;
   }
 
   push @{ $grades[$grade] }, $content;
