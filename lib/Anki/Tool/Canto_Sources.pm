@@ -16,10 +16,13 @@ my %sources = (
       qr/^太空戰士[IVX]+$/,
     ],
     novels => [
-      qr/^龍珠(撒亞人篇\d+)?$/,
       '迷霧之子首部曲：最後帝國',
+      qr/^沙丘\d$/,
+      '沙丘救世主',
+      '沙丘之子',
     ],
     manga => [
+      qr/^龍珠(撒亞人篇\d+)?$/,
     ],
     movies => [
     ],
@@ -56,6 +59,9 @@ my %expected_tags = (
     songs      => 'カラオケ',
     movies     => '映画',
     television => 'テレビ',
+
+    novels     => '読み物',
+    manga      => '読み物',
 );
 
 my (%known_sources, @regex_sources, %type_of);
