@@ -7,7 +7,7 @@ use DateTime;
 use List::Util 'uniq';
 use Anki::Morphology;
 
-@ARGV == 1 || @ARGV == 2 or die "usage: $0 vocabulary.tsv [print-correct]\n";
+@ARGV == 0 || @ARGV == 1 or die "usage: $0 [print-correct]\n";
 my $print_correct = $ARGV[1];
 
 my $anki = Anki::Database->new;
@@ -15,23 +15,14 @@ my $morph = Anki::Morphology->new;
 
 my %tsv_date_of;
 my @tsv_words;
-{
-  my $tsv = shift;
-  open my $handle, '<', $tsv or die "$tsv: $!";
-  while (<$handle>) {
-    next if $. == 1;
-    chomp;
-    my @fields = split "\t", $_;
-    next if $. == 2 && (@fields == 0 || @fields == 1);
-    die "expected 3 fields, got " . int(@fields) . ": " . $_ if @fields != 3;
-    my ($date, $word, $reading) = @fields;
+for ($morph->manual_canto_vocabulary) {
+    my ($date, $word, $reading) = @$_;
     push @tsv_words, $word;
 
     warn "$.: [$word] [$reading]: Leading whitespace\n" if $word =~ /^\s+/ || $reading =~ /^\s+/;
     warn "$.: [$word] [$reading]: Trailing whitespace\n" if $word =~ /\s+$/ || $reading =~ /\s+$/;
 
     $tsv_date_of{$word} = $date if !$tsv_date_of{$word} or $date lt $tsv_date_of{$word};
-  }
 }
 
 my %anki_date_of;

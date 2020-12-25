@@ -30,4 +30,4 @@ export ANKI2_DECK=/home/shawn/collection.anki2
 /usr/local/bin/extract-mining-sessions 詰碁 Source 読み物 1 900 > $DIR/go/reading-sessions.txt
 /usr/local/bin/extract-mining-sessions 詰碁 Source 動画 1 900 > $DIR/go/viewing-sessions.txt
 
-/usr/local/bin/canto-vocabulary $DIR/cantonese/vocabulary.tsv
+/usr/local/bin/canto-vocabulary
