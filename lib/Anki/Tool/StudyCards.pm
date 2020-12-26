@@ -79,6 +79,7 @@ sub done {
         LEFT JOIN screenshots ON sentences.screenshot = screenshots.id
         WHERE sentences.content IS NOT NULL
         AND sentences.content != ''
+        AND game IN (SELECT id FROM games WHERE visual=1)
         GROUP BY sentences.content;
     ");
     $sth->execute;
