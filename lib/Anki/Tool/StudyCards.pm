@@ -70,22 +70,38 @@ sub each_note_廣東話文 {
     return $self->check_study($note, '廣東話', '出所');
 }
 
+sub slice_info {
+    my ($self, $slice_id, $width, $height, $polygon) = @_;
+    my @polygon = split ',', $polygon;
+    my $p = join ';', map { int $_ } @polygon;
+    return "#slice:${slice_id};${width}x${height};${p}";
+}
+
 sub done {
     my ($self) = @_;
 
-    my $sth = $dbh->prepare("
+    my $unlinked_sth = $dbh->prepare("
         SELECT sentences.content, GROUP_CONCAT(screenshots.path, char(10))
         FROM sentences
         LEFT JOIN screenshots ON sentences.screenshot = screenshots.id
         WHERE sentences.content IS NOT NULL
         AND sentences.content != ''
-        AND game IN (SELECT id FROM games WHERE visual=1)
+        AND screenshots.game IN (SELECT id FROM games WHERE visual=1)
         GROUP BY sentences.content;
     ");
-    $sth->execute;
+    $unlinked_sth->execute;
+
+    my $slice_sth = $dbh->prepare("
+        SELECT slices.id, screenshots.width, screenshots.height, slices.polygon
+	FROM sentences
+        LEFT JOIN screenshots ON sentences.screenshot = screenshots.id
+	LEFT JOIN slices ON sentences.slice = slices.id
+	WHERE slices.id IS NOT NULL
+	AND screenshots.path = ? AND sentences.content = ?
+    ");
 
     my $anki = $self->dbh;
-    while (my ($content, $paths) = $sth->fetchrow_array) {
+    while (my ($content, $paths) = $unlinked_sth->fetchrow_array) {
         my @paths = split /\n/, $paths;
 	my $is_j = $paths[0] =~ m{^/j/};
         my ($model, $field) = $is_j ? ('文', '日本語') : ('廣東話文', '廣東話');
@@ -96,7 +112,7 @@ sub done {
 
         my $context = $note->field('前後関係') || '';
 
-        my @missing_paths = grep { $context !~ /\Q$_\E/ } grep { !!$is_j == !!m{^/j} } @paths
+        my @missing_paths = grep { $context !~ /\b\Q$_\E\b/ } grep { !!$is_j == !!m{^/j} } @paths
             or next;
 
         $self->report_note($note, "Matches content but does not link to @{[ join ', ', @missing_paths ]}");
@@ -105,6 +121,12 @@ sub done {
 
         for my $path (@missing_paths) {
             my $url = "$study_prefix$path";
+
+            $slice_sth->execute($path, $content);
+	    if (my (@slice) = $slice_sth->fetchrow_array) {
+		$url .= $self->slice_info(@slice);
+	    }
+
             if ($context !~ m{<img}) {
                 $context = qq[<img src="$url" />];
             } else {
