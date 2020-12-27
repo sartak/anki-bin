@@ -77,7 +77,7 @@ sub slice_info {
     return "#slice:${slice_id};${width}x${height};${p}";
 }
 
-sub done {
+sub add_missing_links {
     my ($self) = @_;
 
     my $unlinked_sth = $dbh->prepare("
@@ -141,6 +141,55 @@ sub done {
 
         $self->report_hint("tag:      $context");
     }
+}
+
+sub update_stale_links {
+    my $self = shift;
+
+    my $sliced_sentences_sth = $dbh->prepare("
+        SELECT sentences.content, screenshots.path, slices.id, screenshots.width, screenshots.height, slices.polygon
+        FROM sentences
+        LEFT JOIN screenshots ON sentences.screenshot = screenshots.id
+	LEFT JOIN slices ON sentences.slice = slices.id
+	WHERE slices.id IS NOT NULL
+        AND sentences.content IS NOT NULL
+        AND sentences.content != ''
+        AND screenshots.game IN (SELECT id FROM games WHERE visual=1)
+    ");
+    $sliced_sentences_sth->execute;
+
+    my $anki = $self->dbh;
+    while (my ($content, $path, @slice) = $sliced_sentences_sth->fetchrow_array) {
+	my $is_j = $path =~ m{^/j/};
+        my ($model, $field) = $is_j ? ('文', '日本語') : ('廣東話文', '廣東話');
+
+        # no note for this screenshot sentence, so skip
+        my $note = $anki->find_notes($model, $field => $content)
+            or next;
+
+        my $context = $note->field('前後関係') || '';
+
+	my $base = $study_prefix . $path;
+        my $url = $base . $self->slice_info(@slice);
+
+        next if $context =~ /\b\Q$url\E\b/;
+
+	# no link to this yet, but it was already caught in ->add_missing_links
+	next unless $context =~ /\b\Q$base\E/;
+
+        $self->report_note($note, "Stale link to $path");
+        $self->report_hint("sentence: $content");
+        $self->report_hint("context:  $context");
+
+	$context =~ s/\b\Q$base\E[^,"]*/$url/;
+        $self->report_hint("tag:      $context");
+    }
+}
+
+sub done {
+    my $self = shift;
+    $self->add_missing_links;
+    $self->update_stale_links;
 }
 
 1;
