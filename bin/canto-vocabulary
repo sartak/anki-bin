@@ -16,12 +16,21 @@ my $morph = Anki::Morphology->new;
 my %tsv_date_of;
 my @tsv_words;
 for ($morph->manual_canto_vocabulary) {
-    my ($date, $word, $reading) = @$_;
+    my ($date, $word, $reading, $time) = @$_;
     push @tsv_words, $word;
 
     warn "$.: [$word] [$reading]: Leading whitespace\n" if $word =~ /^\s+/ || $reading =~ /^\s+/;
     warn "$.: [$word] [$reading]: Trailing whitespace\n" if $word =~ /\s+$/ || $reading =~ /\s+$/;
 
+    if ($time) {
+         my $dt = DateTime->from_epoch(epoch => $time);
+
+	 # TODO
+	 $dt->set_time_zone('America/New_York');
+	 $dt->subtract(hours => 5);
+
+	 $date = $dt->ymd;
+    }
     $tsv_date_of{$word} = $date if !$tsv_date_of{$word} or $date lt $tsv_date_of{$word};
 }
 
