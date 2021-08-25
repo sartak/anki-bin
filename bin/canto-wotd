@@ -16,6 +16,8 @@ my $CONTEXT = '前後関係';
 @ARGV >= 3 or die "usage: $0 history sender recipient...";
 my ($history, $sender, @recipients) = @ARGV;
 
+my $study_url_regex = qr/$ENV{STUDY_URL_REGEX}/;
+
 my @history;
 open my $handle, '<', $history or die $!;
 while (<$handle>) {
@@ -58,7 +60,7 @@ $anki->each_card(sub {
 
   my $context = $card->field($CONTEXT) || '';
   my ($img) = $context =~ m{(<img[^>]+>)};
-  undef $img if $img && $img !~ /study\.sartak\.org/;
+  undef $img if $img && $img !~ $study_url_regex;
 
   push @parsed_cards, [$card->id, $right, $sentence, $source, $img, $results->{correct}];
 
