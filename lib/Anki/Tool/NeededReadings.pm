@@ -18,7 +18,7 @@ sub each_card_文 {
     my $reading_field = $card->field('読み') || '';
 
     my @needed;
-    for my $kanji ($sentence =~ /(\p{Han}|[０１２３４５６７８９])/g) {
+    for my $kanji ($sentence =~ /(\p{Unified_Ideograph}|[０１２３４５６７８９])/g) {
         next if $reading_field =~ $kanji;
         push @needed, $kanji;
     }

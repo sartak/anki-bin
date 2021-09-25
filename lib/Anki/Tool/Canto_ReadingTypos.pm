@@ -23,7 +23,7 @@ sub each_note_廣東話文 {
 
     s/<.*?>//g for $sentence, $reading_field;
 
-    my @sentence_kanji = $sentence =~ /\p{Han}|[a-zA-Z0-9]+/g;
+    my @sentence_kanji = $sentence =~ /\p{Unified_Ideograph}|[a-zA-Z0-9]+/g;
     my @reading_kanji = split ' ', $reading_field;
 
     if (@sentence_kanji > 0 && @reading_kanji == 0) {

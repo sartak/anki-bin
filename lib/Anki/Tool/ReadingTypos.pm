@@ -100,8 +100,8 @@ sub each_card_文 {
     my $nid = $card->note_id;
 
     if (!$card->suspended) {
-        my @sentence_kanji = uniq($sentence =~ /\p{Han}/g);
-        my @reading_kanji = uniq($reading_field =~ /\p{Han}/g);
+        my @sentence_kanji = uniq($sentence =~ /\p{Unified_Ideograph}/g);
+        my @reading_kanji = uniq($reading_field =~ /\p{Unified_Ideograph}/g);
 
         my @sorted_sentence = sort @sentence_kanji;
         my @sorted_reading = sort @reading_kanji;
@@ -126,7 +126,7 @@ sub each_card_文 {
             $readings_of_word{$word}{$reading}++;
             push @{ $nids_for_word{$word}{$reading} }, $nid;
 
-            for my $kanji ($word =~ /\p{Han}/g) {
+            for my $kanji ($word =~ /\p{Unified_Ideograph}/g) {
                 $readings_of_kanji{$kanji}{$reading}++;
             }
             next;
@@ -149,7 +149,7 @@ sub each_note_漢字 {
     my ($self, $note) = @_;
     if (my $japanese = $note->field('読み')) {
         if ($japanese =~ s{
-            ([^\p{Han}\p{Hiragana}\p{Katakana}ー・、]+) # Non-Japanese
+            ([^\p{Unified_Ideograph}\p{Hiragana}\p{Katakana}ー・、]+) # Non-Japanese
         }{\e[1;41m$+\e[m}xg) {
             return $self->report_note($note, "Malformed 読み: $japanese");
         }
@@ -160,7 +160,7 @@ sub each_note_漢字 {
               ^ (\s+)                # leading space
               | (\s+) $              # trailing space
               | (<.*?>)              # HTML
-              | ([\p{Han}\p{Hiragana}\p{Katakana}ー]+) # Japanese
+              | ([\p{Unified_Ideograph}\p{Hiragana}\p{Katakana}ー]+) # Japanese
           }{\e[1;41m$+\e[m}xg) {
             return $self->report_note($note, "Malformed 廣東話: $cantonese");
         }
@@ -179,7 +179,7 @@ sub done {
         # or with kanji in the reading itself (probably over-eagerly converted)
         # or with only kana in the word (probably forgot to convert)
         next if (grep { $_ } values %{ $readings_of_word{$word} }) <= 1
-            && (join '', keys %{ $readings_of_word{$word} }) !~ /\p{Han}/
+            && (join '', keys %{ $readings_of_word{$word} }) !~ /\p{Unified_Ideograph}/
             && $word !~ /^(\p{Hiragana}|\p{Katakana})+$/;
 
         my $report = "$word: " . join ', ',

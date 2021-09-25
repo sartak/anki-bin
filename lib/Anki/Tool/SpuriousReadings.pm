@@ -19,7 +19,7 @@ sub each_note_文 {
 
     my @readings = $readings =~ m{(^|>)(.*?)【}g;
     my @spurious;
-    for my $kanji (grep defined, map { /(\p{Han}+)/g } @readings) {
+    for my $kanji (grep defined, map { /(\p{Unified_Ideograph}+)/g } @readings) {
         my $regex = join 'っ*', split '', $kanji;
         next if "$sentence$context" =~ $regex;
         push @spurious, $kanji;

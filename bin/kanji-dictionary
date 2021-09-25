@@ -19,13 +19,13 @@ $anki->each_card(sub {
 
     if ($model_name eq '文') {
         my $sentence = $card->field('日本語');
-        for my $kanji ($sentence =~ /\p{Han}/g) {
+        for my $kanji ($sentence =~ /\p{Unified_Ideograph}/g) {
             push @{ $sentences_for_kanji{ $kanji } }, $sentence;
         }
 
         my @readings = split /<.*?>/, $card->field('読み');
         for my $line (grep length, @readings) {
-            for my $kanji ($line =~ /\p{Han}/g) {
+            for my $kanji ($line =~ /\p{Unified_Ideograph}/g) {
                 push @{ $readings_for_kanji{$kanji} }, $line;
             }
         }

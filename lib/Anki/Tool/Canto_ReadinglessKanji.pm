@@ -49,7 +49,7 @@ sub done {
 	    $cantonese =~ s/<.*?>//g;
 	    $readings =~ s/<.*?>//g;
 
-           my @sentence_kanji = $cantonese =~ /\p{Han}|[a-zA-Z0-9]+/g;
+           my @sentence_kanji = $cantonese =~ /\p{Unified_Ideograph}|[a-zA-Z0-9]+/g;
 	    my $index;
 	    for my $i (0..$#sentence_kanji) {
 		    if ($sentence_kanji[$i] =~ $kanji) {
@@ -60,7 +60,7 @@ sub done {
 
 	    my $reading = (split ' ', $readings)[$index];
 
-            $cantonese =~ s/(\p{Han}*)($kanji)(\p{Han}*)/\e[m$1\e[35m$2\e[m$3\e[37m/g;
+            $cantonese =~ s/(\p{Unified_Ideograph}*)($kanji)(\p{Unified_Ideograph}*)/\e[m$1\e[35m$2\e[m$3\e[37m/g;
             $self->report_hint("\e[37m$cantonese\e[m - \e[35m$reading\e[m");
         }
     }

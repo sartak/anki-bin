@@ -97,7 +97,7 @@ my $process_sentence_card = sub {
 
     my $sentence = $card->field('日本語');
 
-    for my $kanji ($sentence =~ /(\p{Han})/g) {
+    for my $kanji ($sentence =~ /(\p{Unified_Ideograph})/g) {
         $kanji_status{$kanji} = 'sentence'
             if ($kanji_status{$kanji}||'card') eq 'card';
         push @nonrtk, $kanji
@@ -112,7 +112,7 @@ my $process_sentence_card = sub {
             next;
         }
         my ($word, $reading) = ($1, $2);
-        for my $kanji ($word =~ /\p{Han}/g) {
+        for my $kanji ($word =~ /\p{Unified_Ideograph}/g) {
             my $joyo = joyo_for($kanji, $word, $reading)
                     || joyo_for($kanji, $word, devoice($reading))
                     || joyo_for($kanji, $word, promote_chiisai($reading))
@@ -236,7 +236,6 @@ if ($print_nonrtk || $ARGV{html}) {
 
     $i = 0;
     for my $kanji (@nonrtk) {
-        next if $kanji =~ /[々〇]/;
         print_kanji($kanji);
     }
 }

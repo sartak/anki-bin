@@ -16,7 +16,7 @@ sub each_card_文 {
     my $sentence = $card->field('日本語');
 
     $sentence_kanji{$_} = $card
-        for $sentence =~ /\p{Han}/g;
+        for $sentence =~ /\p{Unified_Ideograph}/g;
 
     return 1;
 }
@@ -28,7 +28,7 @@ sub each_card_廣東話文 {
     my $sentence = $card->field('廣東話');
 
     $sentence_kanji{$_} = $card
-        for $sentence =~ /\p{Han}/g;
+        for $sentence =~ /\p{Unified_Ideograph}/g;
 
     return 1;
 }
@@ -46,9 +46,6 @@ sub each_note_漢字 {
 
 sub done {
     my ($self) = @_;
-
-    delete $sentence_kanji{'々'};
-    delete $sentence_kanji{'〇'};
 
     for my $kanji (keys %sentence_kanji) {
         next if $studied_kanji{$kanji};

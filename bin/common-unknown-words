@@ -102,7 +102,7 @@ if ($ARGV{'from-file'}) {
         or die "unable to open $ARGV{'from-file'} for reading: $!";
     while (<$handle>) {
         for (/[「」【】『』〈〉]/ ? $_ : split /。/, $_) {
-            next unless /[\p{Han}\p{Hiragana}\p{Katakana}]/;
+            next unless /[\p{Unified_Ideograph}\p{Hiragana}\p{Katakana}]/;
 
             chomp;
             s/^\s+//;

@@ -150,7 +150,7 @@ eval {
         $text =~ s/\bRT @.*//;
 
         # *any* kana/kanji is good, but I may discard the tweet later
-        (my $j_chars = $text) =~ s/[^\p{Han}\p{Hiragana}\p{Katakana}]+//g;
+        (my $j_chars = $text) =~ s/[^\p{Unified_Ideograph}\p{Hiragana}\p{Katakana}]+//g;
         next if !length($j_chars);
 
         my $day = $tweet->created_at->set_time_zone('America/New_York')->add(hours => $drift)->ymd;

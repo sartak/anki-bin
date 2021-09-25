@@ -56,7 +56,7 @@ sub done {
 
             next if $skip{$source_sentence};
 
-            for my $word ($source_sentence =~ /\p{Han}$kanji/g, $source_sentence =~ /$kanji\p{Han}/g) {
+            for my $word ($source_sentence =~ /\p{Unified_Ideograph}$kanji/g, $source_sentence =~ /$kanji\p{Unified_Ideograph}/g) {
                 for my $skip_sentence (@sentences) {
                     next if $source_sentence eq $skip_sentence;
                     if ($skip_sentence =~ $word) {
@@ -72,7 +72,7 @@ sub done {
 
         $self->report_note($note, "\e[35m$kanji\e[m has potential readings");
         for my $sentence (@sentences) {
-            $sentence =~ s/(\p{Han}*)($kanji)(\p{Han}*)/\e[m$1\e[35m$2\e[m$3\e[37m/g;
+            $sentence =~ s/(\p{Unified_Ideograph}*)($kanji)(\p{Unified_Ideograph}*)/\e[m$1\e[35m$2\e[m$3\e[37m/g;
             $self->report_hint("\e[37m$sentence\e[m");
         }
     }

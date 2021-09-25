@@ -6,7 +6,7 @@ use Anki::Database;
 
 my %seen;
 
-$seen{$_} = 1 for "@ARGV" =~ /\p{Han}/g;
+$seen{$_} = 1 for "@ARGV" =~ /\p{Unified_Ideograph}/g;
 
 my $anki = Anki::Database->new;
 
@@ -16,14 +16,11 @@ $anki->each_card(sub {
     $seen{ $card->field('漢字') }++;
 });
 
-$seen{'々'}++;
-$seen{'〇'}++;
-
 @ARGV=();
 
 while (<>) {
     my $listed = 0;
-    for my $kanji (/\p{Han}/g) {
+    for my $kanji (/\p{Unified_Ideograph}/g) {
         if (!$seen{$kanji}) {
             print $kanji;
             $listed++;
