@@ -149,7 +149,7 @@ sub each_note_漢字 {
     my ($self, $note) = @_;
     if (my $japanese = $note->field('読み')) {
         if ($japanese =~ s{
-            ([^\p{Unified_Ideograph}\p{Hiragana}\p{Katakana}ー・、]+) # Non-Japanese
+            ([^\p{Unified_Ideograph}|々|\p{Hiragana}\p{Katakana}ー・、]+) # Non-Japanese
         }{\e[1;41m$+\e[m}xg) {
             return $self->report_note($note, "Malformed 読み: $japanese");
         }
